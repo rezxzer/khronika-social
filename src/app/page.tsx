@@ -1,48 +1,87 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Users, MessageCircle } from "lucide-react";
+import {
+  BookOpen,
+  Users,
+  MessageCircle,
+  ArrowRight,
+  Sparkles,
+} from "lucide-react";
 
 export default function LandingPage() {
   return (
-    <div className="flex flex-col items-center pt-20 pb-12 text-center">
-      <div className="mb-8 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-        <BookOpen className="h-8 w-8" />
-      </div>
+    <div className="-mx-4 -mt-6 sm:-mx-6">
+      {/* Hero */}
+      <section className="relative overflow-hidden border-b bg-gradient-to-b from-muted/50 to-background px-4 pb-20 pt-24 sm:px-6 sm:pt-32">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(0,0,0,0.02)_0%,transparent_60%)]" />
 
-      <h1 className="mb-4 text-4xl font-bold tracking-tight sm:text-5xl">
-        ქრონიკა
-      </h1>
-      <p className="mb-8 max-w-md text-lg text-muted-foreground">
-        წრეებზე დაფუძნებული სოციალური ქსელი, სადაც კონტენტი არის ამბავი,
-        სწავლება და მოწვევა.
-      </p>
+        <div className="relative mx-auto max-w-[1100px]">
+          <div className="flex flex-col items-center text-center">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border bg-background px-4 py-1.5 text-sm text-muted-foreground shadow-sm">
+              <Sparkles className="h-3.5 w-3.5" />
+              წრეებზე დაფუძნებული სოციალური ქსელი
+            </div>
 
-      <div className="flex gap-3">
-        <Button size="lg" asChild>
-          <Link href="/register">დაიწყე ახლა</Link>
-        </Button>
-        <Button size="lg" variant="outline" asChild>
-          <Link href="/login">შესვლა</Link>
-        </Button>
-      </div>
+            <h1 className="mb-5 max-w-2xl text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+              შენი ამბები, <br className="hidden sm:block" />
+              <span className="text-muted-foreground">შენს წრეში</span>
+            </h1>
 
-      <div className="mt-20 grid w-full max-w-2xl gap-8 sm:grid-cols-3">
-        <FeatureCard
-          icon={<Users className="h-6 w-6" />}
-          title="წრეები"
-          description="შექმენი ან შეუერთდი წრეებს — უბანი, კლასი, კლუბი, ოჯახი."
-        />
-        <FeatureCard
-          icon={<BookOpen className="h-6 w-6" />}
-          title="ამბები და სწავლებები"
-          description="გაუზიარე გამოცდილება, ცოდნა და რჩევები შენს წრეს."
-        />
-        <FeatureCard
-          icon={<MessageCircle className="h-6 w-6" />}
-          title="მოწვევები"
-          description="დაგეგმე შეხვედრები და ღონისძიებები წრეში."
-        />
-      </div>
+            <p className="mb-10 max-w-lg text-base text-muted-foreground sm:text-lg">
+              ქრონიკა არის სივრცე, სადაც ყველაფერი იწყება წრეებიდან — გაუზიარე
+              გამოცდილება, ცოდნა და მოწვევა იმ ადამიანებს, ვინც ნამდვილად
+              გაინტერესებს.
+            </p>
+
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button size="lg" asChild className="rounded-full px-8">
+                <Link href="/register">
+                  უფასოდ დაიწყე
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                asChild
+                className="rounded-full px-8"
+              >
+                <Link href="/login">უკვე მაქვს ანგარიში</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="mx-auto max-w-[1100px] px-4 py-20 sm:px-6">
+        <div className="mb-12 text-center">
+          <h2 className="mb-3 text-2xl font-bold tracking-tight sm:text-3xl">
+            რატომ ქრონიკა?
+          </h2>
+          <p className="text-muted-foreground">
+            სამი პრინციპი, რომელიც განგვასხვავებს
+          </p>
+        </div>
+
+        <div className="grid gap-6 sm:grid-cols-3">
+          <FeatureCard
+            icon={<Users className="h-5 w-5" />}
+            title="წრეები"
+            description="შექმენი ან შეუერთდი წრეებს — უბანი, კლასი, კლუბი, სკვადი, ოჯახი. შენ ირჩევ ვინ არის შენს სივრცეში."
+          />
+          <FeatureCard
+            icon={<BookOpen className="h-5 w-5" />}
+            title="ამბები და სწავლებები"
+            description="ყოველ პოსტს აქვს მიზანი — გაუზიარე გამოცდილება, ცოდნა ან რჩევა. არა ქაოსური ფიდი, არამედ ხარისხი."
+          />
+          <FeatureCard
+            icon={<MessageCircle className="h-5 w-5" />}
+            title="მოწვევები"
+            description="დაგეგმე შეხვედრები და ღონისძიებები წრეში. ჩათვალე, რომ ეს შენი პატარა სამყაროა."
+          />
+        </div>
+      </section>
     </div>
   );
 }
@@ -57,12 +96,14 @@ function FeatureCard({
   description: string;
 }) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-lg border p-6">
-      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted">
+    <div className="group rounded-xl border bg-card p-6 transition-shadow hover:shadow-md">
+      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-muted transition-colors group-hover:bg-foreground group-hover:text-background">
         {icon}
       </div>
-      <h3 className="font-semibold">{title}</h3>
-      <p className="text-sm text-muted-foreground">{description}</p>
+      <h3 className="mb-2 font-semibold">{title}</h3>
+      <p className="text-sm leading-relaxed text-muted-foreground">
+        {description}
+      </p>
     </div>
   );
 }

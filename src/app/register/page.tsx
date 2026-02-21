@@ -15,7 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase/client";
-import { Loader2, MailCheck } from "lucide-react";
+import { Loader2, AlertCircle, MailCheck, BookOpen } from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -68,19 +68,19 @@ export default function RegisterPage() {
 
   if (emailSent) {
     return (
-      <div className="flex min-h-[calc(100vh-10rem)] items-center justify-center">
-        <Card className="w-full max-w-sm text-center">
-          <CardHeader>
-            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-              <MailCheck className="h-6 w-6 text-primary" />
+      <div className="flex min-h-[calc(100vh-12rem)] flex-col items-center justify-center px-4">
+        <Card className="w-full max-w-[400px] text-center shadow-sm">
+          <CardHeader className="pb-2">
+            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+              <MailCheck className="h-7 w-7 text-primary" />
             </div>
-            <CardTitle className="text-2xl">შეამოწმე ელფოსტა</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-xl">შეამოწმე ელფოსტა</CardTitle>
+            <CardDescription className="mt-1">
               დადასტურების ბმული გაიგზავნა მისამართზე{" "}
               <span className="font-medium text-foreground">{email}</span>
             </CardDescription>
           </CardHeader>
-          <CardFooter className="justify-center">
+          <CardFooter className="justify-center pt-4">
             <Button variant="outline" asChild>
               <Link href="/login">შესვლის გვერდზე დაბრუნება</Link>
             </Button>
@@ -91,17 +91,28 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-10rem)] items-center justify-center">
-      <Card className="w-full max-w-sm">
+    <div className="flex min-h-[calc(100vh-12rem)] flex-col items-center justify-center px-4">
+      <Link
+        href="/"
+        className="mb-8 flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground text-background">
+          <BookOpen className="h-4 w-4" />
+        </div>
+        <span className="text-lg font-bold text-foreground">ქრონიკა</span>
+      </Link>
+
+      <Card className="w-full max-w-[400px] shadow-sm">
         <form onSubmit={handleSubmit}>
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">რეგისტრაცია</CardTitle>
+          <CardHeader className="pb-4 text-center">
+            <CardTitle className="text-xl">ანგარიშის შექმნა</CardTitle>
             <CardDescription>შექმენი ანგარიში ქრონიკაზე</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {error && (
-              <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                {error}
+              <div className="flex items-start gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2.5 text-sm text-destructive">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>{error}</span>
               </div>
             )}
             <div className="space-y-2">
@@ -112,6 +123,7 @@ export default function RegisterPage() {
                 placeholder="თქვენი სახელი"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                autoComplete="name"
                 required
               />
             </div>
@@ -123,6 +135,7 @@ export default function RegisterPage() {
                 placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
                 required
               />
             </div>
@@ -131,8 +144,10 @@ export default function RegisterPage() {
               <Input
                 id="password"
                 type="password"
+                placeholder="მინიმუმ 6 სიმბოლო"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
                 required
               />
             </div>
@@ -141,20 +156,25 @@ export default function RegisterPage() {
               <Input
                 id="confirm-password"
                 type="password"
+                placeholder="••••••••"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
+                autoComplete="new-password"
                 required
               />
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col gap-3">
+          <CardFooter className="flex flex-col gap-4 pt-2">
             <Button className="w-full" type="submit" disabled={loading}>
               {loading && <Loader2 className="animate-spin" />}
               რეგისტრაცია
             </Button>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-center text-sm text-muted-foreground">
               უკვე გაქვს ანგარიში?{" "}
-              <Link href="/login" className="text-primary underline">
+              <Link
+                href="/login"
+                className="font-medium text-foreground underline underline-offset-4 hover:no-underline"
+              >
                 შესვლა
               </Link>
             </p>
