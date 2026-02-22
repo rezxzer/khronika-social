@@ -147,7 +147,7 @@ export function PostCard({
 
   return (
     <article className="rounded-xl border bg-card transition-all duration-200 hover:shadow-sm">
-      <div className="p-5">
+      <div className="p-3 sm:p-5">
         <div className="flex items-start gap-3">
           <Link href={author.username ? `/u/${author.username}` : "#"}>
             <Avatar className="h-10 w-10 ring-2 ring-seal/10">
@@ -242,12 +242,12 @@ export function PostCard({
         </Link>
 
         {post.media_urls.length > 0 && (
-          <div className="mt-3 flex gap-2 overflow-hidden rounded-lg">
+          <div className="mt-3 grid grid-cols-1 gap-2 overflow-hidden rounded-lg sm:grid-cols-3">
             {post.media_urls.slice(0, 3).map((url, i) => (
               <Link
                 key={i}
                 href={`/p/${post.id}`}
-                className="relative flex-1"
+                className="relative"
               >
                 <img
                   src={url}
@@ -261,7 +261,7 @@ export function PostCard({
         )}
       </div>
 
-      <div className="flex items-center gap-1 border-t px-4 py-2">
+      <div className="flex items-center gap-0.5 border-t px-2 py-1.5 sm:gap-1 sm:px-4 sm:py-2">
         <button
           type="button"
           onClick={handleLikeClick}

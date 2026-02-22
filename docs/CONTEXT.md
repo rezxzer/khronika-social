@@ -1,6 +1,6 @@
 # Khronika — Project Context (for AI assistants)
 
-> Last updated: 2026-02-22
+> Last updated: 2026-02-22 (Phase 7 — Launch Polish Pack v1)
 > This document is the single source of truth for any AI assistant helping develop Khronika.
 > It will be updated incrementally as the project evolves.
 
@@ -26,6 +26,7 @@
 | Toasts | sonner (shadcn/sonner) |
 | Command Palette | cmdk |
 | Theme | next-themes (light mode active, dark tokens defined, toggle not yet built) |
+| Mobile Drawer | shadcn/ui Sheet (left-side drawer for < lg) |
 
 ---
 
@@ -157,7 +158,7 @@ Body has a fixed multi-layer gradient:
 - Landing page with gold gradient hero
 - Footer with social icons
 
-### Phase 3 — Posts v1 ✅ (partially)
+### Phase 3 — Posts v1 ✅
 - PostComposer with type selection (story/lesson/invite)
 - Text content required (min 3 chars)
 - Photo upload (up to 4 images, Supabase Storage bucket: `posts`)
@@ -165,53 +166,50 @@ Body has a fixed multi-layer gradient:
 - Post detail page (`/p/[id]`)
 - FeedComposer on `/feed` with circle selector
 
-### Phase 4 — Feed ✅ (partially)
+### Phase 4 — Feed ✅
 - `/feed` shows posts from joined circles
 - PostCard with author, time, type badge, content, media, actions
 - Empty state with CTA to browse circles
-- **NOT done:** pagination / infinite scroll
+- "Load more" pagination (page size 20) via Supabase `.range()`
+
+### Phase 5 — Comments + Reactions ✅
+- Comment system on `/p/[id]` (list, add, delete own)
+- Reaction (like) toggle with optimistic UI
+- Real comment and reaction counts on PostCard
+- `useReactions` hook for batched liked-state fetching
+- Red filled heart when liked, outline when not
+- Comment icon navigates to `/p/[id]?focus=comment`
+
+### Phase 6 — Notifications + Moderation ✅
+- DB triggers auto-create notifications on comment/reaction
+- `/notifications` page with mark-as-read (individual + bulk)
+- Unread badge in Navbar + Left sidebar
+- PostCard overflow menu: Report post + Block user
+- Blocked users' content hidden from /feed and /c/[slug]
+- `/settings/blocked` page to manage blocked users
+- `useUnreadCount`, `useBlocklist` hooks
+
+### Phase 7 — Launch Polish Pack v1 ✅
+- Mobile responsiveness: hamburger menu + left-side Sheet drawer on < lg
+- Navbar compact layout for small screens (search icon → command palette)
+- PostCard responsive media grid + tighter mobile padding
+- "Load more" pagination on /feed and /c/[slug] (page size 20)
+- SEO: site-wide metadata template, per-page metadata (static + dynamic `generateMetadata`)
+- `public/robots.txt` + `src/app/sitemap.ts`
+- Server-side Supabase client (`src/lib/supabase/server.ts`) for metadata fetching
 
 ---
 
-## What Is NOT Built Yet (Current Phase to Start)
+## What Is NOT Built Yet
 
-### Phase 5 — Comments + Reactions ← START HERE
-
-**Database tables exist in schema** (`comments`, `reactions`) but the UI and logic are not implemented.
-
-**What needs to be built:**
-
-1. **Comment system on `/p/[id]`:**
-   - Comment list below post (ordered by created_at asc)
-   - Comment composer (textarea + submit button)
-   - Each comment: author avatar/name + time + content
-   - Delete own comment (only author)
-   - Real-time count on PostCard
-
-2. **Reaction (like) toggle:**
-   - Heart button on PostCard toggles like
-   - Insert/delete from `reactions` table
-   - Show real count (not placeholder)
-   - Red filled heart when liked, outline when not
-
-3. **Comment count on PostCard:**
-   - Show actual comment count from DB
-   - Clicking comment icon navigates to `/p/[id]`
-
-**After Phase 5, the next phases are:**
-
-### Phase 6 — Notifications + Moderation
-- Create notification on comment/reaction
-- `/notifications` page
-- Report + Block functionality
-- Blocked user content hidden from feed
-
-### Phase 7 — Polish & Launch Prep
-- Pagination / infinite scroll on feed
-- Dark mode toggle
-- Mobile responsiveness audit
-- SEO meta tags
-- Performance optimization
+### Phase 8 — Remaining Polish
+- Dark mode toggle (tokens exist, toggle UI not built)
+- Google OAuth login
+- Circle discovery / explore page
+- Search results page (currently only command palette)
+- Messages / chat system
+- Performance optimization (lazy loading, bundle analysis)
+- Image optimization (next/image for user media)
 
 ---
 
@@ -221,20 +219,41 @@ Body has a fixed multi-layer gradient:
 src/
 ├── app/
 │   ├── globals.css              ← CSS tokens (source of truth for colors)
-│   ├── layout.tsx               ← Root layout (fonts, providers, navbar)
+│   ├── layout.tsx               ← Root layout (fonts, providers, navbar, metadata template)
+│   ├── sitemap.ts               ← Static sitemap for SEO
 │   ├── page.tsx                 ← Landing page
-│   ├── login/page.tsx
-│   ├── register/page.tsx
-│   ├── feed/page.tsx
+│   ├── login/
+│   │   ├── layout.tsx           ← SEO metadata
+│   │   └── page.tsx
+│   ├── register/
+│   │   ├── layout.tsx           ← SEO metadata
+│   │   └── page.tsx
+│   ├── feed/
+│   │   ├── layout.tsx           ← SEO metadata
+│   │   └── page.tsx             ← Feed with "Load more" pagination
 │   ├── circles/
+│   │   ├── layout.tsx           ← SEO metadata
 │   │   ├── page.tsx             ← Circle listing
 │   │   └── new/page.tsx         ← Create circle
-│   ├── c/[slug]/page.tsx        ← Circle detail + posts
-│   ├── p/[id]/page.tsx          ← Post detail
-│   ├── u/[username]/page.tsx    ← Public profile
-│   └── settings/profile/page.tsx
+│   ├── c/[slug]/
+│   │   ├── layout.tsx           ← Dynamic SEO (generateMetadata)
+│   │   └── page.tsx             ← Circle detail + posts + "Load more"
+│   ├── p/[id]/
+│   │   ├── layout.tsx           ← Dynamic SEO (generateMetadata)
+│   │   └── page.tsx             ← Post detail + comments
+│   ├── u/[username]/
+│   │   ├── layout.tsx           ← Dynamic SEO (generateMetadata)
+│   │   └── page.tsx             ← Public profile
+│   ├── notifications/
+│   │   ├── layout.tsx           ← SEO metadata
+│   │   └── page.tsx
+│   └── settings/
+│       ├── layout.tsx           ← SEO metadata
+│       ├── profile/page.tsx
+│       └── blocked/page.tsx
 ├── components/
-│   ├── navbar.tsx
+│   ├── navbar.tsx               ← Responsive navbar with hamburger on mobile
+│   ├── mobile-drawer.tsx        ← Sheet-based left drawer for < lg
 │   ├── footer.tsx
 │   ├── providers.tsx            ← ThemeProvider wrapper
 │   ├── command-palette.tsx      ← Ctrl+K global search
@@ -244,23 +263,30 @@ src/
 │   │   ├── left-sidebar.tsx
 │   │   └── right-sidebar.tsx
 │   ├── posts/
-│   │   ├── post-card.tsx
+│   │   ├── post-card.tsx        ← Responsive PostCard with moderation
 │   │   ├── post-composer.tsx    ← Composer inside circle page
 │   │   └── feed-composer.tsx    ← Composer on /feed with circle selector
 │   └── ui/                      ← shadcn components
 │       ├── button.tsx, card.tsx, input.tsx, label.tsx, avatar.tsx
 │       ├── badge.tsx, skeleton.tsx, switch.tsx, textarea.tsx
 │       ├── dialog.tsx, dropdown-menu.tsx, command.tsx
-│       ├── sonner.tsx
+│       ├── sheet.tsx, sonner.tsx
 │       └── post-type-badge.tsx
 ├── hooks/
 │   ├── use-auth.ts
-│   └── use-profile.ts
+│   ├── use-profile.ts
+│   ├── use-my-circles.ts
+│   ├── use-reactions.ts
+│   ├── use-notifications.ts
+│   └── use-blocklist.ts
 ├── lib/
 │   ├── utils.ts                 ← cn() helper
 │   ├── supabase/client.ts       ← Supabase browser client
+│   ├── supabase/server.ts       ← Supabase server client (for metadata)
 │   ├── auth/normalize.ts        ← Email normalize, error translate, rate limit detect
 │   └── ui/circle-style.ts       ← Deterministic circle colors
+├── public/
+│   └── robots.txt               ← SEO robots file
 ├── docs/
 │   ├── 00_MASTER_PLAN.md        ← Full project plan
 │   ├── 01_DESIGN_SYSTEM.md      ← Design system v4
@@ -268,7 +294,7 @@ src/
 │   └── CONTEXT.md               ← THIS FILE
 └── database/
     ├── 0001_init.sql            ← Tables: profiles, circles, circle_members, posts, comments, reactions, reports, blocklist, notifications
-    ├── 0002_rls.sql             ← Row-level security policies
+    ├── 0002_rls.sql             ← Row-level security policies + triggers
     ├── 0003_profile_metadata_patch.sql
     ├── 0004_storage_avatars.sql ← Avatars bucket
     └── 0005_storage_posts.sql   ← Posts media bucket

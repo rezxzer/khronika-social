@@ -12,9 +12,9 @@ import { cn } from "@/lib/utils";
 type PostType = "story" | "lesson" | "invite";
 
 const TYPE_OPTIONS: { value: PostType; label: string; icon: string }[] = [
-  { value: "story", label: "Story", icon: "📖" },
-  { value: "lesson", label: "Lesson", icon: "🎓" },
-  { value: "invite", label: "Invite", icon: "📨" },
+  { value: "story", label: "Story", icon: "ðŸ“–" },
+  { value: "lesson", label: "Lesson", icon: "ðŸŽ“" },
+  { value: "invite", label: "Invite", icon: "ðŸ“¨" },
 ];
 
 interface CircleOption {
@@ -87,7 +87,7 @@ export function FeedComposer({
         .from("posts")
         .upload(path, file, { upsert: true });
       if (uploadErr) {
-        toast.error("სურათის ატვირთვა ვერ მოხერხდა");
+        toast.error("áƒ¡áƒ£áƒ áƒáƒ—áƒ˜áƒ¡ áƒáƒ¢áƒ•áƒ˜áƒ áƒ—áƒ•áƒ áƒ•áƒ”áƒ  áƒ›áƒáƒ®áƒ”áƒ áƒ®áƒ“áƒ");
         setPosting(false);
         return;
       }
@@ -104,12 +104,12 @@ export function FeedComposer({
     });
 
     if (error) {
-      toast.error("პოსტი ვერ გაიგზავნა");
+      toast.error("áƒžáƒáƒ¡áƒ¢áƒ˜ áƒ•áƒ”áƒ  áƒ’áƒáƒ˜áƒ’áƒ–áƒáƒ•áƒœáƒ");
       setPosting(false);
       return;
     }
 
-    toast.success("პოსტი გამოქვეყნდა!");
+    toast.success("áƒžáƒáƒ¡áƒ¢áƒ˜ áƒ’áƒáƒ›áƒáƒ¥áƒ•áƒ”áƒ§áƒœáƒ“áƒ!");
     setContent("");
     setType("story");
     setImages([]);
@@ -178,7 +178,7 @@ export function FeedComposer({
               </div>
 
               <textarea
-                placeholder="რას უზიარებ წრეს?"
+                placeholder="áƒ áƒáƒ¡ áƒ£áƒ–áƒ˜áƒáƒ áƒ”áƒ‘ áƒ¬áƒ áƒ”áƒ¡?"
                 rows={3}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
@@ -216,7 +216,7 @@ export function FeedComposer({
                   className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40"
                 >
                   <ImagePlus className="h-4 w-4" />
-                  ფოტო
+                  áƒ¤áƒáƒ¢áƒ
                 </button>
                 <input
                   ref={fileInputRef}

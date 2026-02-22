@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
@@ -15,6 +15,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Loader2, CircleDot } from "lucide-react";
 
+const PAGE_SIZE = 20;
+
 export default function FeedPage() {
   const { user, loading: authLoading } = useAuth();
   const { profile } = useProfile();
@@ -24,23 +26,33 @@ export default function FeedPage() {
 
   const [posts, setPosts] = useState<PostData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [circleIds, setCircleIds] = useState<string[]>([]);
+  const circleIdsRef = useRef<string[]>([]);
 
-  const fetchFeed = useCallback(async () => {
+  const fetchFeed = useCallback(async (offset = 0, append = false) => {
     if (!user) return;
-    setLoading(true);
+    if (offset === 0) setLoading(true);
+    else setLoadingMore(true);
 
-    const { data: memberships } = await supabase
-      .from("circle_members")
-      .select("circle_id")
-      .eq("user_id", user.id);
+    let ids = circleIdsRef.current;
+    if (offset === 0) {
+      const { data: memberships } = await supabase
+        .from("circle_members")
+        .select("circle_id")
+        .eq("user_id", user.id);
 
-    const ids = memberships?.map((m) => m.circle_id) ?? [];
-    setCircleIds(ids);
+      ids = memberships?.map((m) => m.circle_id) ?? [];
+      setCircleIds(ids);
+      circleIdsRef.current = ids;
+    }
 
     if (ids.length === 0) {
       setPosts([]);
       setLoading(false);
+      setLoadingMore(false);
+      setHasMore(false);
       return;
     }
 
@@ -49,7 +61,7 @@ export default function FeedPage() {
       .select("*, profiles:author_id(id, username, display_name, avatar_url), comments(count), reactions(count)")
       .in("circle_id", ids)
       .order("created_at", { ascending: false })
-      .limit(20);
+      .range(offset, offset + PAGE_SIZE - 1);
 
     if (!error && data) {
       const mapped: PostData[] = data.map((p) => ({
@@ -59,11 +71,25 @@ export default function FeedPage() {
         comment_count: (p.comments as unknown as { count: number }[])?.[0]?.count ?? 0,
         reaction_count: (p.reactions as unknown as { count: number }[])?.[0]?.count ?? 0,
       }));
-      setPosts(mapped);
-      await fetchLiked(mapped.map((p) => p.id));
+
+      if (append) {
+        setPosts((prev) => {
+          const existing = new Set(prev.map((p) => p.id));
+          const newPosts = mapped.filter((p) => !existing.has(p.id));
+          const all = [...prev, ...newPosts];
+          fetchLiked(all.map((p) => p.id));
+          return all;
+        });
+      } else {
+        setPosts(mapped);
+        await fetchLiked(mapped.map((p) => p.id));
+      }
+
+      setHasMore(data.length === PAGE_SIZE);
     }
 
     setLoading(false);
+    setLoadingMore(false);
   }, [user, fetchLiked]);
 
   useEffect(() => {
@@ -73,12 +99,17 @@ export default function FeedPage() {
   }, [user, authLoading, router]);
 
   useEffect(() => {
-    if (user) fetchFeed();
+    if (user) fetchFeed(0, false);
   }, [user, fetchFeed]);
 
   function handleBlock(blockedUserId: string) {
     setPosts((prev) => prev.filter((p) => p.author_id !== blockedUserId));
     refreshBlocklist();
+  }
+
+  function handleLoadMore() {
+    if (loadingMore) return;
+    fetchFeed(posts.length, true);
   }
 
   const visiblePosts = posts.filter((p) => !blockedIds.includes(p.author_id));
@@ -93,9 +124,9 @@ export default function FeedPage() {
 
   return (
     <AppShell>
-      <div className="space-y-5">
+      <div className="space-y-4 sm:space-y-5">
         <div>
-          <h1 className="font-serif text-2xl font-bold">ფიდი</h1>
+          <h1 className="font-serif text-xl font-bold sm:text-2xl">ფიდი</h1>
           <p className="text-sm text-muted-foreground">
             შენი წრეების უახლესი პოსტები
           </p>
@@ -105,7 +136,7 @@ export default function FeedPage() {
           <FeedComposer
             circleIds={circleIds}
             avatarUrl={profile?.avatar_url ?? null}
-            onPosted={fetchFeed}
+            onPosted={() => fetchFeed(0, false)}
           />
         )}
 
@@ -116,7 +147,7 @@ export default function FeedPage() {
             ))}
           </div>
         ) : visiblePosts.length === 0 ? (
-          <div className="flex flex-col items-center rounded-xl border border-dashed border-seal/20 bg-seal-light/30 py-16 text-center">
+          <div className="flex flex-col items-center rounded-xl border border-dashed border-seal/20 bg-seal-light/30 py-12 text-center sm:py-16">
             <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-seal-muted">
               <CircleDot className="h-6 w-6 text-seal" />
             </div>
@@ -140,6 +171,26 @@ export default function FeedPage() {
                 onBlock={handleBlock}
               />
             ))}
+
+            {hasMore && (
+              <div className="flex justify-center pt-2">
+                <Button
+                  variant="outline"
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                  className="rounded-full px-8"
+                >
+                  {loadingMore ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      იტვირთება...
+                    </>
+                  ) : (
+                    "მეტის ჩატვირთვა"
+                  )}
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>

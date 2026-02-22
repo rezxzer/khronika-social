@@ -24,12 +24,14 @@ import {
   MessageSquare,
   ChevronDown,
   Ban,
+  Menu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { useUnreadCount } from "@/hooks/use-notifications";
 import { CommandPalette } from "@/components/command-palette";
+import { MobileDrawer } from "@/components/mobile-drawer";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -48,6 +50,7 @@ export function Navbar() {
   }
 
   const [cmdOpen, setCmdOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const NAV_LINKS = [
     { href: "/feed", label: "ფიდი" },
@@ -57,7 +60,19 @@ export function Navbar() {
   return (
     <>
       <header className="sticky top-0 z-50 w-full border-b bg-background/90 backdrop-blur-lg">
-        <div className="mx-auto flex h-14 max-w-[1100px] items-center gap-6 px-4 sm:px-6">
+        <div className="mx-auto flex h-14 max-w-[1100px] items-center gap-2 px-3 sm:gap-6 sm:px-6">
+          {/* Hamburger — visible on < lg */}
+          {user && (
+            <button
+              type="button"
+              onClick={() => setDrawerOpen(true)}
+              className="shrink-0 rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground lg:hidden"
+              aria-label="მენიუ"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          )}
+
           {/* Logo */}
           <Link
             href={user ? "/feed" : "/"}
@@ -71,7 +86,7 @@ export function Navbar() {
             </span>
           </Link>
 
-          {/* Nav links — underline style like mockup */}
+          {/* Nav links — hidden on mobile, shown sm+ */}
           {user && (
             <nav className="hidden items-center gap-1 sm:flex">
               {NAV_LINKS.map((link) => {
@@ -87,7 +102,7 @@ export function Navbar() {
                       "relative px-3 py-1 text-sm transition-colors duration-150",
                       active
                         ? "font-semibold text-foreground"
-                        : "text-muted-foreground hover:text-foreground"
+                        : "text-muted-foreground hover:text-foreground",
                     )}
                   >
                     {link.label}
@@ -100,7 +115,7 @@ export function Navbar() {
             </nav>
           )}
 
-          {/* Search bar — center */}
+          {/* Search bar — center, hidden on < md */}
           <div className="hidden flex-1 justify-center md:flex">
             <button
               type="button"
@@ -112,17 +127,30 @@ export function Navbar() {
             </button>
           </div>
 
+          {/* Spacer on mobile when search hidden */}
+          <div className="flex-1 md:hidden" />
+
           {/* Right side */}
-          <div className="ml-auto flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             {authLoading ? (
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             ) : user ? (
               <>
+                {/* Search icon on mobile (opens command palette) */}
+                <button
+                  type="button"
+                  onClick={() => setCmdOpen(true)}
+                  className="shrink-0 rounded-full p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:hidden"
+                  aria-label="ძებნა"
+                >
+                  <Search className="h-[18px] w-[18px]" />
+                </button>
+
                 {/* Bell */}
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="relative rounded-full text-muted-foreground hover:text-foreground"
+                  className="relative shrink-0 rounded-full text-muted-foreground hover:text-foreground"
                   asChild
                 >
                   <Link href="/notifications">
@@ -135,16 +163,16 @@ export function Navbar() {
                   </Link>
                 </Button>
 
-                {/* Messages */}
+                {/* Messages — hidden on small mobile */}
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="rounded-full text-muted-foreground hover:text-foreground"
+                  className="hidden shrink-0 rounded-full text-muted-foreground hover:text-foreground xs:inline-flex"
                 >
                   <MessageSquare className="h-[18px] w-[18px]" />
                 </Button>
 
-                {/* Create button */}
+                {/* Create button — hidden on mobile */}
                 <Button
                   variant="seal"
                   size="sm"
@@ -162,7 +190,7 @@ export function Navbar() {
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
-                      className="ml-1 flex items-center gap-2 rounded-full px-1 py-0.5 transition-colors hover:bg-accent"
+                      className="ml-0.5 flex items-center gap-2 rounded-full px-1 py-0.5 transition-colors hover:bg-accent sm:ml-1"
                     >
                       <Avatar className="h-8 w-8 ring-2 ring-seal/20">
                         <AvatarImage src={profile?.avatar_url ?? undefined} />
@@ -226,7 +254,7 @@ export function Navbar() {
                   asChild
                   className={cn(
                     "text-muted-foreground hover:text-foreground",
-                    pathname === "/login" && "bg-accent text-foreground"
+                    pathname === "/login" && "bg-accent text-foreground",
                   )}
                 >
                   <Link href="/login">შესვლა</Link>
@@ -245,6 +273,7 @@ export function Navbar() {
         </div>
       </header>
       <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} />
+      {user && <MobileDrawer open={drawerOpen} onOpenChange={setDrawerOpen} />}
     </>
   );
 }

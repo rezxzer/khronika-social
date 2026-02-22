@@ -252,18 +252,41 @@
 - Pagination / infinite scroll მუშაობს
 - Post card-ს აქვს ავტორი, დრო, რეაქციები, კომენტარების რაოდენობა
 
-### Phase 5 — Comments + Reactions
-**Done როცა:**
-- /p/[id] დეტალი
-- კომენტარის დამატება/წაშლა (only own)
-- reaction toggle მუშაობს
+### Phase 5 — Comments + Reactions ✅
+**სრულია.** მოიცავს:
+- /p/[id] პოსტის დეტალი კომენტარების სისტემით
+- კომენტარის დამატება/წაშლა (only own) + დადასტურება
+- reaction (like) toggle ოპტიმისტური UI-ით
+- რეალური counts PostCard-ზე
+- `useReactions` hook ბათჩ-ფეჩინგით
+- Comment icon → `/p/[id]?focus=comment` ნავიგაცია
 
-### Phase 6 — Notifications + Moderation
+### Phase 6 — Notifications + Moderation ✅
+**სრულია.** მოიცავს:
+- DB triggers ავტომატურად ქმნის notifications-ს comment/reaction-ზე
+- `/notifications` გვერდი mark-as-read-ით (individual + bulk)
+- Unread badge Navbar-ში + Left sidebar-ში
+- PostCard overflow menu: Report + Block
+- დაბლოკილი მომხმარებლის კონტენტი იფილტრება /feed და /c/[slug]-ზე
+- `/settings/blocked` გვერდი განბლოკვის ფუნქციით
+- `useUnreadCount`, `useBlocklist` hooks
+
+### Phase 7 — Launch Polish Pack v1 ✅
+**სრულია.** მოიცავს:
+- მობაილ რესპონსივი: hamburger მენიუ + Sheet drawer < lg
+- Navbar compact layout მობაილზე
+- PostCard responsive media + tighter mobile padding
+- "მეტის ჩატვირთვა" pagination /feed და /c/[slug]-ზე (page size 20)
+- SEO: metadata template, per-page metadata, generateMetadata dynamic pages-ზე
+- `public/robots.txt` + `src/app/sitemap.ts`
+
+### Phase 8 — Remaining Polish (შემდეგი)
 **Done როცა:**
-- notification იქმნება comment/reaction-ზე
-- /notifications გვერდი მუშაობს
-- report + block მუშაობს
-- blocked user-ის კონტენტი არ ჩანს ფიდში
+- Dark mode toggle UI მუშაობს
+- Google OAuth ინტეგრირებულია
+- Circle discovery / explore page
+- Search results page
+- Performance optimization
 
 ---
 

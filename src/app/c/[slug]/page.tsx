@@ -27,6 +27,8 @@ import { PostCard, type PostData } from "@/components/posts/post-card";
 import { PostComposer } from "@/components/posts/post-composer";
 import { toast } from "sonner";
 
+const PAGE_SIZE = 20;
+
 interface CircleDetail {
   id: string;
   name: string;
@@ -52,6 +54,8 @@ export default function CircleDetailPage() {
 
   const [posts, setPosts] = useState<PostData[]>([]);
   const [postsLoading, setPostsLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
   const fetchCircle = useCallback(async () => {
     if (!slug) return;
@@ -92,16 +96,17 @@ export default function CircleDetailPage() {
     setLoading(false);
   }, [slug, user]);
 
-  const fetchPosts = useCallback(async () => {
+  const fetchPosts = useCallback(async (offset = 0, append = false) => {
     if (!circle) return;
-    setPostsLoading(true);
+    if (offset === 0) setPostsLoading(true);
+    else setLoadingMore(true);
 
     const { data, error } = await supabase
       .from("posts")
       .select("*, profiles:author_id(id, username, display_name, avatar_url), comments(count), reactions(count)")
       .eq("circle_id", circle.id)
       .order("created_at", { ascending: false })
-      .limit(30);
+      .range(offset, offset + PAGE_SIZE - 1);
 
     if (!error && data) {
       const mapped: PostData[] = data.map((p) => ({
@@ -111,11 +116,25 @@ export default function CircleDetailPage() {
         comment_count: (p.comments as unknown as { count: number }[])?.[0]?.count ?? 0,
         reaction_count: (p.reactions as unknown as { count: number }[])?.[0]?.count ?? 0,
       }));
-      setPosts(mapped);
-      await fetchLiked(mapped.map((p) => p.id));
+
+      if (append) {
+        setPosts((prev) => {
+          const existing = new Set(prev.map((p) => p.id));
+          const newPosts = mapped.filter((p) => !existing.has(p.id));
+          const all = [...prev, ...newPosts];
+          fetchLiked(all.map((p) => p.id));
+          return all;
+        });
+      } else {
+        setPosts(mapped);
+        await fetchLiked(mapped.map((p) => p.id));
+      }
+
+      setHasMore(data.length === PAGE_SIZE);
     }
 
     setPostsLoading(false);
+    setLoadingMore(false);
   }, [circle, fetchLiked]);
 
   useEffect(() => {
@@ -129,7 +148,7 @@ export default function CircleDetailPage() {
   }, [authLoading, user, fetchCircle, router]);
 
   useEffect(() => {
-    if (circle) fetchPosts();
+    if (circle) fetchPosts(0, false);
   }, [circle, fetchPosts]);
 
   async function handleJoin() {
@@ -175,6 +194,11 @@ export default function CircleDetailPage() {
     setActionLoading(false);
   }
 
+  function handleLoadMore() {
+    if (loadingMore) return;
+    fetchPosts(posts.length, true);
+  }
+
   if (authLoading || loading) {
     return (
       <div className="space-y-4">
@@ -209,10 +233,11 @@ export default function CircleDetailPage() {
 
   const isOwner = user?.id === circle.owner_id;
   const accent = getCircleAccent(circle.slug);
+  const filteredPosts = posts.filter((p) => !blockedIds.includes(p.author_id));
 
   return (
     <AppShell>
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <Button variant="ghost" size="sm" asChild>
         <Link href="/circles">
           <ArrowLeft className="h-4 w-4" />
@@ -222,9 +247,9 @@ export default function CircleDetailPage() {
 
       <div className="relative overflow-hidden rounded-xl border bg-card">
         <div className="h-2" style={accent.stripStyle} />
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="space-y-2">
+            <div className="min-w-0 space-y-2">
               <div className="flex items-center gap-3">
                 <div
                   className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
@@ -232,8 +257,8 @@ export default function CircleDetailPage() {
                 >
                   <CircleDot className="h-5 w-5" />
                 </div>
-                <div className="flex items-center gap-2">
-                  <h1 className="font-serif text-2xl font-bold">{circle.name}</h1>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="font-serif text-xl font-bold sm:text-2xl">{circle.name}</h1>
                   <Badge variant={circle.is_private ? "secondary" : "outline"}>
                     {circle.is_private ? (
                       <Lock className="mr-1 h-3 w-3" />
@@ -245,7 +270,7 @@ export default function CircleDetailPage() {
                 </div>
               </div>
               {circle.description && (
-                <p className="text-muted-foreground">{circle.description}</p>
+                <p className="text-sm text-muted-foreground sm:text-base">{circle.description}</p>
               )}
               <div className="flex items-center gap-1 text-sm text-muted-foreground">
                 <Users className="h-4 w-4" />
@@ -302,7 +327,7 @@ export default function CircleDetailPage() {
         <h2 className="text-lg font-semibold">პოსტები</h2>
 
         {isMember && (
-          <PostComposer circleId={circle.id} onPosted={fetchPosts} />
+          <PostComposer circleId={circle.id} onPosted={() => fetchPosts(0, false)} />
         )}
 
         {postsLoading ? (
@@ -311,7 +336,7 @@ export default function CircleDetailPage() {
               <Skeleton key={i} className="h-28 w-full rounded-xl" />
             ))}
           </div>
-        ) : posts.filter((p) => !blockedIds.includes(p.author_id)).length === 0 ? (
+        ) : filteredPosts.length === 0 ? (
           <div className="flex flex-col items-center rounded-xl border border-dashed py-12 text-center text-muted-foreground">
             <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted">
               <PenLine className="h-5 w-5" />
@@ -325,9 +350,7 @@ export default function CircleDetailPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {posts
-              .filter((p) => !blockedIds.includes(p.author_id))
-              .map((post) => (
+            {filteredPosts.map((post) => (
               <PostCard
                 key={post.id}
                 post={post}
@@ -340,6 +363,26 @@ export default function CircleDetailPage() {
                 }}
               />
             ))}
+
+            {hasMore && (
+              <div className="flex justify-center pt-2">
+                <Button
+                  variant="outline"
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                  className="rounded-full px-8"
+                >
+                  {loadingMore ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      იტვირთება...
+                    </>
+                  ) : (
+                    "მეტის ჩატვირთვა"
+                  )}
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>

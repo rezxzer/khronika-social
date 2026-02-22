@@ -20,9 +20,22 @@ const sourceSerif = Source_Serif_4({
 });
 
 export const metadata: Metadata = {
-  title: "ქრონიკა — წრეებზე დაფუძნებული სოციალური ქსელი",
+  title: {
+    default: "ქრონიკა — წრეებზე დაფუძნებული სოციალური ქსელი",
+    template: "%s | ქრონიკა",
+  },
   description:
     "ქრონიკა არის წრეებზე (თემებზე) დაფუძნებული სოციალური ქსელი, სადაც კონტენტი არის ამბავი, სწავლება და მოწვევა.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://khronika.ge"),
+  openGraph: {
+    type: "website",
+    locale: "ka_GE",
+    siteName: "ქრონიკა",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
@@ -41,7 +54,7 @@ export default function RootLayout({
             shadow={false}
           />
           <Navbar />
-          <main className="mx-auto w-full max-w-[1100px] flex-1 px-4 py-6 sm:px-6">
+          <main className="mx-auto w-full max-w-[1100px] flex-1 px-3 py-4 sm:px-6 sm:py-6">
             <PageTransition>{children}</PageTransition>
           </main>
           <Footer />
