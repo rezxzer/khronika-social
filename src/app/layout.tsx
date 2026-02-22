@@ -1,10 +1,23 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Source_Serif_4 } from "next/font/google";
+import NextTopLoader from "nextjs-toploader";
 import "./globals.css";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { PageTransition } from "@/components/page-transition";
+import { Providers } from "@/components/providers";
+import { Toaster } from "@/components/ui/sonner";
 
-const inter = Inter({ subsets: ["latin", "latin-ext"] });
+const inter = Inter({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-inter",
+});
+
+const sourceSerif = Source_Serif_4({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-source-serif",
+  weight: ["400", "600", "700"],
+});
 
 export const metadata: Metadata = {
   title: "ქრონიკა — წრეებზე დაფუძნებული სოციალური ქსელი",
@@ -19,12 +32,21 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ka">
-      <body className={`${inter.className} flex min-h-svh flex-col antialiased`}>
-        <Navbar />
-        <main className="mx-auto w-full max-w-[1100px] flex-1 px-4 py-6 sm:px-6">
-          {children}
-        </main>
-        <Footer />
+      <body className={`${inter.variable} ${sourceSerif.variable} font-sans flex min-h-svh flex-col antialiased`}>
+        <Providers>
+          <NextTopLoader
+            color="#1A1A1A"
+            height={2}
+            showSpinner={false}
+            shadow={false}
+          />
+          <Navbar />
+          <main className="mx-auto w-full max-w-[1100px] flex-1 px-4 py-6 sm:px-6">
+            <PageTransition>{children}</PageTransition>
+          </main>
+          <Footer />
+          <Toaster position="bottom-right" />
+        </Providers>
       </body>
     </html>
   );

@@ -85,7 +85,7 @@ export default function PublicProfilePage() {
             <AvatarFallback className="text-lg">{initials}</AvatarFallback>
           </Avatar>
           <div className="min-w-0">
-            <h1 className="truncate text-xl font-bold">
+            <h1 className="truncate font-serif text-xl font-bold">
               {profile.display_name || profile.username}
             </h1>
             {profile.username && (

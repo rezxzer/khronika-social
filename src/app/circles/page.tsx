@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase/client";
+import { getCircleAccent } from "@/lib/ui/circle-style";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AppShell } from "@/components/layout/app-shell";
 import { Plus, Search, Lock, Globe, Users, CircleDot } from "lucide-react";
 
 interface Circle {
@@ -80,10 +82,11 @@ export default function CirclesPage() {
   );
 
   return (
+    <AppShell>
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">წრეები</h1>
+          <h1 className="font-serif text-2xl font-bold">წრეები</h1>
           <p className="text-muted-foreground">იპოვე ან შექმენი შენი წრე</p>
         </div>
         <Button asChild>
@@ -126,38 +129,56 @@ export default function CirclesPage() {
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
-          {filtered.map((circle) => (
-            <Link
-              key={circle.id}
-              href={`/c/${circle.slug}`}
-              className="group rounded-xl border bg-card p-5 transition-shadow hover:shadow-md"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="font-semibold group-hover:underline">
-                  {circle.name}
-                </h3>
-                <Badge variant={circle.is_private ? "secondary" : "outline"}>
-                  {circle.is_private ? (
-                    <Lock className="mr-1 h-3 w-3" />
-                  ) : (
-                    <Globe className="mr-1 h-3 w-3" />
-                  )}
-                  {circle.is_private ? "პირადი" : "ღია"}
-                </Badge>
-              </div>
-              {circle.description && (
-                <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                  {circle.description}
-                </p>
-              )}
-              <div className="mt-3 flex items-center gap-1 text-xs text-muted-foreground">
-                <Users className="h-3 w-3" />
-                <span>{circle.member_count} წევრი</span>
-              </div>
-            </Link>
-          ))}
+          {filtered.map((circle) => {
+            const accent = getCircleAccent(circle.slug);
+            return (
+              <Link
+                key={circle.id}
+                href={`/c/${circle.slug}`}
+                className="group relative overflow-hidden rounded-xl border bg-card p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+              >
+                <div
+                  className="absolute inset-x-0 top-0 h-1"
+                  style={accent.stripStyle}
+                />
+                <div className="flex items-start gap-3">
+                  <div
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+                    style={accent.chipStyle}
+                  >
+                    <CircleDot className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="truncate font-semibold group-hover:underline">
+                        {circle.name}
+                      </h3>
+                      <Badge variant={circle.is_private ? "secondary" : "outline"}>
+                        {circle.is_private ? (
+                          <Lock className="mr-1 h-3 w-3" />
+                        ) : (
+                          <Globe className="mr-1 h-3 w-3" />
+                        )}
+                        {circle.is_private ? "პირადი" : "ღია"}
+                      </Badge>
+                    </div>
+                    {circle.description && (
+                      <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                        {circle.description}
+                      </p>
+                    )}
+                    <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+                      <Users className="h-3 w-3" />
+                      <span>{circle.member_count} წევრი</span>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>
+    </AppShell>
   );
 }

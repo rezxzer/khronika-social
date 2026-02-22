@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
+import { AppShell } from "@/components/layout/app-shell";
 import { Loader2 } from "lucide-react";
 
 export default function FeedPage() {
@@ -24,20 +25,22 @@ export default function FeedPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">ფიდი</h1>
-        <p className="text-muted-foreground">
-          შენი წრეების უახლესი პოსტები
-        </p>
-      </div>
+    <AppShell>
+      <div className="space-y-6">
+        <div>
+          <h1 className="font-serif text-2xl font-bold">ფიდი</h1>
+          <p className="text-muted-foreground">
+            შენი წრეების უახლესი პოსტები
+          </p>
+        </div>
 
-      <div className="rounded-lg border border-dashed p-12 text-center text-muted-foreground">
-        <p className="text-lg font-medium">ჯერ ცარიელია</p>
-        <p className="mt-1 text-sm">
-          შეუერთდი წრეებს რომ ფიდში პოსტები გამოჩნდეს.
-        </p>
+        <div className="rounded-lg border border-dashed p-12 text-center text-muted-foreground">
+          <p className="text-lg font-medium">ჯერ ცარიელია</p>
+          <p className="mt-1 text-sm">
+            შეუერთდი წრეებს რომ ფიდში პოსტები გამოჩნდეს.
+          </p>
+        </div>
       </div>
-    </div>
+    </AppShell>
   );
 }

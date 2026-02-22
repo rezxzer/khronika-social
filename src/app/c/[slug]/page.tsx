@@ -16,7 +16,11 @@ import {
   LogIn,
   LogOut as LogOutIcon,
   Loader2,
+  CircleDot,
 } from "lucide-react";
+import { getCircleAccent } from "@/lib/ui/circle-style";
+import { AppShell } from "@/components/layout/app-shell";
+import { toast } from "sonner";
 
 interface CircleDetail {
   id: string;
@@ -101,6 +105,9 @@ export default function CircleDetailPage() {
     if (!error) {
       setIsMember(true);
       setMemberCount((prev) => prev + 1);
+      toast.success("წრეს შეუერთდი!");
+    } else {
+      toast.error("შეერთება ვერ მოხერხდა");
     }
 
     setActionLoading(false);
@@ -120,6 +127,9 @@ export default function CircleDetailPage() {
     if (!error) {
       setIsMember(false);
       setMemberCount((prev) => Math.max(0, prev - 1));
+      toast.success("წრე დატოვე");
+    } else {
+      toast.error("დატოვება ვერ მოხერხდა");
     }
 
     setActionLoading(false);
@@ -158,8 +168,10 @@ export default function CircleDetailPage() {
   }
 
   const isOwner = user?.id === circle.owner_id;
+  const accent = getCircleAccent(circle.slug);
 
   return (
+    <AppShell>
     <div className="space-y-6">
       <Button variant="ghost" size="sm" asChild>
         <Link href="/circles">
@@ -168,28 +180,38 @@ export default function CircleDetailPage() {
         </Link>
       </Button>
 
-      <div className="rounded-xl border bg-card p-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold">{circle.name}</h1>
-              <Badge variant={circle.is_private ? "secondary" : "outline"}>
-                {circle.is_private ? (
-                  <Lock className="mr-1 h-3 w-3" />
-                ) : (
-                  <Globe className="mr-1 h-3 w-3" />
-                )}
-                {circle.is_private ? "პირადი" : "ღია"}
-              </Badge>
+      <div className="relative overflow-hidden rounded-xl border bg-card">
+        <div className="h-2" style={accent.stripStyle} />
+        <div className="p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <div
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+                  style={accent.chipStyle}
+                >
+                  <CircleDot className="h-5 w-5" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <h1 className="font-serif text-2xl font-bold">{circle.name}</h1>
+                  <Badge variant={circle.is_private ? "secondary" : "outline"}>
+                    {circle.is_private ? (
+                      <Lock className="mr-1 h-3 w-3" />
+                    ) : (
+                      <Globe className="mr-1 h-3 w-3" />
+                    )}
+                    {circle.is_private ? "პირადი" : "ღია"}
+                  </Badge>
+                </div>
+              </div>
+              {circle.description && (
+                <p className="text-muted-foreground">{circle.description}</p>
+              )}
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <Users className="h-4 w-4" />
+                <span>{memberCount} წევრი</span>
+              </div>
             </div>
-            {circle.description && (
-              <p className="text-muted-foreground">{circle.description}</p>
-            )}
-            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-              <Users className="h-4 w-4" />
-              <span>{memberCount} წევრი</span>
-            </div>
-          </div>
 
           <div className="flex shrink-0 gap-2">
             {circle.is_private && !isMember ? (
@@ -233,6 +255,7 @@ export default function CircleDetailPage() {
             )}
           </div>
         </div>
+        </div>
       </div>
 
       <div>
@@ -247,5 +270,6 @@ export default function CircleDetailPage() {
         </div>
       </div>
     </div>
+    </AppShell>
   );
 }

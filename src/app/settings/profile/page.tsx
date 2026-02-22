@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AppShell } from "@/components/layout/app-shell";
 import {
   Loader2,
   AlertCircle,
@@ -153,6 +154,7 @@ export default function ProfileSettingsPage() {
       .toUpperCase();
 
   return (
+    <AppShell>
     <div className="mx-auto max-w-lg space-y-6">
       <div>
         <h1 className="text-2xl font-bold">პროფილის რედაქტირება</h1>
@@ -272,5 +274,6 @@ export default function ProfileSettingsPage() {
         </form>
       </Card>
     </div>
+    </AppShell>
   );
 }

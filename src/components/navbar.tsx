@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -19,10 +21,12 @@ import {
   Rss,
   Settings,
   User,
+  Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
+import { CommandPalette } from "@/components/command-palette";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -40,42 +44,57 @@ export function Navbar() {
     router.push("/");
   }
 
+  const [cmdOpen, setCmdOpen] = useState(false);
+
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-lg">
-      <div className="mx-auto flex h-16 max-w-[1100px] items-center justify-between px-4 sm:px-6">
-        <Link
-          href={user ? "/feed" : "/"}
-          className="flex items-center gap-2.5 transition-opacity hover:opacity-80"
-        >
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground text-background">
-            <BookOpen className="h-4 w-4" />
-          </div>
-          <span className="text-lg font-bold tracking-tight">ქრონიკა</span>
-        </Link>
+    <>
+      <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-lg">
+        <div className="mx-auto flex h-16 max-w-[1100px] items-center justify-between px-4 sm:px-6">
+          <Link
+            href={user ? "/feed" : "/"}
+            className="flex items-center gap-2.5 transition-opacity hover:opacity-80"
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground text-background">
+              <BookOpen className="h-4 w-4" />
+            </div>
+            <span className="text-lg font-bold tracking-tight">ქრონიკა</span>
+          </Link>
 
-        <nav className="flex items-center gap-1">
-          {authLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-          ) : user ? (
-            <>
-              <NavLink href="/feed" active={pathname === "/feed"}>
-                <Rss className="h-4 w-4" />
-                <span className="hidden sm:inline">ფიდი</span>
-              </NavLink>
-              <NavLink
-                href="/circles"
-                active={
-                  pathname.startsWith("/circles") ||
-                  pathname.startsWith("/c/")
-                }
-              >
-                <CircleDot className="h-4 w-4" />
-                <span className="hidden sm:inline">წრეები</span>
-              </NavLink>
+          <nav className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setCmdOpen(true)}
+              className="mr-1 hidden items-center gap-2 rounded-lg border bg-muted/50 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground sm:inline-flex"
+            >
+              <Search className="h-3.5 w-3.5" />
+              <span>ძებნა</span>
+              <kbd className="pointer-events-none inline-flex h-5 items-center rounded border bg-background px-1.5 font-mono text-[10px] font-medium">
+                ⌘K
+              </kbd>
+            </button>
 
-              <div className="mx-1.5 h-5 w-px bg-border" />
+            {authLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            ) : user ? (
+              <>
+                <NavLink href="/feed" active={pathname === "/feed"}>
+                  <Rss className="h-4 w-4" />
+                  <span className="hidden sm:inline">ფიდი</span>
+                </NavLink>
+                <NavLink
+                  href="/circles"
+                  active={
+                    pathname.startsWith("/circles") ||
+                    pathname.startsWith("/c/")
+                  }
+                >
+                  <CircleDot className="h-4 w-4" />
+                  <span className="hidden sm:inline">წრეები</span>
+                </NavLink>
 
-              <DropdownMenu>
+                <div className="mx-1.5 h-5 w-px bg-border" />
+
+                <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
@@ -147,6 +166,8 @@ export function Navbar() {
         </nav>
       </div>
     </header>
+    <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} />
+    </>
   );
 }
 
@@ -159,17 +180,32 @@ function NavLink({
   active: boolean;
   children: React.ReactNode;
 }) {
+  const reduced = useReducedMotion();
+
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      asChild
+    <Link
+      href={href}
       className={cn(
-        "gap-1.5 text-muted-foreground hover:text-foreground",
-        active && "bg-accent text-foreground font-medium"
+        "relative flex h-8 items-center gap-1.5 rounded-lg px-3 text-sm transition-colors duration-150",
+        active
+          ? "text-foreground font-medium"
+          : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
       )}
     >
-      <Link href={href}>{children}</Link>
-    </Button>
+      {active && (
+        <motion.span
+          layoutId="nav-pill"
+          className="absolute inset-0 rounded-lg bg-seal-muted"
+          transition={
+            reduced
+              ? { duration: 0 }
+              : { type: "spring", bounce: 0.15, duration: 0.5 }
+          }
+        />
+      )}
+      <span className="relative z-10 flex items-center gap-1.5">
+        {children}
+      </span>
+    </Link>
   );
 }

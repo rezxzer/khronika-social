@@ -18,7 +18,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { AppShell } from "@/components/layout/app-shell";
 import { ArrowLeft, Loader2, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 
 function slugify(text: string): string {
   return text
@@ -94,6 +96,7 @@ export default function NewCirclePage() {
       return;
     }
 
+    toast.success("წრე წარმატებით შეიქმნა!");
     router.push(`/c/${data.slug}`);
   }
 
@@ -106,6 +109,7 @@ export default function NewCirclePage() {
   }
 
   return (
+    <AppShell>
     <div className="mx-auto max-w-lg">
       <Button variant="ghost" size="sm" asChild className="mb-4">
         <Link href="/circles">
@@ -188,5 +192,6 @@ export default function NewCirclePage() {
         </form>
       </Card>
     </div>
+    </AppShell>
   );
 }

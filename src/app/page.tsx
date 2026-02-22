@@ -22,7 +22,7 @@ export default function LandingPage() {
               წრეებზე დაფუძნებული სოციალური ქსელი
             </div>
 
-            <h1 className="mb-5 max-w-2xl text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+            <h1 className="mb-5 max-w-2xl font-serif text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
               შენი ამბები, <br className="hidden sm:block" />
               <span className="text-muted-foreground">შენს წრეში</span>
             </h1>
@@ -56,7 +56,7 @@ export default function LandingPage() {
       {/* Features */}
       <section className="mx-auto max-w-[1100px] px-4 py-20 sm:px-6">
         <div className="mb-12 text-center">
-          <h2 className="mb-3 text-2xl font-bold tracking-tight sm:text-3xl">
+          <h2 className="mb-3 font-serif text-2xl font-bold tracking-tight sm:text-3xl">
             რატომ ქრონიკა?
           </h2>
           <p className="text-muted-foreground">
@@ -96,8 +96,8 @@ function FeatureCard({
   description: string;
 }) {
   return (
-    <div className="group rounded-xl border bg-card p-6 transition-shadow hover:shadow-md">
-      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-muted transition-colors group-hover:bg-foreground group-hover:text-background">
+    <div className="group rounded-xl border bg-card p-6 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-muted transition-colors duration-200 group-hover:bg-foreground group-hover:text-background">
         {icon}
       </div>
       <h3 className="mb-2 font-semibold">{title}</h3>
