@@ -1,45 +1,124 @@
-# Khronika — Design System (v1)
+# Khronika — Design System (v2)
 
 ## 1) ბრენდის იდეა (ვიზუალური ხასიათი)
-Khronika = „ქაღალდი და მელანი" — ტრადიციული სითბო + თანამედროვე სისუფთავე.
-- სუფთა ფონები, რბილი ჩრდილები, ბარათები
-- მკაფიო ჰედლაინები, ბევრი whitespace
-- UI არ უნდა იყოს ხმაურიანი/ფერადი; მთავარი ყურადღება — კონტენტზე
+Khronika = **„მელანი ქაღალდზე"** — ტრადიციული სითბო + თანამედროვე სისუფთავე.
+- სუფთა, თბილი ფონი (paper), მუქი ტექსტი (ink)
+- ერთადერთი თბილი აქცენტი: **seal** (#C19552) — ბეჭდის ტონი
+- მკაფიო ჰედლაინები serif ფონტით, ბევრი whitespace
+- UI არ „ყვირის"; მთავარი ყურადღება — კონტენტზე
 
 ---
 
-## 2) Layout სტანდარტი
+## 2) ფერების სისტემა
+
+### Base ნეიტრალები (Paper / Ink)
+| Token | Light | Dark |
+|---|---|---|
+| background (paper) | `#FAFAF8` | `#0F0F10` |
+| foreground (ink) | `#1A1A1A` | `#EAEAEA` |
+| card | `#FFFFFF` | `#1A1A1A` |
+| muted | `#F0EFED` | `#2A2A2A` |
+| muted-foreground | `#777777` | `#888888` |
+| border | `#E8E7E5` | `#2A2A2A` |
+| primary (CTA) | `#1A1A1A` | `#EAEAEA` |
+| primary-foreground | `#FAFAF8` | `#0F0F10` |
+
+### Seal Accent (ერთადერთი აქცენტი)
+| Token | Light | Dark |
+|---|---|---|
+| seal | `#C19552` | `#D4A862` |
+| seal-foreground | `#FAFAF8` | `#0F0F10` |
+| seal-muted | `#F5EDE0` | `#2A2518` |
+
+#### სად გამოიყენება seal:
+- ✅ Active nav pill background (`bg-seal-muted`)
+- ✅ Premium/selected states (მაგ: owner badge accent)
+- ✅ Invite badge — seal outline + seal text
+- ✅ Story/Lesson badge-ების seal dot
+- ✅ Subtle highlights, focus ring accents
+
+#### სად **არ** გამოიყენება:
+- ❌ Primary CTA ღილაკები (ისინი ink-black უნდა დარჩეს)
+- ❌ ტექსტის ფერი ზოგადად (მხოლოდ badge/accent კონტექსტში)
+- ❌ ფონის ფერი დიდ ფართობზე
+
+### Dark Mode
+ტოკენები განსაზღვრულია CSS-ში (`.dark` class). Dark mode toggle — **შემდეგ ეტაპზე**.
+ტოკენები უკვე მზადაა:
+- Background: `#0F0F10`, Surface: `#1A1A1A`, Border: `#2A2A2A`
+- Text: `#EAEAEA`, Text-muted: `#888888`
+- Seal: `#D4A862` (ოდნავ ღია dark-ზე visibility-სთვის)
+
+---
+
+## 3) Circle Identity (მუტირებული პალიტრა)
+
+ყოველ წრეს slug-იდან დეტერმინისტულად ენიჭება ფერი 8 მუტირებული ტონიდან.
+ესთეტიკა: **„ფერადი მელანი ძველ ქაღალდზე"** — არა ნეონი, არა gradient.
+
+| # | სახელი | Hex |
+|---|---|---|
+| 1 | Dusty Rose | `#C9A6A6` |
+| 2 | Seal Amber | `#C19552` |
+| 3 | Sage | `#8FA68E` |
+| 4 | Deep Teal | `#5A8A8A` |
+| 5 | Steel Blue | `#7A9AB0` |
+| 6 | Dusty Violet | `#9A8AA6` |
+| 7 | Mauve | `#B89AA6` |
+| 8 | Terracotta | `#C48A7A` |
+
+### გამოყენება:
+- **Icon chip**: `rgba(color, 0.1)` ფონი + hex ტექსტი
+- **Card strip**: `rgba(color, 0.25)` solid ზოლი (h-1 list-ში, h-2 detail-ზე)
+- **Badge**: `rgba(color, 0.08)` ფონი + hex ტექსტი + `rgba(color, 0.25)` border
+
+იმპლემენტაცია: `src/lib/ui/circle-style.ts` → `getCircleAccent(slug)`
+
+---
+
+## 4) Typography
+
+### ფონტები
+| ფონტი | CSS Variable | Tailwind | გამოყენება |
+|---|---|---|---|
+| **Inter** | `--font-inter` | `font-sans` | Body, UI, ფორმები, ღილაკები |
+| **Source Serif 4** | `--font-source-serif` | `font-serif` | H1–H3, გვერდების სათაურები |
+
+### იერარქია (Tailwind)
+- **H1**: `font-serif text-4xl md:text-5xl font-bold tracking-tight`
+- **H2**: `font-serif text-2xl md:text-3xl font-bold tracking-tight`
+- **H3**: `text-xl font-semibold` (sans — card სათაურებზე)
+- **Body**: `text-base leading-7`
+- **Small/Meta**: `text-sm text-muted-foreground`
+
+### სად გამოიყენება serif:
+- Landing hero H1 + section H2
+- Circles page H1 ("წრეები")
+- Circle detail H1 (circle.name)
+- Profile display_name
+- **არ** გამოიყენება: ფორმების labels, ღილაკები, navbar, badges
+
+---
+
+## 5) Layout სტანდარტი
+
 ### Container
 - max-width: **1100px**
 - გვერდის padding: **px-4 (mobile), px-6 (desktop)**
 
-### App Shell (auth pages არა)
+### App Shell — შემდეგ ეტაპზე
 Desktop-ზე 3 სვეტი:
 - Left sidebar: navigation + circles shortcuts
 - Center: main content (feed / circle / post)
-- Right sidebar: notifications / suggestions (placeholder MVP)
+- Right sidebar: notifications / suggestions
 
 Mobile-ზე:
 - ყველაფერი ერთ სვეტად (center-only)
-- sidebar ელემენტები გადადის Drawer/Dropdown-ში (მოგვიანებით)
+- sidebar ელემენტები გადადის Drawer/Dropdown-ში
 
 ---
 
-## 3) Typography
-### პრინციპი
-- სათაური: მოკლე, დიდი, „მტკიცე"
-- ტექსტი: მარტივად წასაკითხი, ხაზებს შორის კარგი სივრცე
-
-### ზომები (Tailwind)
-- H1: text-4xl md:text-5xl font-semibold tracking-tight
-- H2: text-2xl md:text-3xl font-semibold
-- H3: text-xl font-semibold
-- Body: text-base leading-7
-- Small: text-sm text-muted-foreground
-
----
-
-## 4) Spacing / Grid წესები
+## 6) Spacing / Grid წესები
 - Section spacing: **py-14 md:py-20**
 - Card padding: **p-4 md:p-6**
 - Form field gap: **space-y-3**
@@ -47,85 +126,94 @@ Mobile-ზე:
 
 ---
 
-## 5) Shapes / Radius / Shadows
-- Cards: rounded-xl
-- Buttons/Inputs: rounded-lg
-- Pills/Badges: rounded-full
-- Hover: shadow-sm → shadow-md (სუბტილურად)
+## 7) Shapes / Radius / Shadows
+- Cards: `rounded-xl`
+- Buttons/Inputs: `rounded-lg`
+- Pills/Badges: `rounded-full`
+- Hover: `shadow-sm → shadow-md` (სუბტილურად)
 - Border: ყოველთვის თხელი, არა მძიმე
 
 ---
 
-## 6) Components (shadcn/ui) სტანდარტები
+## 8) Components (shadcn/ui) სტანდარტები
+
 ### Buttons
-- Primary: მთავარ CTA-ზე (1 გვერდზე მაქსიმუმ 1 ძლიერი CTA)
-- Secondary/Outline: მეორეხარისხოვანი
-- Ghost: Navbar/secondary actions
+- **Primary**: ink-black (`#1A1A1A`). 1 გვერდზე მაქსიმუმ 1 ძლიერი CTA.
+- **Secondary/Outline**: მეორეხარისხოვანი მოქმედებები
+- **Ghost**: Navbar, secondary actions
+- Hover: shadow-md + 1px lift; Press: scale(0.98)
 
 ### Cards
-- ყველა ძირითადი ბლოკი card-ში უნდა იყოს:
-  - Header (title + meta)
-  - Body (content)
-  - Footer (actions)
+- Header (title + meta) → Body (content) → Footer (actions)
+- Hover: `-translate-y-0.5 + shadow-md` (200ms, ease-out)
+- Circle cards: accent strip ზემოთ + icon chip მარცხნივ
 
 ### Forms
-- Input height: ~44px
+- Input height: ~36–44px
 - Labels ზემოთ
-- Error/Success ყოველთვის Alert კომპონენტით (კონსისტენტურად)
+- Error/Success ყოველთვის Alert კომპონენტით
+- Focus: smooth border-color + ring transition (150ms)
+
+### Badges (Post Types)
+პილის სტილი — outlined, არა filled.
+
+| ტიპი | სტილი |
+|---|---|
+| **ამბავი (story)** | neutral border + muted text + პატარა seal dot |
+| **სწავლება (lesson)** | neutral border + muted text + პატარა seal dot |
+| **მოწვევა (invite)** | seal border + seal text (უმაღლესი პრიორიტეტი) |
+
+იმპლემენტაცია: `src/components/ui/post-type-badge.tsx`
 
 ### Avatars
 - Navbar: 32–36px
 - Profile header: 72–96px
 - Placeholder: initials
 
-### Badges
-- Private/Public badge: პატარა, მოკლე ტექსტი
-- Owner/Mod badge: მკაფიო მაგრამ არ „ყვირის"
-
 ### Empty states
-- Icon + სათაური + 1 წინადადება + ერთი ღილაკი (თუ შესაძლებელია)
+- Icon + სათაური + 1 წინადადება + ერთი ღილაკი
 
 ### Loading states
-- Skeleton grid (Cards), ფორმებზე spinner არა მუდმივად (მხოლოდ submit-ზე)
+- Skeleton grid (Cards), ფორმებზე spinner მხოლოდ submit-ზე
 
 ---
 
-## 7) გვერდების დიზაინის პატერნები
+## 9) გვერდების დიზაინის პატერნები
+
 ### Landing (/)
-- Hero: დიდი სათაური + მოკლე ტექსტი + 2 CTA
-- ქვემოთ: 3 feature cards
-- Footer: minimal
+- Hero: serif H1 + მოკლე ტექსტი + 2 CTA (ink-black primary + outline secondary)
+- Feature cards (3): icon chip + sans title + description
+- Background: paper gradient + grain texture
 
 ### Auth (/login, /register)
-- Centered card: max-w-md
-- Clear heading + helper text
-- Errors/Success Alert
+- Centered card: max-w-[400px]
+- Logo ზემოთ, clear heading + helper text
+- Errors: Alert (AlertCircle icon)
 
 ### Feed (/feed)
-- Page header: „ფიდი" + create post (მოგვიანებით)
-- Post cards: avatar + name + time + content + actions
-- Right sidebar: notifications preview
+- Page header: „ფიდი" + create post (შემდეგ ეტაპზე)
+- Post cards: avatar + name + time + content + PostTypeBadge + actions
 
 ### Circles (/circles)
-- Header: „წრეები" + "შექმენი"
-- List: card grid, search top
+- Serif H1 + search + create button
+- Card grid: accent strip + icon chip + name + privacy badge + member count
 
 ### Circle detail (/c/[slug])
-- Header card: name + badges + join/leave
-- Tabs (later): Posts / Members / About
-- Placeholder: posts section header
+- Accent cover strip (h-2) + icon chip + serif H1 + badges
+- Join/Leave buttons + toast feedback
+- Posts section placeholder
 
 ### Profile (/u/[username])
-- Profile header: avatar + display_name + username + bio
-- ქვემოთ: stats placeholder + posts placeholder
+- Avatar (80px) + serif display_name + @username + bio
+- Posts placeholder
 
 ### Settings (/settings/profile)
 - Form card + avatar uploader
-- Save button ყოველთვის ქვემოთ მარჯვნივ (desktop), full-width (mobile)
+- Save: full-width mobile, right-aligned desktop
 
 ---
 
-## 8) UI ტექსტების წესები (ქართული)
+## 10) UI ტექსტების წესები (ქართული)
 - მოკლე, პირდაპირი
 - 1 მოქმედება = 1 ღილაკი
 - შეცდომა: რა მოხდა + რა ქნა იუზერმა
@@ -136,86 +224,69 @@ Mobile-ზე:
 
 ---
 
-## 9) QA Checklist (Design)
-- ყველა გვერდს აქვს ერთნაირი container/max-width
-- ყველა card ერთნაირი radius/shadow
-- ყველა ფორმას აქვს consistent spacing + Alerts
-- Mobile-ზე არაფერი "გადმოდის" ეკრანიდან
-- Navbar ყველა გვერდზე ერთი და იგივე
+## 11) Motion & Microinteractions
 
----
+### პრინციპი
+სუბტილური, სწრაფი, ელეგანტური. `prefers-reduced-motion` → ანიმაციები მინიმალურია/გამორთული.
 
-## 10) Motion & Microinteractions (ინტერაქცია = ხასიათი)
-ჩვენი ანიმაციები უნდა იყოს **სუბტილური, სწრაფი, "ელეგანტური"**.
-მიზანი: იუზერს დაეხმაროს "გრძნობის" დონეზე — რა არის clickable, რა მოხდა, სად გადავიდა.
-
-### სიჩქარეები (სტანდარტი)
+### სიჩქარეები
 - Fast: 120–160ms (hover, focus)
-- Normal: 180–240ms (cards, small transitions)
-- Slow (იშვიათად): 280–360ms (modal open/close)
+- Normal: 180–240ms (cards, transitions)
+- Slow: 280–360ms (modal open/close)
 
 ### Easing
-- default: ease-out (ყველაზე ხშირად)
-- emphasis: ease-in-out (მხოლოდ განსაკუთრებულზე)
+- default: `ease-out`
+- emphasis: `ease-in-out` (იშვიათად)
 
-### Buttons — წესები
-- Hover: ოდნავ "გაიბრწყინოს" + 1px lift (არა დიდი)
-- Active/Press: scale(0.98) ან translateY(1px)
-- Focus: მკაფიო ring (accessibility)
-- Disabled: opacity + cursor-not-allowed
+### Page Transitions
+- fade + 4px slide (framer-motion, 200ms)
+- Route change progress bar: 2px, ink-colored (#1A1A1A)
 
-### Cards — წესები
-- Hover: shadow-sm → shadow-md + -translate-y-0.5
-- Border: ყოველთვის თხელი, hover-ზე ოდნავ გამოკვეთილი
-- Clickable card: cursor-pointer + subtle highlight
-
-### Links — წესები
-- Navbar active: "pill" ან underline animation
-- Hover underline: მოკლე ხაზით "გაჩენა" (არა სტანდარტული underline)
-
-### Inputs — წესები
-- Focus: ring + border color (ერთნაირი ყველა ფორმაზე)
-- Error: Alert + input border (არ იყოს აგრესიული წითელი)
+### Navigation Feedback
+- Progress bar ზედა ნაწილში (nextjs-toploader)
+- Submit ღილაკზე spinner მხოლოდ იმ ღილაკზე
+- Success/Error: sonner toast (bottom-right)
 
 ---
 
-## 11) Page Transitions (გვერდებს შორის გადასვლა)
-### პრინციპი
-- გადასვლა უნდა იყოს მოკლე: fade + პატარა slide (2–6px)
-- არ უნდა "დაგვაგვიანოს" ნავიგაცია
-
-### Reduced Motion
-- თუ user-ს აქვს `prefers-reduced-motion`, ანიმაციები უნდა გახდეს მინიმალური/გამორთული.
-
----
-
-## 12) Navigation Feedback (იუზერს ყოველთვის უნდა იცოდეს რა ხდება)
-- Route change-ზე ზედა პატარა progress bar (0.15–0.25 წამი)
-- Submit ღილაკზე loading state (spinner) მხოლოდ იმ ღილაკზე
-- Success/Error: Alert + Toast (თუ გვექნება)
-
----
-
-## 13) "Delight" დეტალები (მომხიბლელი ელემენტები)
-- Landing background: soft gradient + ძალიან მსუბუქი "grain" ეფექტი
+## 12) Delight დეტალები
+- Landing background: paper gradient + grain texture (SVG feTurbulence, opacity 0.02)
 - Iconography: lucide icons, ერთ სტილში
-- Empty states: icon + ტექსტი + ერთი CTA (მაგ: "შექმენი წრე")
-- Profile header: subtle "stamp" style badge (Khronika seal)
+- Empty states: icon + ტექსტი + CTA
+- Command Palette: Ctrl/Cmd+K, ქართული ძებნა
+- Active nav pill: seal-muted ფონით, spring animation
 
 ---
 
-## 14) Theme & Accent (ფერების ზომიერება)
-- Base: შავი/თეთრი (ink/paper)
-- Accent: ერთი თბილი accent (მაგ: "seal" ოქროსფერ-თბილი ტონი) მხოლოდ CTA/ბეჯებზე
-- არასდროს: ბევრი ფერი ერთდროულად.
+## 13) QA Checklist
 
----
+### ფერები და ტოკენები
+- [ ] Paper background (#FAFAF8) ყველა გვერდზე
+- [ ] Ink text (#1A1A1A) ყველა ტექსტზე
+- [ ] Primary CTA ink-black (არა seal)
+- [ ] Seal გამოიყენება მხოლოდ ნებადართულ ადგილებში
+- [ ] Circle identity muted palette-ით (არა ნეონი)
 
-## 15) UI ხარისხის Checklist
-- ყველა hover/active/focus აქვს
-- clickable ელემენტები ვიზუალურად იგრძნობა clickable-ად
-- route transitions მუშაობს და არ ანელებს UI-ს
-- reduced motion მუშაობს
-- mobile-ზე hover effects არ "აწუხებს" (უბრალოდ არ ჩანს)
+### Typography
+- [ ] H1/H2 serif ფონტით key pages-ზე
+- [ ] Body/UI Inter-ით
+- [ ] Font variables ჩატვირთულია layout.tsx-ში
+
+### კომპონენტები
+- [ ] ყველა card ერთნაირი radius/shadow
+- [ ] ყველა ფორმას consistent spacing + Alerts
+- [ ] PostTypeBadge outline pill სტილით
+- [ ] Toast feedback circle actions-ზე
+
+### ინტერაქცია
+- [ ] hover/active/focus ყველგან აქვს
+- [ ] route transitions მუშაობს
+- [ ] reduced motion მუშაობს
+- [ ] mobile-ზე hover effects არ „აწუხებს"
+
+### Layout
+- [ ] ყველა გვერდს ერთნაირი container/max-width (1100px)
+- [ ] Mobile-ზე არაფერი „გადმოდის"
+- [ ] Navbar ყველა გვერდზე ერთი და იგივე
 
 # End

@@ -38,11 +38,15 @@
 ---
 
 ## 3) UX / დიზაინის წესები (ერთიანი სტილი)
-### საერთო სტილი
-- Minimal + სუფთა + „საიმედო“ ვიზუალი
-- Card-based UI (ბარათები)
-- ბევრი whitespace (სუნთქვა)
 
+> **UI Source of Truth:**
+> - სრული დიზაინ სისტემა → `docs/01_DESIGN_SYSTEM.md`
+> - ფერები/ფონტები/ტოკენები (სწრაფი ref) → `docs/02_BRAND_TOKENS.md`
+
+### საერთო სტილი
+- „მელანი ქაღალდზე" ესთეტიკა — paper (#FAFAF8) / ink (#1A1A1A)
+- ერთი თბილი აქცენტი: seal (#C19552)
+- Card-based UI, ბევრი whitespace
 ### Layout
 - Max width: 1100px
 - 3 მთავარი ზონა:
@@ -52,16 +56,18 @@
   - Right: Notifications / Suggestions (desktop-ზე)
 
 ### Typography
-- Headings: მკაფიო, მოკლე
-- Body: ადვილად წასაკითხი
+- **Inter** — body/UI
+- **Source Serif 4** — H1–H3, key page titles
 - Button ტექსტი: მკაფიო მოქმედება (შეერთდი / დატოვე / დაწერე)
 
 ### UI Components (shadcn/ui)
-- Button, Card, Tabs, Dialog, DropdownMenu, Badge, Skeleton, Toast
+- Button, Card, Tabs, Dialog, DropdownMenu, Badge, Skeleton, Toast, Command, Sonner
 - Icons: lucide-react
+- Animations: framer-motion, nextjs-toploader
 
 ### Theme
-- Light/Dark mode (თუნდაც MVP-ში მხოლოდ Light, მაგრამ სტრუქტურით მზად)
+- Light mode — მზადაა (Visual Identity v2 სრულია)
+- Dark mode tokens — CSS-ში განსაზღვრულია, toggle შემდეგ ეტაპზე
 
 ---
 
@@ -189,6 +195,8 @@
   - validators/
 - docs/
   - 00_MASTER_PLAN.md (ეს ფაილი)
+  - 01_DESIGN_SYSTEM.md (დიზაინ სისტემა v2)
+  - 02_BRAND_TOKENS.md (ფერები/ფონტები quick ref)
 - database/
   - 0001_init.sql
   - 0002_rls.sql
@@ -217,7 +225,16 @@
 - Join/Leave მუშაობს
 - /c/[slug] გვერდი ჩანს
 
-### Phase 3 — Posts
+### Phase 2.5 — Visual Identity v2 ✅
+**სრულია.** მოიცავს:
+- Paper/Ink ფერები, Seal accent ტოკენები (light + dark)
+- Source Serif 4 typography (H1–H3)
+- Circle Identity (muted 8-color palette)
+- Interaction Pack (page transitions, command palette, toast, hover states)
+- PostTypeBadge outline pill სტილი
+- დოკუმენტაცია: `docs/01_DESIGN_SYSTEM.md`, `docs/02_BRAND_TOKENS.md`
+
+### Phase 3 — Posts (შემდეგი UI milestone: AppShell + PostComposer)
 **Done როცა:**
 - PostComposer აქვს type არჩევა (story/lesson/invite)
 - ტექსტი აუცილებელია
