@@ -280,11 +280,19 @@
 - SEO: metadata template, per-page metadata, generateMetadata dynamic pages-ზე
 - `public/robots.txt` + `src/app/sitemap.ts`
 
-### Phase 8 — Remaining Polish (შემდეგი)
+### Phase 8.1 — Explore Circles + Real Onboarding ✅
+**სრულია.** მოიცავს:
+- `/circles/explore` გვერდი პოპულარული + აქტიური წრეებით
+- Inline Join ღილაკი explore card-ებზე
+- Explore ლინკი sidebar-ში, mobile drawer-ში, /circles header-ში
+- Right sidebar: რეალური trending წრეები DB-დან (`useTrendingCircles`)
+- Right sidebar: რეალური onboarding widget 3 ნაბიჯით (`useOnboarding`)
+- Feed empty state გაუმჯობესებული CTA-ით `/circles/explore`-ზე
+
+### Phase 9 — Remaining Polish (შემდეგი)
 **Done როცა:**
 - Dark mode toggle UI მუშაობს
 - Google OAuth ინტეგრირებულია
-- Circle discovery / explore page
 - Search results page
 - Performance optimization
 
