@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Rss, CircleDot, Bell, MessageSquare, Plus } from "lucide-react";
+import { Home, Rss, CircleDot, Bell, MessageSquare, Plus, Compass } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMyCircles } from "@/hooks/use-my-circles";
 import { useUnreadCount } from "@/hooks/use-notifications";
@@ -23,7 +23,13 @@ const NAV_ITEMS = [
     href: "/circles",
     label: "Circles",
     icon: CircleDot,
-    match: (p: string) => p.startsWith("/circles") || p.startsWith("/c/"),
+    match: (p: string) => (p.startsWith("/circles") && !p.startsWith("/circles/explore")) || p.startsWith("/c/"),
+  },
+  {
+    href: "/circles/explore",
+    label: "Explore",
+    icon: Compass,
+    match: (p: string) => p === "/circles/explore",
   },
   {
     href: "/notifications",

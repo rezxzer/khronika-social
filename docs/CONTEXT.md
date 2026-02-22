@@ -198,14 +198,25 @@ Body has a fixed multi-layer gradient:
 - `public/robots.txt` + `src/app/sitemap.ts`
 - Server-side Supabase client (`src/lib/supabase/server.ts`) for metadata fetching
 
+### Phase 8.1 — Explore Circles + Real Onboarding ✅
+- `/circles/explore` page with "პოპულარული წრეები" (by member count) and "აქტიური ამ კვირაში" (by post count last 7 days)
+- Inline Join button on explore cards (with optimistic UI)
+- "Explore" link in Left sidebar, Mobile drawer, and /circles page header
+- Right sidebar: real trending circles from DB (top 5 active this week, `useTrendingCircles` hook)
+- Right sidebar: real onboarding widget with 3 DB-computed steps (`useOnboarding` hook):
+  - Profile complete (username + display_name)
+  - Joined a circle (circle_members count >= 1)
+  - Created a post (posts count >= 1)
+- Onboarding widget auto-hides when all steps complete
+- Feed empty state enhanced with strong CTA to `/circles/explore`
+
 ---
 
 ## What Is NOT Built Yet
 
-### Phase 8 — Remaining Polish
+### Phase 9 — Remaining Polish
 - Dark mode toggle (tokens exist, toggle UI not built)
 - Google OAuth login
-- Circle discovery / explore page
 - Search results page (currently only command palette)
 - Messages / chat system
 - Performance optimization (lazy loading, bundle analysis)
@@ -234,7 +245,8 @@ src/
 │   ├── circles/
 │   │   ├── layout.tsx           ← SEO metadata
 │   │   ├── page.tsx             ← Circle listing
-│   │   └── new/page.tsx         ← Create circle
+│   │   ├── new/page.tsx         ← Create circle
+│   │   └── explore/page.tsx     ← Explore / discover circles
 │   ├── c/[slug]/
 │   │   ├── layout.tsx           ← Dynamic SEO (generateMetadata)
 │   │   └── page.tsx             ← Circle detail + posts + "Load more"
@@ -278,7 +290,9 @@ src/
 │   ├── use-my-circles.ts
 │   ├── use-reactions.ts
 │   ├── use-notifications.ts
-│   └── use-blocklist.ts
+│   ├── use-blocklist.ts
+│   ├── use-onboarding.ts       ← 3-step onboarding progress
+│   └── use-trending-circles.ts ← Top active circles this week
 ├── lib/
 │   ├── utils.ts                 ← cn() helper
 │   ├── supabase/client.ts       ← Supabase browser client

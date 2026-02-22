@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AppShell } from "@/components/layout/app-shell";
-import { Plus, Search, Lock, Globe, Users, CircleDot } from "lucide-react";
+import { Plus, Search, Lock, Globe, Users, CircleDot, Compass } from "lucide-react";
 
 interface Circle {
   id: string;
@@ -86,15 +86,23 @@ export default function CirclesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="font-serif text-2xl font-bold">წრეები</h1>
-          <p className="text-muted-foreground">იპოვე ან შექმენი შენი წრე</p>
+          <h1 className="font-serif text-xl font-bold sm:text-2xl">წრეები</h1>
+          <p className="text-sm text-muted-foreground">იპოვე ან შექმენი შენი წრე</p>
         </div>
-        <Button asChild>
-          <Link href="/circles/new">
-            <Plus className="h-4 w-4" />
-            შექმნა
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" asChild className="rounded-full">
+            <Link href="/circles/explore">
+              <Compass className="h-4 w-4" />
+              <span className="hidden sm:inline">აღმოაჩინე</span>
+            </Link>
+          </Button>
+          <Button size="sm" asChild>
+            <Link href="/circles/new">
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">შექმნა</span>
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="relative">

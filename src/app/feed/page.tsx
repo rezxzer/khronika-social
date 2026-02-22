@@ -13,7 +13,7 @@ import { PostCard, type PostData } from "@/components/posts/post-card";
 import { FeedComposer } from "@/components/posts/feed-composer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Loader2, CircleDot } from "lucide-react";
+import { Loader2, CircleDot, Compass } from "lucide-react";
 
 const PAGE_SIZE = 20;
 
@@ -148,16 +148,24 @@ export default function FeedPage() {
           </div>
         ) : visiblePosts.length === 0 ? (
           <div className="flex flex-col items-center rounded-xl border border-dashed border-seal/20 bg-seal-light/30 py-12 text-center sm:py-16">
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-seal-muted">
-              <CircleDot className="h-6 w-6 text-seal" />
+            <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-seal-muted">
+              <Compass className="h-7 w-7 text-seal" />
             </div>
-            <p className="text-lg font-medium">ჯერ ცარიელია</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              შეუერთდი წრეებს რომ ფიდში პოსტები გამოჩნდეს.
+            <h2 className="font-serif text-lg font-bold">შენი ფიდი ცარიელია</h2>
+            <p className="mt-1 max-w-xs text-sm text-muted-foreground">
+              აღმოაჩინე საინტერესო წრეები და შეუერთდი თემებს — პოსტები აქ გამოჩნდება.
             </p>
-            <Button variant="seal" size="sm" asChild className="mt-4 rounded-full px-6">
-              <Link href="/circles">წრეების ნახვა</Link>
-            </Button>
+            <div className="mt-4 flex items-center gap-2">
+              <Button variant="seal" size="sm" asChild className="rounded-full px-6">
+                <Link href="/circles/explore">
+                  <Compass className="h-4 w-4" />
+                  წრეების აღმოჩენა
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild className="rounded-full">
+                <Link href="/circles">ყველა წრე</Link>
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="space-y-3">
