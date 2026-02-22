@@ -1,6 +1,6 @@
 const PALETTE = [
   "#C9A6A6",
-  "#C19552",
+  "#B8860B",
   "#8FA68E",
   "#5A8A8A",
   "#7A9AB0",

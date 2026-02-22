@@ -31,11 +31,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ka">
+    <html lang="ka" suppressHydrationWarning>
       <body className={`${inter.variable} ${sourceSerif.variable} font-sans flex min-h-svh flex-col antialiased`}>
         <Providers>
           <NextTopLoader
-            color="#1A1A1A"
+            color="#3B82F6"
             height={2}
             showSpinner={false}
             shadow={false}

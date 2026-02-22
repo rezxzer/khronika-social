@@ -1,36 +1,57 @@
 # Khronika — Brand Tokens (სწრაფი რეფერენსი)
 
-> ეს ფაილი არის სწრაფი lookup table. სრული წესებისთვის → `docs/01_DESIGN_SYSTEM.md`
+> ბოლო განახლება: 2026-02-22
+> სრული წესებისთვის → `docs/01_DESIGN_SYSTEM.md`
+> CSS source of truth → `src/app/globals.css`
 
 ---
 
-## ფერები
+## პალიტრის კონცეფცია
 
-### Base (Paper / Ink)
+**ოქროს ფონი + ლურჯი აქცენტი**
+- ფონი, card-ები, sidebar, border — ყველაფერი ოქროსფერი
+- CTA ღილაკები, active states, progress bar — ლურჯი (seal)
+- თეთრი (#FFFFFF) არსად
+
+---
+
+## ოქროს ნეიტრალები (Gold Base)
+
 | Token | Light | Dark |
 |---|---|---|
-| background | `#FAFAF8` | `#0F0F10` |
-| foreground | `#1A1A1A` | `#EAEAEA` |
-| card | `#FFFFFF` | `#1A1A1A` |
-| muted | `#F0EFED` | `#2A2A2A` |
-| muted-fg | `#777777` | `#888888` |
-| border | `#E8E7E5` | `#2A2A2A` |
-| primary | `#1A1A1A` | `#EAEAEA` |
+| background | `#F0E2C8` | `#1A1408` |
+| foreground | `#1C1108` | `#F0E2C8` |
+| card | `#F7EDDA` | `#241C0E` |
+| muted | `#E8D5B5` | `#2E2412` |
+| muted-fg | `#7A6545` | `#A89070` |
+| border | `#D4C4A0` | `#3A2E18` |
+| primary | `#2C1A08` | `#F0E2C8` |
+| primary-fg | `#F5E6C8` | `#1A1408` |
+| secondary | `#EBDBC2` | `#2E2412` |
+| sidebar | `#ECD9B8` | `#1A1408` |
 
-### Seal (ერთადერთი აქცენტი)
+---
+
+## Seal — ლურჯი აქცენტი
+
 | Token | Light | Dark |
 |---|---|---|
-| seal | `#C19552` | `#D4A862` |
-| seal-fg | `#FAFAF8` | `#0F0F10` |
-| seal-muted | `#F5EDE0` | `#2A2518` |
+| seal | `#3B82F6` | `#60A5FA` |
+| seal-fg | `#FFF8E7` | `#1A1408` |
+| seal-muted | `#DBEAFE` | `#1E3A5F` |
+| seal-light | `#EFF6FF` | `#152238` |
+
+**Seal = ლურჯი.** გამოიყენება: CTA buttons, nav active, logo bg, progress bar, badges.
+**არ გამოიყენება:** ფონის ფერად, body text-ად, borders.
 
 ---
 
 ## Circle პალიტრა (8 muted ტონი)
+
 | # | სახელი | Hex |
 |---|---|---|
 | 1 | Dusty Rose | `#C9A6A6` |
-| 2 | Seal Amber | `#C19552` |
+| 2 | Dark Gold | `#B8860B` |
 | 3 | Sage | `#8FA68E` |
 | 4 | Deep Teal | `#5A8A8A` |
 | 5 | Steel Blue | `#7A9AB0` |
@@ -38,33 +59,30 @@
 | 7 | Mauve | `#B89AA6` |
 | 8 | Terracotta | `#C48A7A` |
 
-გამოყენება: chip `rgba(hex, 0.1)`, strip `rgba(hex, 0.25)`, badge `rgba(hex, 0.08)`
+Sidebar-ში: colored dots · Card-ებზე: accent strip + icon chip
 
 ---
 
 ## Typography
+
 | ფონტი | Tailwind | გამოყენება |
 |---|---|---|
 | Inter | `font-sans` | Body, UI, ფორმები, ღილაკები |
-| Source Serif 4 | `font-serif` | H1–H3, გვერდების სათაურები |
+| Source Serif 4 | `font-serif` | H1–H3, post titles, key headings |
 
 ---
 
 ## Badge წესები (Post Types)
+
 | ტიპი | სტილი |
 |---|---|
-| ამბავი / სწავლება | neutral border + muted text + seal dot |
+| ამბავი / სწავლება | neutral border + muted text |
 | მოწვევა | seal border + seal text |
 
 ---
 
-## Seal-ის წესები
-- ✅ nav pill, selected states, premium indicators, invite badge
-- ❌ primary CTA, body text, დიდი ფონები
-
----
-
 ## ფაილები (კოდი)
+
 | რა | სად |
 |---|---|
 | CSS ტოკენები | `src/app/globals.css` |

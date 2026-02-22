@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Rss, CircleDot, Bell, PlusCircle } from "lucide-react";
+import { Home, Rss, CircleDot, Bell, MessageSquare, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMyCircles } from "@/hooks/use-my-circles";
 import { getCircleAccent } from "@/lib/ui/circle-style";
@@ -10,14 +10,22 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 
 const NAV_ITEMS = [
-  { href: "/feed", label: "ფიდი", icon: Rss, match: (p: string) => p === "/feed" },
+  { href: "/feed", label: "Home", icon: Home, match: (p: string) => p === "/feed" },
+  { href: "/feed", label: "Feed", icon: Rss, match: () => false },
   {
     href: "/circles",
-    label: "წრეები",
+    label: "Circles",
     icon: CircleDot,
     match: (p: string) => p.startsWith("/circles") || p.startsWith("/c/"),
   },
-  { href: "/notifications", label: "შეტყობინებები", icon: Bell, match: (p: string) => p === "/notifications" },
+  {
+    href: "/notifications",
+    label: "Notifications",
+    icon: Bell,
+    match: (p: string) => p === "/notifications",
+    badge: 3,
+  },
+  { href: "/messages", label: "Messages", icon: MessageSquare, match: (p: string) => p === "/messages" },
 ];
 
 export function LeftSidebar() {
@@ -25,23 +33,28 @@ export function LeftSidebar() {
   const { circles, loading } = useMyCircles(6);
 
   return (
-    <aside className="sticky top-[calc(4rem+1.5rem)] hidden h-fit w-[200px] shrink-0 lg:block">
+    <aside className="sticky top-[calc(3.5rem+1.5rem)] hidden h-fit w-[180px] shrink-0 lg:block">
       <nav className="space-y-0.5">
         {NAV_ITEMS.map((item) => {
           const active = item.match(pathname);
           return (
             <Link
-              key={item.href}
+              key={item.label}
               href={item.href}
               className={cn(
-                "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors duration-150",
+                "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-all duration-150",
                 active
-                  ? "bg-seal-muted font-medium text-foreground"
+                  ? "bg-seal-muted font-semibold text-foreground"
                   : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
               )}
             >
               <item.icon className="h-4 w-4 shrink-0" />
               {item.label}
+              {item.badge && (
+                <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-seal px-1.5 text-[10px] font-bold text-seal-foreground">
+                  {item.badge}
+                </span>
+              )}
             </Link>
           );
         })}
@@ -49,31 +62,36 @@ export function LeftSidebar() {
 
       <div className="mt-6">
         <div className="flex items-center justify-between px-3">
-          <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            ჩემი წრეები
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            MY CIRCLES
           </h3>
           <Link
             href="/circles/new"
-            className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-seal-muted hover:text-seal"
           >
-            <PlusCircle className="h-3.5 w-3.5" />
+            <Plus className="h-3.5 w-3.5" />
           </Link>
         </div>
 
         <div className="mt-2 space-y-0.5">
           {loading ? (
-            Array.from({ length: 3 }).map((_, i) => (
+            Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="flex items-center gap-2.5 px-3 py-1.5">
-                <Skeleton className="h-5 w-5 rounded" />
+                <Skeleton className="h-2.5 w-2.5 rounded-full" />
                 <Skeleton className="h-3.5 w-20" />
               </div>
             ))
           ) : circles.length === 0 ? (
             <div className="px-3 py-4 text-center">
               <p className="text-xs text-muted-foreground">ჯერ არ გაქვს წრე</p>
-              <Button variant="outline" size="xs" asChild className="mt-2">
+              <Button
+                variant="outline"
+                size="xs"
+                asChild
+                className="mt-2 border-seal/30 text-seal hover:bg-seal-muted"
+              >
                 <Link href="/circles/new">
-                  <PlusCircle className="h-3 w-3" />
+                  <Plus className="h-3 w-3" />
                   შექმენი წრე
                 </Link>
               </Button>
@@ -87,18 +105,16 @@ export function LeftSidebar() {
                   key={circle.id}
                   href={`/c/${circle.slug}`}
                   className={cn(
-                    "flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm transition-colors duration-150",
+                    "flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm transition-all duration-150",
                     active
                       ? "bg-accent font-medium text-foreground"
                       : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
                   )}
                 >
                   <span
-                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-[10px] font-bold"
-                    style={accent.chipStyle}
-                  >
-                    {circle.name.charAt(0).toUpperCase()}
-                  </span>
+                    className="h-2.5 w-2.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: accent.hex }}
+                  />
                   <span className="truncate">{circle.name}</span>
                 </Link>
               );

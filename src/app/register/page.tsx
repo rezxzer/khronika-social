@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase/client";
-import { Loader2, AlertCircle, MailCheck, BookOpen } from "lucide-react";
+import { normalizeEmail, translateAuthError, isRateLimitError } from "@/lib/auth/normalize";
+import { Loader2, AlertCircle, MailCheck, BookOpen, Timer } from "lucide-react";
+
+const COOLDOWN_SECONDS = 60;
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -26,6 +29,15 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setInterval(() => setCooldown((c) => Math.max(0, c - 1)), 1000);
+    return () => clearInterval(t);
+  }, [cooldown]);
+
+  const isDisabled = loading || cooldown > 0;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -41,10 +53,16 @@ export default function RegisterPage() {
       return;
     }
 
+    const normalizedEmail = normalizeEmail(email);
+    if (!normalizedEmail || !normalizedEmail.includes("@")) {
+      setError("ელფოსტა არასწორადაა შეყვანილი (შეამოწმე ზედმეტი space).");
+      return;
+    }
+
     setLoading(true);
 
     const { data, error } = await supabase.auth.signUp({
-      email,
+      email: normalizedEmail,
       password,
       options: {
         data: { display_name: name },
@@ -52,7 +70,14 @@ export default function RegisterPage() {
     });
 
     if (error) {
-      setError(error.message);
+      const isRL = isRateLimitError(error.message);
+      if (isRL) {
+        console.warn("Rate limit hit — cooldown started");
+        setCooldown(COOLDOWN_SECONDS);
+      } else {
+        console.error("Register error:", error.message);
+      }
+      setError(translateAuthError(error.message));
       setLoading(false);
       return;
     }
@@ -165,9 +190,16 @@ export default function RegisterPage() {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4 pt-2">
-            <Button className="w-full" type="submit" disabled={loading}>
-              {loading && <Loader2 className="animate-spin" />}
-              რეგისტრაცია
+            <Button variant="seal" className="w-full" type="submit" disabled={isDisabled}>
+              {loading ? (
+                <Loader2 className="animate-spin" />
+              ) : cooldown > 0 ? (
+                <>
+                  <Timer className="h-4 w-4" />
+                  დაელოდე {cooldown}წმ
+                </>
+              ) : null}
+              {!loading && cooldown <= 0 && "რეგისტრაცია"}
             </Button>
             <p className="text-center text-sm text-muted-foreground">
               უკვე გაქვს ანგარიში?{" "}

@@ -40,24 +40,26 @@
 ## 3) UX / დიზაინის წესები (ერთიანი სტილი)
 
 > **UI Source of Truth:**
-> - სრული დიზაინ სისტემა → `docs/01_DESIGN_SYSTEM.md`
+> - სრული დიზაინ სისტემა → `docs/01_DESIGN_SYSTEM.md` (v4)
 > - ფერები/ფონტები/ტოკენები (სწრაფი ref) → `docs/02_BRAND_TOKENS.md`
 
-### საერთო სტილი
-- „მელანი ქაღალდზე" ესთეტიკა — paper (#FAFAF8) / ink (#1A1A1A)
-- ერთი თბილი აქცენტი: seal (#C19552)
+### პალიტრის კონცეფცია (v4)
+- **ოქროს ფონი** — background, card, sidebar, border — ყველაფერი ოქროსფერი (#F0E2C8)
+- **ლურჯი აქცენტი** — seal (#3B82F6) — CTA ღილაკები, active states, progress bar
+- **თეთრი არსად** — #FFFFFF არ გამოიყენება
 - Card-based UI, ბევრი whitespace
+
 ### Layout
 - Max width: 1100px
 - 3 მთავარი ზონა:
-  - Top Navbar
-  - Left: Circles list (desktop-ზე)
+  - Top Navbar (ლოგო + nav + search + bell/messages + CTA + avatar)
+  - Left: Nav + My Circles (colored dots, desktop-ზე)
   - Center: Feed / Content
-  - Right: Notifications / Suggestions (desktop-ზე)
+  - Right: Welcome widget + Quick Actions + Trending (desktop-ზე)
 
 ### Typography
 - **Inter** — body/UI
-- **Source Serif 4** — H1–H3, key page titles
+- **Source Serif 4** — H1–H3, key page titles, post titles
 - Button ტექსტი: მკაფიო მოქმედება (შეერთდი / დატოვე / დაწერე)
 
 ### UI Components (shadcn/ui)
@@ -66,8 +68,8 @@
 - Animations: framer-motion, nextjs-toploader
 
 ### Theme
-- Light mode — მზადაა (Visual Identity v2 სრულია)
-- Dark mode tokens — CSS-ში განსაზღვრულია, toggle შემდეგ ეტაპზე
+- Light mode — მზადაა (Visual Identity v4: ოქროს ფონი + ლურჯი აქცენტი)
+- Dark mode tokens — CSS-ში განსაზღვრულია (მუქი ბრინჯაო), toggle შემდეგ ეტაპზე
 
 ---
 
@@ -195,7 +197,7 @@
   - validators/
 - docs/
   - 00_MASTER_PLAN.md (ეს ფაილი)
-  - 01_DESIGN_SYSTEM.md (დიზაინ სისტემა v2)
+  - 01_DESIGN_SYSTEM.md (დიზაინ სისტემა v4)
   - 02_BRAND_TOKENS.md (ფერები/ფონტები quick ref)
 - database/
   - 0001_init.sql
@@ -225,14 +227,17 @@
 - Join/Leave მუშაობს
 - /c/[slug] გვერდი ჩანს
 
-### Phase 2.5 — Visual Identity v2 ✅
+### Phase 2.5 — Visual Identity v4 ✅
 **სრულია.** მოიცავს:
-- Paper/Ink ფერები, Seal accent ტოკენები (light + dark)
-- Source Serif 4 typography (H1–H3)
+- ოქროს ფონი (#F0E2C8) + ლურჯი seal აქცენტი (#3B82F6)
+- თეთრი (#FFFFFF) სრულად ამოღებულია
+- Source Serif 4 typography (H1–H3, post titles)
 - Circle Identity (muted 8-color palette)
 - Interaction Pack (page transitions, command palette, toast, hover states)
+- AppShell 3-column layout + sidebar widgets
 - PostTypeBadge outline pill სტილი
-- დოკუმენტაცია: `docs/01_DESIGN_SYSTEM.md`, `docs/02_BRAND_TOKENS.md`
+- FeedComposer + PostCard redesign
+- დოკუმენტაცია: `docs/01_DESIGN_SYSTEM.md` (v4), `docs/02_BRAND_TOKENS.md`
 
 ### Phase 3 — Posts (შემდეგი UI milestone: AppShell + PostComposer)
 **Done როცა:**
