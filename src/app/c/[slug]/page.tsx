@@ -144,7 +144,10 @@ export default function CircleDetailPage() {
             წრეებზე დაბრუნება
           </Link>
         </Button>
-        <div className="rounded-lg border border-dashed p-12 text-center text-muted-foreground">
+        <div className="flex flex-col items-center rounded-xl border border-dashed py-16 text-center text-muted-foreground">
+          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+            <Lock className="h-6 w-6" />
+          </div>
           <p className="text-lg font-medium">წრე ვერ მოიძებნა</p>
           <p className="mt-1 text-sm">
             ეს წრე არ არსებობს ან შენ არ გაქვს წვდომა.
@@ -165,7 +168,7 @@ export default function CircleDetailPage() {
         </Link>
       </Button>
 
-      <div className="rounded-lg border p-6">
+      <div className="rounded-xl border bg-card p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
@@ -232,13 +235,16 @@ export default function CircleDetailPage() {
         </div>
       </div>
 
-      <div className="rounded-lg border border-dashed p-12 text-center text-muted-foreground">
-        <p className="text-lg font-medium">პოსტები ჯერ არ არის</p>
-        <p className="mt-1 text-sm">
-          {isMember
-            ? "დაწერე პირველი პოსტი ამ წრეში!"
-            : "შეუერთდი წრეს რომ პოსტები ნახო."}
-        </p>
+      <div>
+        <h2 className="mb-3 text-lg font-semibold">პოსტები</h2>
+        <div className="flex flex-col items-center rounded-xl border border-dashed py-12 text-center text-muted-foreground">
+          <p className="font-medium">ჯერ ცარიელია</p>
+          <p className="mt-1 text-sm">
+            {isMember
+              ? "დაწერე პირველი პოსტი ამ წრეში!"
+              : "შეუერთდი წრეს რომ პოსტები ნახო."}
+          </p>
+        </div>
       </div>
     </div>
   );

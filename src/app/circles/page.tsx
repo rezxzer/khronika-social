@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Search, Lock, Globe, Users } from "lucide-react";
+import { Plus, Search, Lock, Globe, Users, CircleDot } from "lucide-react";
 
 interface Circle {
   id: string;
@@ -105,13 +105,16 @@ export default function CirclesPage() {
       </div>
 
       {loading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-24 w-full rounded-lg" />
+        <div className="grid gap-3 sm:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-28 w-full rounded-xl" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-12 text-center text-muted-foreground">
+        <div className="flex flex-col items-center rounded-xl border border-dashed py-16 text-center text-muted-foreground">
+          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+            <CircleDot className="h-6 w-6" />
+          </div>
           <p className="text-lg font-medium">
             {search ? "ვერ მოიძებნა" : "ჯერ წრეები არ არის"}
           </p>
@@ -127,7 +130,7 @@ export default function CirclesPage() {
             <Link
               key={circle.id}
               href={`/c/${circle.slug}`}
-              className="group rounded-lg border p-4 transition-colors hover:bg-muted/50"
+              className="group rounded-xl border bg-card p-5 transition-shadow hover:shadow-md"
             >
               <div className="flex items-start justify-between gap-2">
                 <h3 className="font-semibold group-hover:underline">
