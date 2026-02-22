@@ -5,7 +5,22 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PostTypeBadge } from "@/components/ui/post-type-badge";
-import { MessageCircle, Heart, Share2, MoreHorizontal } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  MessageCircle,
+  Heart,
+  Share2,
+  MoreHorizontal,
+  Flag,
+  Ban,
+} from "lucide-react";
+import { supabase } from "@/lib/supabase/client";
+import { toast } from "sonner";
 
 export interface PostData {
   id: string;
@@ -35,7 +50,10 @@ function timeAgo(dateStr: string): string {
   if (hours < 24) return `${hours} hours ago`;
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days} days ago`;
-  return new Date(dateStr).toLocaleDateString("ka-GE", { day: "numeric", month: "short" });
+  return new Date(dateStr).toLocaleDateString("ka-GE", {
+    day: "numeric",
+    month: "short",
+  });
 }
 
 function extractTitle(content: string): { title: string; body: string } {
@@ -52,19 +70,34 @@ function extractTitle(content: string): { title: string; body: string } {
 interface PostCardProps {
   post: PostData;
   liked?: boolean;
-  onLikeToggle?: (postId: string, currentCount: number, setCount: (n: number) => void) => void;
+  onLikeToggle?: (
+    postId: string,
+    currentCount: number,
+    setCount: (n: number) => void,
+  ) => void;
+  currentUserId?: string;
+  onBlock?: (blockedUserId: string) => void;
 }
 
-export function PostCard({ post, liked = false, onLikeToggle }: PostCardProps) {
+export function PostCard({
+  post,
+  liked = false,
+  onLikeToggle,
+  currentUserId,
+  onBlock,
+}: PostCardProps) {
   const router = useRouter();
   const author = post.profiles;
   const initials = (author.display_name || author.username || "?")
     .slice(0, 2)
     .toUpperCase();
-  const authorName = author.display_name || author.username || "მომხმარებელი";
+  const authorName =
+    author.display_name || author.username || "მომხმარებელი";
   const { title, body } = extractTitle(post.content);
 
   const [localCount, setLocalCount] = useState(post.reaction_count);
+
+  const isSelf = currentUserId === post.author_id;
 
   function handleLikeClick(e: React.MouseEvent) {
     e.preventDefault();
@@ -78,10 +111,43 @@ export function PostCard({ post, liked = false, onLikeToggle }: PostCardProps) {
     router.push(`/p/${post.id}?focus=comment`);
   }
 
+  async function handleReport() {
+    if (!currentUserId) return;
+    const { error } = await supabase.from("reports").insert({
+      reporter_id: currentUserId,
+      target_type: "post" as const,
+      target_id: post.id,
+    });
+    if (error) {
+      toast.error("რეპორტი ვერ გაიგზავნა");
+    } else {
+      toast.success("რეპორტი გაიგზავნა, მადლობა!");
+    }
+  }
+
+  async function handleBlock() {
+    if (!currentUserId) return;
+    const { error } = await supabase.from("blocklist").insert({
+      blocker_id: currentUserId,
+      blocked_id: post.author_id,
+    });
+    if (error) {
+      if (error.code === "23505") {
+        toast.info("უკვე დაბლოკილია");
+      } else {
+        toast.error("დაბლოკვა ვერ მოხერხდა");
+      }
+    } else {
+      toast.success(
+        `${authorName} დაიბლოკა. მისი პოსტები აღარ გამოჩნდება.`,
+      );
+      onBlock?.(post.author_id);
+    }
+  }
+
   return (
     <article className="rounded-xl border bg-card transition-all duration-200 hover:shadow-sm">
       <div className="p-5">
-        {/* Header: avatar + author info */}
         <div className="flex items-start gap-3">
           <Link href={author.username ? `/u/${author.username}` : "#"}>
             <Avatar className="h-10 w-10 ring-2 ring-seal/10">
@@ -111,12 +177,42 @@ export function PostCard({ post, liked = false, onLikeToggle }: PostCardProps) {
                   </span>
                 )}
               </div>
-              <button
-                type="button"
-                className="ml-auto shrink-0 rounded-lg p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </button>
+
+              {/* Overflow menu with report/block */}
+              {currentUserId && !isSelf && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="ml-auto shrink-0 rounded-lg p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem onClick={handleReport}>
+                      <Flag className="mr-2 h-4 w-4" />
+                      დაარეპორტე
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={handleBlock}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Ban className="mr-2 h-4 w-4" />
+                      დაბლოკე მომხმარებელი
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+
+              {(isSelf || !currentUserId) && (
+                <button
+                  type="button"
+                  className="ml-auto shrink-0 rounded-lg p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </button>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">
@@ -127,7 +223,6 @@ export function PostCard({ post, liked = false, onLikeToggle }: PostCardProps) {
           </div>
         </div>
 
-        {/* Content */}
         <Link href={`/p/${post.id}`} className="group mt-3 block">
           {title && (
             <h3 className="font-serif text-base font-bold leading-snug group-hover:text-foreground/80">
@@ -146,7 +241,6 @@ export function PostCard({ post, liked = false, onLikeToggle }: PostCardProps) {
           )}
         </Link>
 
-        {/* Media */}
         {post.media_urls.length > 0 && (
           <div className="mt-3 flex gap-2 overflow-hidden rounded-lg">
             {post.media_urls.slice(0, 3).map((url, i) => (
@@ -167,7 +261,6 @@ export function PostCard({ post, liked = false, onLikeToggle }: PostCardProps) {
         )}
       </div>
 
-      {/* Action bar */}
       <div className="flex items-center gap-1 border-t px-4 py-2">
         <button
           type="button"
@@ -177,7 +270,9 @@ export function PostCard({ post, liked = false, onLikeToggle }: PostCardProps) {
           <Heart
             className={`h-4 w-4 transition-colors ${liked ? "fill-red-500 text-red-500" : "text-muted-foreground"}`}
           />
-          <span className={liked ? "text-red-500" : "text-muted-foreground"}>
+          <span
+            className={liked ? "text-red-500" : "text-muted-foreground"}
+          >
             {localCount || ""}
           </span>
         </button>
@@ -195,12 +290,6 @@ export function PostCard({ post, liked = false, onLikeToggle }: PostCardProps) {
         >
           <Share2 className="h-4 w-4" />
           <span>Share</span>
-        </button>
-        <button
-          type="button"
-          className="ml-auto rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        >
-          <MoreHorizontal className="h-4 w-4" />
         </button>
       </div>
     </article>

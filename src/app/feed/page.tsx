@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { useReactions } from "@/hooks/use-reactions";
+import { useBlocklist } from "@/hooks/use-blocklist";
 import { supabase } from "@/lib/supabase/client";
 import { AppShell } from "@/components/layout/app-shell";
 import { PostCard, type PostData } from "@/components/posts/post-card";
@@ -19,6 +20,7 @@ export default function FeedPage() {
   const { profile } = useProfile();
   const router = useRouter();
   const { likedMap, fetchLiked, toggle } = useReactions(user?.id);
+  const { blockedIds, refresh: refreshBlocklist } = useBlocklist();
 
   const [posts, setPosts] = useState<PostData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,6 +76,13 @@ export default function FeedPage() {
     if (user) fetchFeed();
   }, [user, fetchFeed]);
 
+  function handleBlock(blockedUserId: string) {
+    setPosts((prev) => prev.filter((p) => p.author_id !== blockedUserId));
+    refreshBlocklist();
+  }
+
+  const visiblePosts = posts.filter((p) => !blockedIds.includes(p.author_id));
+
   if (authLoading || !user) {
     return (
       <div className="flex min-h-[calc(100vh-10rem)] items-center justify-center">
@@ -106,7 +115,7 @@ export default function FeedPage() {
               <Skeleton key={i} className="h-32 w-full rounded-xl" />
             ))}
           </div>
-        ) : posts.length === 0 ? (
+        ) : visiblePosts.length === 0 ? (
           <div className="flex flex-col items-center rounded-xl border border-dashed border-seal/20 bg-seal-light/30 py-16 text-center">
             <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-seal-muted">
               <CircleDot className="h-6 w-6 text-seal" />
@@ -121,12 +130,14 @@ export default function FeedPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {posts.map((post) => (
+            {visiblePosts.map((post) => (
               <PostCard
                 key={post.id}
                 post={post}
                 liked={!!likedMap[post.id]}
                 onLikeToggle={toggle}
+                currentUserId={user.id}
+                onBlock={handleBlock}
               />
             ))}
           </div>

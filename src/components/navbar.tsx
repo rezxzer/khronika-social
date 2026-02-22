@@ -23,10 +23,12 @@ import {
   Bell,
   MessageSquare,
   ChevronDown,
+  Ban,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
+import { useUnreadCount } from "@/hooks/use-notifications";
 import { CommandPalette } from "@/components/command-palette";
 
 export function Navbar() {
@@ -34,6 +36,7 @@ export function Navbar() {
   const router = useRouter();
   const { user, loading: authLoading, signOut } = useAuth();
   const { profile } = useProfile();
+  const { count: unreadCount } = useUnreadCount();
 
   const displayName =
     profile?.display_name || profile?.username || user?.email?.split("@")[0] || "?";
@@ -119,9 +122,17 @@ export function Navbar() {
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="rounded-full text-muted-foreground hover:text-foreground"
+                  className="relative rounded-full text-muted-foreground hover:text-foreground"
+                  asChild
                 >
-                  <Bell className="h-[18px] w-[18px]" />
+                  <Link href="/notifications">
+                    <Bell className="h-[18px] w-[18px]" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-seal px-1 text-[10px] font-bold text-seal-foreground">
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                      </span>
+                    )}
+                  </Link>
                 </Button>
 
                 {/* Messages */}
@@ -191,6 +202,12 @@ export function Navbar() {
                       <Link href="/settings/profile">
                         <Settings className="mr-2 h-4 w-4" />
                         პარამეტრები
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/settings/blocked">
+                        <Ban className="mr-2 h-4 w-4" />
+                        დაბლოკილები
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />

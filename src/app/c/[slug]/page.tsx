@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { useReactions } from "@/hooks/use-reactions";
+import { useBlocklist } from "@/hooks/use-blocklist";
 import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +42,7 @@ export default function CircleDetailPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { likedMap, fetchLiked, toggle } = useReactions(user?.id);
+  const { blockedIds, refresh: refreshBlocklist } = useBlocklist();
 
   const [circle, setCircle] = useState<CircleDetail | null>(null);
   const [memberCount, setMemberCount] = useState(0);
@@ -309,7 +311,7 @@ export default function CircleDetailPage() {
               <Skeleton key={i} className="h-28 w-full rounded-xl" />
             ))}
           </div>
-        ) : posts.length === 0 ? (
+        ) : posts.filter((p) => !blockedIds.includes(p.author_id)).length === 0 ? (
           <div className="flex flex-col items-center rounded-xl border border-dashed py-12 text-center text-muted-foreground">
             <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted">
               <PenLine className="h-5 w-5" />
@@ -323,12 +325,19 @@ export default function CircleDetailPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {posts.map((post) => (
+            {posts
+              .filter((p) => !blockedIds.includes(p.author_id))
+              .map((post) => (
               <PostCard
                 key={post.id}
                 post={post}
                 liked={!!likedMap[post.id]}
                 onLikeToggle={toggle}
+                currentUserId={user?.id}
+                onBlock={(id) => {
+                  setPosts((prev) => prev.filter((p) => p.author_id !== id));
+                  refreshBlocklist();
+                }}
               />
             ))}
           </div>

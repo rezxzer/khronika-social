@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Home, Rss, CircleDot, Bell, MessageSquare, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMyCircles } from "@/hooks/use-my-circles";
+import { useUnreadCount } from "@/hooks/use-notifications";
 import { getCircleAccent } from "@/lib/ui/circle-style";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,7 @@ const NAV_ITEMS = [
     label: "Notifications",
     icon: Bell,
     match: (p: string) => p === "/notifications",
-    badge: 3,
+    badgeKey: "notifications" as const,
   },
   { href: "/messages", label: "Messages", icon: MessageSquare, match: (p: string) => p === "/messages" },
 ];
@@ -31,6 +32,7 @@ const NAV_ITEMS = [
 export function LeftSidebar() {
   const pathname = usePathname();
   const { circles, loading } = useMyCircles(6);
+  const { count: unreadNotifs } = useUnreadCount();
 
   return (
     <aside className="sticky top-[calc(3.5rem+1.5rem)] hidden h-fit w-[180px] shrink-0 lg:block">
@@ -50,9 +52,9 @@ export function LeftSidebar() {
             >
               <item.icon className="h-4 w-4 shrink-0" />
               {item.label}
-              {item.badge && (
+              {item.badgeKey === "notifications" && unreadNotifs > 0 && (
                 <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-seal px-1.5 text-[10px] font-bold text-seal-foreground">
-                  {item.badge}
+                  {unreadNotifs > 9 ? "9+" : unreadNotifs}
                 </span>
               )}
             </Link>
