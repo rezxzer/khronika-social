@@ -163,16 +163,16 @@ export function Navbar() {
                   </Link>
                 </Button>
 
-                {/* Messages — hidden on small mobile */}
+                {/* Messages — visible on md+ */}
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="hidden shrink-0 rounded-full text-muted-foreground hover:text-foreground xs:inline-flex"
+                  className="hidden shrink-0 rounded-full text-muted-foreground hover:text-foreground md:inline-flex"
                 >
                   <MessageSquare className="h-[18px] w-[18px]" />
                 </Button>
 
-                {/* Create button — hidden on mobile */}
+                {/* Create button — visible on sm+ (bottom nav handles mobile) */}
                 <Button
                   variant="seal"
                   size="sm"

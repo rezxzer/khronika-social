@@ -3,6 +3,7 @@ import { Inter, Source_Serif_4 } from "next/font/google";
 import NextTopLoader from "nextjs-toploader";
 import "./globals.css";
 import { Navbar } from "@/components/navbar";
+import { BottomNav } from "@/components/bottom-nav";
 import { Footer } from "@/components/footer";
 import { PageTransition } from "@/components/page-transition";
 import { Providers } from "@/components/providers";
@@ -54,11 +55,12 @@ export default function RootLayout({
             shadow={false}
           />
           <Navbar />
-          <main className="mx-auto w-full max-w-[1100px] flex-1 px-3 py-4 sm:px-6 sm:py-6">
+          <main className="mx-auto w-full max-w-[1100px] flex-1 px-3 py-4 pb-20 sm:px-6 sm:py-6 sm:pb-6">
             <PageTransition>{children}</PageTransition>
           </main>
           <Footer />
-          <Toaster position="bottom-right" />
+          <BottomNav />
+          <Toaster position="top-center" />
         </Providers>
       </body>
     </html>
