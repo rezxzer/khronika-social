@@ -10,7 +10,8 @@ import { AppShell } from "@/components/layout/app-shell";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Send, Loader2 } from "lucide-react";
+import { ArrowLeft, Send, Loader2, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 interface OtherUser {
@@ -38,13 +39,14 @@ export default function ChatPage() {
   const { id: conversationId } = useParams<{ id: string }>();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const { messages, loading, sending, sendMessage } = useMessages(
+  const { messages, loading, sending, sendMessage, deleteMessage } = useMessages(
     conversationId,
     user?.id,
   );
 
   const [otherUser, setOtherUser] = useState<OtherUser | null>(null);
   const [input, setInput] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const fetchOtherUser = useCallback(async () => {
@@ -162,6 +164,7 @@ export default function ChatPage() {
                   i === 0 ||
                   formatDate(msg.created_at) !==
                     formatDate(messages[i - 1].created_at);
+                const isConfirming = confirmDeleteId === msg.id;
 
                 return (
                   <div key={msg.id}>
@@ -172,10 +175,46 @@ export default function ChatPage() {
                     )}
                     <div
                       className={cn(
-                        "flex",
+                        "group flex items-end gap-1.5",
                         isMine ? "justify-end" : "justify-start",
                       )}
                     >
+                      {isMine && !isConfirming && (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeleteId(msg.id)}
+                          className="mb-2 shrink-0 rounded-full p-1 text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
+                          title="წაშლა"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      )}
+                      {isMine && isConfirming && (
+                        <div className="mb-2 flex shrink-0 items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const ok = await deleteMessage(msg.id);
+                              if (ok) {
+                                toast.success("მესიჯი წაიშალა");
+                              } else {
+                                toast.error("წაშლა ვერ მოხერხდა");
+                              }
+                              setConfirmDeleteId(null);
+                            }}
+                            className="rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-medium text-destructive transition-colors hover:bg-destructive/20"
+                          >
+                            წაშლა
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDeleteId(null)}
+                            className="rounded-full px-2 py-0.5 text-[10px] text-muted-foreground transition-colors hover:bg-accent"
+                          >
+                            არა
+                          </button>
+                        </div>
+                      )}
                       <div
                         className={cn(
                           "max-w-[75%] rounded-2xl px-3.5 py-2 text-sm",

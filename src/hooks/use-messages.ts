@@ -69,7 +69,10 @@ export function useMessages(conversationId?: string, currentUserId?: string) {
           const newMsg = payload.new as MessageRow;
           setMessages((prev) => {
             if (prev.some((m) => m.id === newMsg.id)) return prev;
-            return [...prev, newMsg];
+            const withoutOptimistic = prev.filter(
+              (m) => !m.id.startsWith("optimistic-"),
+            );
+            return [...withoutOptimistic, newMsg];
           });
 
           if (currentUserId && newMsg.sender_id !== currentUserId) {
@@ -79,6 +82,19 @@ export function useMessages(conversationId?: string, currentUserId?: string) {
               .eq("id", newMsg.id)
               .then();
           }
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload) => {
+          const deletedId = (payload.old as { id: string }).id;
+          setMessages((prev) => prev.filter((m) => m.id !== deletedId));
         },
       )
       .subscribe();
@@ -96,6 +112,16 @@ export function useMessages(conversationId?: string, currentUserId?: string) {
       if (!conversationId || !currentUserId || !content.trim()) return false;
       setSending(true);
 
+      const optimisticMsg: MessageRow = {
+        id: `optimistic-${Date.now()}`,
+        conversation_id: conversationId,
+        sender_id: currentUserId,
+        content: content.trim(),
+        is_read: false,
+        created_at: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, optimisticMsg]);
+
       const { error } = await supabase
         .from("messages")
         .insert({
@@ -104,7 +130,9 @@ export function useMessages(conversationId?: string, currentUserId?: string) {
           content: content.trim(),
         });
 
-      if (!error) {
+      if (error) {
+        setMessages((prev) => prev.filter((m) => m.id !== optimisticMsg.id));
+      } else {
         await supabase
           .from("conversations")
           .update({ last_message_at: new Date().toISOString() })
@@ -117,5 +145,25 @@ export function useMessages(conversationId?: string, currentUserId?: string) {
     [conversationId, currentUserId],
   );
 
-  return { messages, loading, sending, sendMessage, refetch: fetchMessages };
+  const deleteMessage = useCallback(
+    async (messageId: string) => {
+      const prev = messages;
+      setMessages((p) => p.filter((m) => m.id !== messageId));
+
+      const { error } = await supabase
+        .from("messages")
+        .delete()
+        .eq("id", messageId)
+        .eq("sender_id", currentUserId!);
+
+      if (error) {
+        setMessages(prev);
+        return false;
+      }
+      return true;
+    },
+    [messages, currentUserId],
+  );
+
+  return { messages, loading, sending, sendMessage, deleteMessage, refetch: fetchMessages };
 }
