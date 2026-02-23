@@ -1,6 +1,6 @@
 # Khronika — Project Context (for AI assistants)
 
-> Last updated: 2026-02-22 (Phase 15.1 — Realtime Messages)
+> Last updated: 2026-02-22 (Phase 15.1 — Realtime Messages + Google OAuth fix)
 > This document is the single source of truth for any AI assistant helping develop Khronika.
 > It will be updated incrementally as the project evolves.
 
@@ -301,9 +301,10 @@ Body has a fixed multi-layer gradient:
 ### Phase 13.1 — Google OAuth ✅
 - Google OAuth sign-in/sign-up buttons on `/login` and `/register`
 - `signInWithOAuth({ provider: 'google' })` via Supabase Auth
-- Auth callback route `/auth/callback` — exchanges code for session
+- Auth callback **client page** `/auth/callback/page.tsx` — PKCE code exchange via browser client
 - Google logo SVG inline (no external dependencies)
 - Divider "ან" between email form and Google button
+- Debug logging (dev-only) + sonner toast errors
 - Requires Supabase Dashboard setup (see Manual Supabase Steps)
 
 ---

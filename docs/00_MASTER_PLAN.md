@@ -356,7 +356,8 @@
 ### Phase 13.1 — Google OAuth ✅
 **სრულია (2026-02-22).** მოიცავს:
 - Google OAuth ღილაკი login + register გვერდებზე
-- `/auth/callback` route (code → session exchange)
+- `/auth/callback` client page (PKCE code → session exchange via browser client)
+- Debug logging (dev-only) + sonner toast errors
 - Supabase Auth Google provider (Dashboard-ში manual setup)
 
 ### Phase 14 — Direct Messages ✅
