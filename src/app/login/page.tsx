@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase/client";
 import { normalizeEmail, translateAuthError, isRateLimitError } from "@/lib/auth/normalize";
 import { Loader2, AlertCircle, BookOpen, Timer } from "lucide-react";
+import { toast } from "sonner";
 
 const COOLDOWN_SECONDS = 30;
 
@@ -72,13 +73,24 @@ export default function LoginPage() {
   async function handleGoogleLogin() {
     setGoogleLoading(true);
     setError(null);
-    const { error } = await supabase.auth.signInWithOAuth({
+
+    const redirectTo = `${window.location.origin}/auth/callback`;
+
+    if (process.env.NODE_ENV === "development") {
+      console.log("[Google OAuth] starting, redirectTo:", redirectTo);
+    }
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
+      options: { redirectTo },
     });
+
+    if (process.env.NODE_ENV === "development") {
+      console.log("[Google OAuth] result:", { url: data?.url, error });
+    }
+
     if (error) {
+      toast.error("Google-ით შესვლა ვერ მოხერხდა");
       setError(translateAuthError(error.message));
       setGoogleLoading(false);
     }
