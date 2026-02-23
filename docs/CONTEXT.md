@@ -1,6 +1,6 @@
 # Khronika — Project Context (for AI assistants)
 
-> Last updated: 2026-02-22 (Phase 13.1 — Google OAuth)
+> Last updated: 2026-02-22 (Phase 14 — Direct Messages)
 > This document is the single source of truth for any AI assistant helping develop Khronika.
 > It will be updated incrementally as the project evolves.
 
@@ -308,13 +308,28 @@ Body has a fixed multi-layer gradient:
 
 ---
 
+### Phase 14 — Direct Messages ✅
+- `conversations` table (1-to-1 DMs, participant_1 + participant_2, unique pair, no self-chat)
+- `messages` table (conversation_id, sender_id, content, is_read)
+- RLS: only participants can see/send messages in their conversations
+- `/messages` inbox page — conversation list with last message preview, unread badges, time ago
+- `/messages/[id]` chat page — message bubbles (blue for self, card for other), auto-scroll, 5s polling
+- "მესიჯი" button on `/u/[username]` profile — creates or finds existing conversation
+- Navbar: Messages icon links to `/messages` with unread count badge
+- Left sidebar: Messages link with unread count badge
+- `useConversations`, `useUnreadMessages`, `useMessages` hooks
+- Account deletion: messages + conversations cleanup
+- DB migration: `database/0008_messages.sql`
+
+---
+
 ## What Is NOT Built Yet
 
-### Phase 14 — Remaining Polish
-- Messages / chat system
-- Follow/Friend system (new DB table)
+### Phase 15 — Remaining Polish
 - Performance optimization (lazy loading, bundle analysis)
 - Image optimization (next/image for user media)
+- Realtime subscriptions (Supabase Realtime for messages/notifications)
+- Video uploads
 
 ---
 
@@ -361,6 +376,10 @@ src/
 │   │   ├── page.tsx             ← Public profile (follow, stats, posts)
 │   │   ├── followers/page.tsx   ← Followers list
 │   │   └── following/page.tsx   ← Following list
+│   ├── messages/
+│   │   ├── layout.tsx           ← SEO metadata
+│   │   ├── page.tsx             ← Conversations inbox
+│   │   └── [id]/page.tsx        ← Chat page (1-to-1 DM)
 │   ├── search/
 │   │   ├── layout.tsx           ← SEO metadata
 │   │   └── page.tsx             ← Full search (circles + posts)
@@ -406,6 +425,8 @@ src/
 │   ├── use-reactions.ts
 │   ├── use-notifications.ts
 │   ├── use-blocklist.ts
+│   ├── use-conversations.ts    ← Conversations list + unread count
+│   ├── use-messages.ts         ← Chat messages + send
 │   ├── use-follow.ts           ← Follow/unfollow toggle + counts
 │   ├── use-onboarding.ts       ← 3-step onboarding progress
 │   └── use-trending-circles.ts ← Top active circles this week
@@ -432,7 +453,8 @@ src/
     ├── 0004_storage_avatars.sql ← Avatars bucket policies
     ├── 0005_storage_posts.sql   ← Posts media bucket policies
     ├── 0006_reports_select_policy.sql ← Reports SELECT policy + admin RPC
-    └── 0007_follows.sql             ← Follows table + RLS + notification trigger
+    ├── 0007_follows.sql             ← Follows table + RLS + notification trigger
+    └── 0008_messages.sql            ← Conversations + messages tables + RLS
 ```
 
 ---
@@ -450,7 +472,7 @@ These steps cannot be automated via migrations and must be done manually in the 
    - Then run `database/0005_storage_posts.sql` in SQL Editor
 
 3. **Run all SQL migrations in order:**
-   - `0001_init.sql` → `0002_rls.sql` → `0003_profile_metadata_patch.sql` → `0004_storage_avatars.sql` → `0005_storage_posts.sql` → `0006_reports_select_policy.sql` → `0007_follows.sql`
+   - `0001_init.sql` → `0002_rls.sql` → `0003_profile_metadata_patch.sql` → `0004_storage_avatars.sql` → `0005_storage_posts.sql` → `0006_reports_select_policy.sql` → `0007_follows.sql` → `0008_messages.sql`
 
 4. **Enable Google OAuth in Supabase:**
    - Go to [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials
@@ -469,7 +491,7 @@ These steps cannot be automated via migrations and must be done manually in the 
 
 ## Database Schema (Supabase PostgreSQL)
 
-Tables: `profiles`, `circles`, `circle_members`, `posts`, `comments`, `reactions`, `reports`, `blocklist`, `notifications`, `follows`
+Tables: `profiles`, `circles`, `circle_members`, `posts`, `comments`, `reactions`, `reports`, `blocklist`, `notifications`, `follows`, `conversations`, `messages`
 
 Key relationships:
 - `posts.circle_id` → `circles.id`
@@ -478,9 +500,11 @@ Key relationships:
 - `reactions.post_id` → `posts.id` (unique per user)
 - `circle_members` links users to circles with role (owner/mod/member)
 - `follows` (follower_id, following_id) — unique pair, no self-follow constraint
+- `conversations` (participant_1, participant_2) — 1-to-1 DMs, unique pair, no self-chat
+- `messages` (conversation_id, sender_id, content, is_read)
 - Notification types: `comment`, `reaction`, `follow`
 
-RLS enabled: users can only read public circle posts, insert when logged in, update/delete only own content. Follows: authenticated can select, self can insert/delete.
+RLS enabled: users can only read public circle posts, insert when logged in, update/delete only own content. Follows: authenticated can select, self can insert/delete. Messages: only conversation participants can access.
 
 ---
 

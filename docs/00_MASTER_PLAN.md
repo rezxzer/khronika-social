@@ -359,10 +359,19 @@
 - `/auth/callback` route (code → session exchange)
 - Supabase Auth Google provider (Dashboard-ში manual setup)
 
-### Phase 14 — Remaining Polish (შემდეგი)
+### Phase 14 — Direct Messages ✅
+**სრულია (2026-02-22).** მოიცავს:
+- `conversations` + `messages` tables + RLS (`0008_messages.sql`)
+- `/messages` inbox (conversation list, unread badges, last message preview)
+- `/messages/[id]` chat page (bubbles, auto-scroll, 5s polling)
+- "მესიჯი" button on profile pages
+- Navbar + sidebar: Messages unread count
+- Account deletion cascade
+
+### Phase 15 — Remaining Polish (შემდეგი)
 **Done როცა:**
-- Messages / chat system
 - Performance optimization
+- Realtime (Supabase Realtime for messages)
 
 ---
 

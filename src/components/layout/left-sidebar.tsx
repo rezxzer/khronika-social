@@ -6,6 +6,8 @@ import { Home, Rss, CircleDot, Bell, MessageSquare, Plus, Compass } from "lucide
 import { cn } from "@/lib/utils";
 import { useMyCircles } from "@/hooks/use-my-circles";
 import { useUnreadCount } from "@/hooks/use-notifications";
+import { useUnreadMessages } from "@/hooks/use-conversations";
+import { useAuth } from "@/hooks/use-auth";
 import { getCircleAccent } from "@/lib/ui/circle-style";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -32,13 +34,21 @@ const NAV_ITEMS = [
     match: (p: string) => p === "/notifications",
     badgeKey: "notifications" as const,
   },
-  { href: "/messages", label: "Messages", icon: MessageSquare, match: (p: string) => p === "/messages" },
+  {
+    href: "/messages",
+    label: "Messages",
+    icon: MessageSquare,
+    match: (p: string) => p.startsWith("/messages"),
+    badgeKey: "messages" as const,
+  },
 ];
 
 export function LeftSidebar() {
   const pathname = usePathname();
   const { circles, loading } = useMyCircles(6);
+  const { user } = useAuth();
   const { count: unreadNotifs } = useUnreadCount();
+  const { count: unreadMessages } = useUnreadMessages(user?.id);
 
   return (
     <aside className="sticky top-[calc(3.5rem+1.5rem)] hidden h-fit w-[180px] shrink-0 lg:block">
@@ -61,6 +71,11 @@ export function LeftSidebar() {
               {item.badgeKey === "notifications" && unreadNotifs > 0 && (
                 <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-seal px-1.5 text-[10px] font-bold text-seal-foreground">
                   {unreadNotifs > 9 ? "9+" : unreadNotifs}
+                </span>
+              )}
+              {item.badgeKey === "messages" && unreadMessages > 0 && (
+                <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-seal px-1.5 text-[10px] font-bold text-seal-foreground">
+                  {unreadMessages > 9 ? "9+" : unreadMessages}
                 </span>
               )}
             </Link>

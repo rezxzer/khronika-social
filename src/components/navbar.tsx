@@ -32,6 +32,7 @@ import { isAdmin } from "@/lib/admin";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { useUnreadCount } from "@/hooks/use-notifications";
+import { useUnreadMessages } from "@/hooks/use-conversations";
 import { CommandPalette } from "@/components/command-palette";
 import { MobileDrawer } from "@/components/mobile-drawer";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -42,6 +43,7 @@ export function Navbar() {
   const { user, loading: authLoading, signOut } = useAuth();
   const { profile } = useProfile();
   const { count: unreadCount } = useUnreadCount();
+  const { count: unreadMessages } = useUnreadMessages(user?.id);
 
   const displayName =
     profile?.display_name || profile?.username || user?.email?.split("@")[0] || "?";
@@ -173,9 +175,17 @@ export function Navbar() {
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="hidden shrink-0 rounded-full text-muted-foreground hover:text-foreground md:inline-flex"
+                  className="relative hidden shrink-0 rounded-full text-muted-foreground hover:text-foreground md:inline-flex"
+                  asChild
                 >
-                  <MessageSquare className="h-[18px] w-[18px]" />
+                  <Link href="/messages">
+                    <MessageSquare className="h-[18px] w-[18px]" />
+                    {unreadMessages > 0 && (
+                      <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-seal px-1 text-[10px] font-bold text-seal-foreground">
+                        {unreadMessages > 9 ? "9+" : unreadMessages}
+                      </span>
+                    )}
+                  </Link>
                 </Button>
 
                 {/* Create button — visible on sm+ (bottom nav handles mobile) */}

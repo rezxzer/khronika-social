@@ -28,6 +28,7 @@ import {
   CircleDot,
   UserPlus,
   UserCheck,
+  MessageSquare,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Profile } from "@/hooks/use-profile";
@@ -265,6 +266,42 @@ export default function PublicProfilePage() {
     setBlocking(false);
   }
 
+  const [startingChat, setStartingChat] = useState(false);
+
+  async function handleMessage() {
+    if (!user || !profile || isSelf) return;
+    setStartingChat(true);
+
+    const myId = user.id;
+    const theirId = profile.id;
+    const [p1, p2] = myId < theirId ? [myId, theirId] : [theirId, myId];
+
+    const { data: existing } = await supabase
+      .from("conversations")
+      .select("id")
+      .eq("participant_1", p1)
+      .eq("participant_2", p2)
+      .maybeSingle();
+
+    if (existing) {
+      router.push(`/messages/${existing.id}`);
+      return;
+    }
+
+    const { data: created, error } = await supabase
+      .from("conversations")
+      .insert({ participant_1: p1, participant_2: p2 })
+      .select("id")
+      .single();
+
+    if (created) {
+      router.push(`/messages/${created.id}`);
+    } else {
+      toast.error("მესიჯის დაწყება ვერ მოხერხდა");
+      setStartingChat(false);
+    }
+  }
+
   function handleDeleted(postId: string) {
     setPosts((prev) => prev.filter((p) => p.id !== postId));
     setPostCount((c) => Math.max(0, c - 1));
@@ -372,6 +409,20 @@ export default function PublicProfilePage() {
                         <UserPlus className="h-4 w-4" />
                       )}
                       {isFollowing ? "გამოწერილი" : "გამოწერა"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-full"
+                      onClick={handleMessage}
+                      disabled={startingChat}
+                    >
+                      {startingChat ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <MessageSquare className="h-4 w-4" />
+                      )}
+                      <span className="hidden sm:inline">მესიჯი</span>
                     </Button>
                     <Button
                       variant="outline"

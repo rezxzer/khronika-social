@@ -34,6 +34,8 @@ export async function POST(request: NextRequest) {
   const uid = user.id;
 
   try {
+    await adminClient.from("messages").delete().eq("sender_id", uid);
+    await adminClient.from("conversations").delete().or(`participant_1.eq.${uid},participant_2.eq.${uid}`);
     await adminClient.from("reactions").delete().eq("user_id", uid);
     await adminClient.from("comments").delete().eq("author_id", uid);
     await adminClient.from("posts").delete().eq("author_id", uid);

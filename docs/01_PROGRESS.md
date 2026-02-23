@@ -328,13 +328,35 @@ Button, Card, Input, Label, Avatar, Badge, Dialog, DropdownMenu, Command, Skelet
 
 ---
 
-## რა არ არის ჯერ გაკეთებული (Phase 14+)
+## Phase 14 — Direct Messages ✅ (2026-02-22)
+
+| ფაილი | აღწერა | სტატუსი |
+|---|---|---|
+| `database/0008_messages.sql` | conversations + messages tables, RLS policies | ✅ |
+| `src/hooks/use-conversations.ts` | Conversation list + unread count (30s polling) | ✅ |
+| `src/hooks/use-messages.ts` | Chat messages + send + mark read (5s polling) | ✅ |
+| `src/app/messages/layout.tsx` | SEO metadata | ✅ |
+| `src/app/messages/page.tsx` | Inbox — conversation list, unread badges, time ago | ✅ |
+| `src/app/messages/[id]/page.tsx` | Chat — message bubbles, date separators, auto-scroll | ✅ |
+| `src/app/u/[username]/page.tsx` | "მესიჯი" button — creates/finds conversation | ✅ |
+| `src/components/navbar.tsx` | Messages icon → /messages with unread badge | ✅ |
+| `src/components/layout/left-sidebar.tsx` | Messages nav link with unread badge | ✅ |
+| `src/app/api/account/delete/route.ts` | messages + conversations cascade cleanup | ✅ |
+
+**DB ცვლილებები:**
+- `conversations` (participant_1, participant_2, last_message_at, unique pair, no self-chat)
+- `messages` (conversation_id, sender_id, content, is_read, created_at)
+- RLS: only participants can select/insert/update
+
+---
+
+## რა არ არის ჯერ გაკეთებული (Phase 15+)
 
 - [x] Dark mode toggle UI
 - [x] Search results page
 - [x] Follow/Friend system
 - [x] Google OAuth login
-- [ ] Messages / chat system
+- [x] Messages / chat system
 - [ ] Performance optimization (lazy loading, bundle analysis)
 - [ ] Image optimization (next/image for user media)
 - [ ] Video uploads
