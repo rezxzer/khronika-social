@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { Suspense, useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
@@ -87,6 +87,21 @@ function timeAgo(dateStr: string): string {
 }
 
 export default function PostDetailPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-2xl space-y-4">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-40 w-full rounded-xl" />
+        </div>
+      }
+    >
+      <PostDetailContent />
+    </Suspense>
+  );
+}
+
+function PostDetailContent() {
   const { id } = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
@@ -173,6 +188,7 @@ export default function PostDetailPage() {
     });
 
     if (error) {
+      console.error("[comment] insert error:", error);
       toast.error("კომენტარი ვერ გაიგზავნა");
     } else {
       setCommentText("");
@@ -419,6 +435,14 @@ export default function PostDetailPage() {
             rows={1}
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                if (commentText.trim().length > 0 && !submitting) {
+                  handleComment(e as unknown as React.FormEvent);
+                }
+              }
+            }}
             className="min-h-[40px] flex-1 resize-none"
           />
           <Button
