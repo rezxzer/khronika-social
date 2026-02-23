@@ -1,7 +1,7 @@
 # ქრონიკა — პროგრესის ტრეკერი (Changelog)
 
 > ყოველი ახალი ფუნქციის დამატებისას აქ ვწერთ.
-> ბოლო განახლება: 2026-02-22 (Phase 15.1 + Google OAuth fix)
+> ბოლო განახლება: 2026-02-22 (Phase 16 — Realtime Notifications)
 
 ---
 
@@ -374,7 +374,24 @@ Button, Card, Input, Label, Avatar, Badge, Dialog, DropdownMenu, Command, Skelet
 
 ---
 
-## რა არ არის ჯერ გაკეთებული (Phase 16+)
+## Phase 16 — Realtime Notifications ✅ (2026-02-22)
+
+| ფაილი | აღწერა | სტატუსი |
+|---|---|---|
+| `src/hooks/use-notifications.ts` | Realtime INSERT (count +1) + UPDATE (refetch) subscriptions | ✅ |
+| `src/app/notifications/page.tsx` | Realtime INSERT → auto-refetch + `refreshBadge()` on mark-as-read | ✅ |
+
+**UX ცვლილებები:**
+- ახალი comment/reaction/follow notification-ზე navbar badge მყისიერად იზრდება
+- `/notifications` გვერდზე ახალი notification ავტომატურად ჩნდება (page refresh-ის გარეშე)
+- mark-as-read / mark-all-as-read: badge მყისიერად სინქრონიზდება
+
+**Manual Supabase Steps:**
+- Supabase Dashboard → Database → Replication → Enable Realtime on `notifications` table
+
+---
+
+## რა არ არის ჯერ გაკეთებული (Phase 17+)
 
 **დასრულებული:**
 - [x] Dark mode toggle UI (Phase 11.1)
@@ -383,9 +400,9 @@ Button, Card, Input, Label, Avatar, Badge, Dialog, DropdownMenu, Command, Skelet
 - [x] Google OAuth login (Phase 13.1 + fix)
 - [x] Direct Messages (Phase 14)
 - [x] Realtime Messages (Phase 15.1)
+- [x] Realtime Notifications (Phase 16)
 
 **შემდეგი:**
-- [ ] Realtime notifications (Supabase Realtime for notifications)
 - [ ] Image optimization (next/image for user media)
 - [ ] Feed algorithm (Follow-ების პოსტები + Trending)
 - [ ] Performance optimization (lazy loading, bundle analysis)

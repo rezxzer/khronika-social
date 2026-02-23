@@ -1,6 +1,6 @@
 # Khronika — Project Context (for AI assistants)
 
-> Last updated: 2026-02-22 (Phase 15.1 — Realtime Messages + Google OAuth fix)
+> Last updated: 2026-02-22 (Phase 16 — Realtime Notifications)
 > This document is the single source of truth for any AI assistant helping develop Khronika.
 > It will be updated incrementally as the project evolves.
 
@@ -335,12 +335,22 @@ Body has a fixed multi-layer gradient:
 
 ---
 
+### Phase 16 — Realtime Notifications ✅
+- Supabase Realtime `postgres_changes` on `notifications` table
+- `useUnreadCount`: INSERT → count +1 instantly, UPDATE → refetch count
+- `/notifications` page: INSERT → auto-refetch (new notification appears instantly)
+- mark-as-read / mark-all-as-read: explicitly calls `refreshBadge()` for immediate badge sync
+- Navbar + Left sidebar badges: auto-update via shared `useUnreadCount` hook
+- Requires Supabase Dashboard: enable Realtime on `notifications` table
+
+---
+
 ## What Is NOT Built Yet
 
-### Phase 16 — Remaining Polish
+### Phase 17 — Remaining Polish
 - Performance optimization (lazy loading, bundle analysis)
 - Image optimization (next/image for user media)
-- Realtime notifications (Supabase Realtime for notifications)
+- Feed algorithm (Follow-ების posts + Trending)
 - Video uploads
 
 ---
@@ -494,10 +504,11 @@ These steps cannot be automated via migrations and must be done manually in the 
    - Supabase Dashboard → Authentication → Providers → Google → Enable → Paste Client ID + Secret
    - Save
 
-5. **Enable Realtime on messaging tables:**
+5. **Enable Realtime on messaging + notification tables:**
    - Supabase Dashboard → Database → Replication
    - Enable Realtime on `messages` table
    - Enable Realtime on `conversations` table
+   - Enable Realtime on `notifications` table
 
 6. **Set environment variables on Vercel:**
    - `ADMIN_USER_IDS` = comma-separated admin UUIDs (server-only, **required** for admin security gate)

@@ -376,11 +376,18 @@
 - Mobile bottom nav: "მესიჯები" tab with unread badge
 - Requires Supabase Dashboard: enable Realtime on `messages` + `conversations` tables
 
-### Phase 16 — Remaining Polish (შემდეგი)
+### Phase 16 — Realtime Notifications ✅
+**სრულია (2026-02-22).** მოიცავს:
+- `useUnreadCount`: Supabase Realtime INSERT/UPDATE subscriptions
+- `/notifications` page: auto-refetch on new notification
+- mark-as-read badge sync via `refreshBadge()`
+- Requires Supabase Dashboard: enable Realtime on `notifications` table
+
+### Phase 17 — Remaining Polish (შემდეგი)
 **Done როცა:**
+- Image optimization (next/image)
+- Feed algorithm (Following + Trending)
 - Performance optimization
-- Image optimization
-- Realtime notifications
 
 ---
 

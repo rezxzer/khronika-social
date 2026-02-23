@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
+import { useUnreadCount } from "@/hooks/use-notifications";
 import { supabase } from "@/lib/supabase/client";
 import { AppShell } from "@/components/layout/app-shell";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -120,8 +121,34 @@ export default function NotificationsPage() {
     if (!authLoading && !user) router.replace("/login");
   }, [authLoading, user, router]);
 
+  const { refresh: refreshBadge } = useUnreadCount();
+
   useEffect(() => {
     if (user) fetchNotifications();
+  }, [user, fetchNotifications]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel(`notif-page:${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          fetchNotifications();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user, fetchNotifications]);
 
   async function markAsRead(id: string) {
@@ -132,6 +159,7 @@ export default function NotificationsPage() {
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)),
     );
+    refreshBadge();
   }
 
   async function markAllRead() {
@@ -147,6 +175,7 @@ export default function NotificationsPage() {
       toast.error("ვერ მოინიშნა წაკითხულად");
     } else {
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+      refreshBadge();
       toast.success("ყველა წაკითხულად მოინიშნა");
     }
     setMarkingAll(false);
