@@ -33,6 +33,8 @@ import {
   Share2,
   MoreHorizontal,
   Pencil,
+  Reply,
+  X,
 } from "lucide-react";
 import { PostEditDialog } from "@/components/posts/post-edit-dialog";
 import { shareOrCopy } from "@/lib/share";
@@ -63,6 +65,11 @@ interface Comment {
   author_id: string;
   content: string;
   created_at: string;
+  parent_id: string | null;
+  parent_author?: {
+    display_name: string | null;
+    username: string | null;
+  } | null;
   profiles: {
     id: string;
     username: string | null;
@@ -120,6 +127,11 @@ function PostDetailContent() {
   const [editOpen, setEditOpen] = useState(false);
   const [confirmDeletePost, setConfirmDeletePost] = useState(false);
   const [deletingPost, setDeletingPost] = useState(false);
+  const [isMember, setIsMember] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   const fetchPost = useCallback(async () => {
     if (!id) return;
@@ -141,19 +153,45 @@ function PostDetailContent() {
 
     setPost(data as unknown as PostDetail);
 
+    if (user) {
+      const { data: membership } = await supabase
+        .from("circle_members")
+        .select("user_id")
+        .eq("circle_id", data.circle_id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      setIsMember(!!membership);
+    }
+
     const [commentsRes, reactionsRes] = await Promise.all([
       supabase
         .from("comments")
         .select(
-          "id, author_id, content, created_at, profiles:author_id(id, username, display_name, avatar_url)",
+          "id, author_id, content, created_at, parent_id, profiles:author_id(id, username, display_name, avatar_url), parent:parent_id(author_id, profiles:author_id(display_name, username))",
         )
         .eq("post_id", id)
         .order("created_at", { ascending: true }),
       supabase.from("reactions").select("user_id").eq("post_id", id),
     ]);
 
-    if (commentsRes.data)
-      setComments(commentsRes.data as unknown as Comment[]);
+    if (commentsRes.data) {
+      const mapped = commentsRes.data.map((c: Record<string, unknown>) => {
+        const parent = c.parent as Record<string, unknown> | null;
+        const parentProfiles = parent?.profiles as Record<string, unknown> | null;
+        return {
+          ...c,
+          parent_id: c.parent_id as string | null,
+          parent_author: parentProfiles
+            ? {
+                display_name: parentProfiles.display_name as string | null,
+                username: parentProfiles.username as string | null,
+              }
+            : null,
+          parent: undefined,
+        };
+      });
+      setComments(mapped as unknown as Comment[]);
+    }
     if (reactionsRes.data) {
       setReactionCount(reactionsRes.data.length);
       if (user)
@@ -181,17 +219,21 @@ function PostDetailContent() {
     if (!user || !post || commentText.trim().length < 1) return;
     setSubmitting(true);
 
-    const { error } = await supabase.from("comments").insert({
+    const payload: Record<string, unknown> = {
       post_id: post.id,
       author_id: user.id,
       content: commentText.trim(),
-    });
+    };
+    if (replyingTo) payload.parent_id = replyingTo.id;
+
+    const { error } = await supabase.from("comments").insert(payload);
 
     if (error) {
       console.error("[comment] insert error:", error);
       toast.error("კომენტარი ვერ გაიგზავნა");
     } else {
       setCommentText("");
+      setReplyingTo(null);
       toast.success("კომენტარი დაემატა");
       await fetchPost();
     }
@@ -428,36 +470,72 @@ function PostDetailContent() {
           )}
         </h2>
 
-        <form onSubmit={handleComment} className="flex gap-2">
-          <Textarea
-            ref={commentInputRef}
-            placeholder="დაწერე კომენტარი..."
-            rows={1}
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                if (commentText.trim().length > 0 && !submitting) {
-                  handleComment(e as unknown as React.FormEvent);
-                }
-              }
-            }}
-            className="min-h-[40px] flex-1 resize-none"
-          />
-          <Button
-            type="submit"
-            variant="seal"
-            size="icon"
-            disabled={submitting || commentText.trim().length < 1}
-          >
-            {submitting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
+        {isMember ? (
+          <div className="space-y-1">
+            {replyingTo && (
+              <div className="flex items-center gap-2 rounded-md bg-seal/5 px-3 py-1.5 text-xs text-muted-foreground">
+                <Reply className="h-3 w-3 shrink-0 text-seal" />
+                <span>
+                  <span className="font-medium text-foreground">
+                    {replyingTo.name}
+                  </span>
+                  -ს პასუხობ
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setReplyingTo(null)}
+                  className="ml-auto rounded-full p-0.5 transition-colors hover:bg-accent"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
             )}
-          </Button>
-        </form>
+            <form onSubmit={handleComment} className="flex gap-2">
+              <Textarea
+                ref={commentInputRef}
+                placeholder={
+                  replyingTo
+                    ? `${replyingTo.name}-ს პასუხი...`
+                    : "დაწერე კომენტარი..."
+                }
+                rows={1}
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    if (commentText.trim().length > 0 && !submitting) {
+                      handleComment(e as unknown as React.FormEvent);
+                    }
+                  }
+                }}
+                className="min-h-[40px] flex-1 resize-none"
+              />
+              <Button
+                type="submit"
+                variant="seal"
+                size="icon"
+                disabled={submitting || commentText.trim().length < 1}
+              >
+                {submitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </Button>
+            </form>
+          </div>
+        ) : (
+          <div className="rounded-lg border border-dashed p-3 text-center text-sm text-muted-foreground">
+            კომენტარის დასაწერად{" "}
+            <Link
+              href={`/c/${post.circles.slug}`}
+              className="font-medium text-seal underline underline-offset-2 hover:no-underline"
+            >
+              შეუერთდი წრეს
+            </Link>
+          </div>
+        )}
 
         {comments.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
@@ -541,7 +619,37 @@ function PostDetailContent() {
                         </div>
                       )}
                     </div>
+                    {c.parent_id && c.parent_author && (
+                      <div className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground">
+                        <Reply className="h-3 w-3" />
+                        <span>
+                          {c.parent_author.display_name ||
+                            c.parent_author.username ||
+                            "მომხმარებელი"}
+                          -ს პასუხობს
+                        </span>
+                      </div>
+                    )}
                     <p className="mt-0.5 text-sm">{c.content}</p>
+                    {isMember && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setReplyingTo({
+                            id: c.id,
+                            name:
+                              c.profiles.display_name ||
+                              c.profiles.username ||
+                              "მომხმარებელი",
+                          });
+                          commentInputRef.current?.focus();
+                        }}
+                        className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground transition-colors hover:text-seal"
+                      >
+                        <Reply className="h-3 w-3" />
+                        პასუხი
+                      </button>
+                    )}
                   </div>
                 </div>
               );
