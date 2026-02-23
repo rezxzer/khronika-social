@@ -1,139 +1,226 @@
-# ქრონიკა — პროგრესის ტრეკერი
+# ქრონიკა — პროგრესის ტრეკერი (Changelog)
 
-> ეს ფაილი აღწერს რა არის უკვე გაკეთებული და რა სტატუსშია.
-> ყოველი Phase-ის შემდეგ აქ ვადასტურებთ.
-
----
-
-## Phase 0 — Setup
-**სტატუსი: ✅ დასრულებული**
-
-| რა უნდა | სტატუსი | შენიშვნა |
-|---|:---:|---|
-| Next.js (App Router) + TypeScript | ✅ | v16.1.6 |
-| TailwindCSS v4 | ✅ | @tailwindcss/postcss |
-| shadcn/ui | ✅ | new-york style, components.json |
-| Supabase env-ები | ✅ | `.env.local` + `.env.example` |
-| Basic layout + Navbar | ✅ | max-width 1100px, sticky navbar |
-| Landing page (`/`) | ✅ | hero + 3 feature card |
-
-**ფაილები:**
-- `src/app/layout.tsx` — Root layout
-- `src/app/page.tsx` — Landing
-- `src/app/globals.css` — Theme variables (light/dark ready)
-- `src/components/navbar.tsx` — Navbar
-- `src/lib/utils.ts` — `cn()` helper
-- `src/lib/supabase/client.ts` — Supabase client
-- `components.json` — shadcn/ui config
+> ყოველი ახალი ფუნქციის დამატებისას აქ ვწერთ.
+> ბოლო განახლება: 2026-02-22 (Phase 8.3)
 
 ---
 
-## Phase 1 — Auth + Profiles
-**სტატუსი: ⏳ ნაწილობრივ (Auth მზადაა, Profile edit ჯერ არა)**
+## Phase 0 — Setup ✅
 
-| რა უნდა | სტატუსი | შენიშვნა |
-|---|:---:|---|
-| Login page (`/login`) | ✅ | signInWithPassword, error handling |
-| Register page (`/register`) | ✅ | signUp + email confirmation UI |
-| `useAuth` hook | ✅ | user, loading, signOut |
-| Navbar auth-aware | ✅ | logged in: ფიდი/წრეები/გასვლა; logged out: შესვლა/რეგისტრაცია |
-| Feed scaffold (`/feed`) | ✅ | auth guard + empty state |
-| Profile auto-create trigger | ✅ | `0001_init.sql` + `0003` patch |
-| display_name metadata patch | ⚠️ | `0003_profile_metadata_patch.sql` — SQL Editor-ში გასაშვებია |
-| `/settings/profile` edit | ❌ | ჯერ არ არის |
-| Avatar upload | ❌ | ჯერ არ არის |
-
-**ფაილები:**
-- `src/hooks/use-auth.ts` — Auth state hook
-- `src/app/login/page.tsx` — Login form
-- `src/app/register/page.tsx` — Register form
-- `src/app/feed/page.tsx` — Feed scaffold
+| რა გაკეთდა | ფაილები |
+|---|---|
+| Next.js 16 (App Router) + TypeScript | `package.json`, `tsconfig.json` |
+| TailwindCSS v4 + PostCSS | `postcss.config.mjs`, `src/app/globals.css` |
+| shadcn/ui (new-york style) | `components.json`, `src/components/ui/*` |
+| Supabase client კონფიგურაცია | `src/lib/supabase/client.ts`, `.env.local` |
+| Root layout + Navbar | `src/app/layout.tsx`, `src/components/navbar.tsx` |
+| Landing page | `src/app/page.tsx` |
+| cn() utility | `src/lib/utils.ts` |
 
 ---
 
-## Phase 2 — Circles
-**სტატუსი: ⏳ UI მზადაა, ტესტირება საჭიროა**
+## Phase 1 — Auth + Profiles ✅
 
-| რა უნდა | სტატუსი | შენიშვნა |
-|---|:---:|---|
-| Circle list (`/circles`) | ✅ | search + member count + privacy badge |
-| Circle create (`/circles/new`) | ✅ | name, slug auto-gen, description, private toggle |
-| Circle detail (`/c/[slug]`) | ✅ | Join/Leave + owner badge + private badge |
-| Join public circle | ✅ | insert circle_members |
-| Leave circle | ✅ | delete circle_members (owner ვერ ტოვებს) |
-| Private circle UI | ✅ | "პირადი წრე" badge, join დამალული |
-
-**ფაილები:**
-- `src/app/circles/page.tsx` — Circles list
-- `src/app/circles/new/page.tsx` — Create circle
-- `src/app/c/[slug]/page.tsx` — Circle detail
+| რა გაკეთდა | ფაილები |
+|---|---|
+| Login გვერდი (email/password) | `src/app/login/page.tsx` |
+| Register გვერდი + email confirmation | `src/app/register/page.tsx` |
+| `useAuth` hook (user, loading, signOut) | `src/hooks/use-auth.ts` |
+| `useProfile` hook | `src/hooks/use-profile.ts` |
+| Profile auto-create trigger (DB) | `database/0001_init.sql` |
+| Profile edit გვერდი | `src/app/settings/profile/page.tsx` |
+| Avatar upload (Supabase Storage: `avatars`) | `src/app/settings/profile/page.tsx` |
+| Public profile გვერდი | `src/app/u/[username]/page.tsx` |
+| Rate limit handling + cooldown timer | `src/app/register/page.tsx`, `src/app/login/page.tsx` |
+| Email normalization + error translation | `src/lib/auth/normalize.ts` |
 
 ---
 
-## Phase 3 — Posts
-**სტატუსი: ❌ ჯერ არ დაწყებულა**
+## Phase 2 — Circles ✅
 
-| რა უნდა | სტატუსი |
-|---|:---:|
-| PostComposer (story/lesson/invite) | ❌ |
-| ტექსტი + ფოტო ატვირთვა | ❌ |
-| პოსტები circle page-ზე | ❌ |
-
----
-
-## Phase 4 — Feed
-**სტატუსი: ❌ ჯერ არ დაწყებულა**
-
-| რა უნდა | სტატუსი |
-|---|:---:|
-| Feed: წევრი წრეების პოსტები | ❌ |
-| Pagination / infinite scroll | ❌ |
-| Post card (ავტორი, დრო, reactions) | ❌ |
+| რა გაკეთდა | ფაილები |
+|---|---|
+| წრეების სია + search | `src/app/circles/page.tsx` |
+| წრის შექმნა (name, slug, description, private toggle) | `src/app/circles/new/page.tsx` |
+| წრის გვერდი (header, members, posts) | `src/app/c/[slug]/page.tsx` |
+| Join / Leave ფუნქცია | `src/app/c/[slug]/page.tsx` |
+| Circle identity (deterministic colors from slug) | `src/lib/ui/circle-style.ts` |
+| Toast feedback ყველა ქმედებაზე | sonner integration |
+| `useMyCircles` hook | `src/hooks/use-my-circles.ts` |
 
 ---
 
-## Phase 5 — Comments + Reactions
-**სტატუსი: ❌ ჯერ არ დაწყებულა**
+## Phase 2.5 — Visual Identity v4 ✅
 
-| რა უნდა | სტატუსი |
-|---|:---:|
-| `/p/[id]` post detail | ❌ |
-| კომენტარი add/delete | ❌ |
-| Reaction toggle | ❌ |
+| რა გაკეთდა | ფაილები |
+|---|---|
+| Gold background (#F0E2C8) + Blue seal (#3B82F6) | `src/app/globals.css` |
+| #FFFFFF სრულად ამოღებული | `src/app/globals.css` |
+| Source Serif 4 typography (H1–H3) | `src/app/layout.tsx` |
+| Circle Identity (8-color muted palette) | `src/lib/ui/circle-style.ts` |
+| Page transitions (framer-motion) | `src/components/page-transition.tsx` |
+| Route progress bar (nextjs-toploader) | `src/app/layout.tsx` |
+| Command palette (Ctrl+K) | `src/components/command-palette.tsx` |
+| AppShell 3-column layout | `src/components/layout/app-shell.tsx` |
+| Left sidebar (nav + My Circles) | `src/components/layout/left-sidebar.tsx` |
+| Right sidebar (onboarding, actions, trending) | `src/components/layout/right-sidebar.tsx` |
+| PostTypeBadge (outlined pill) | `src/components/ui/post-type-badge.tsx` |
+| PostCard redesign (serif titles, red heart, action bar) | `src/components/posts/post-card.tsx` |
+| FeedComposer (compose from feed) | `src/components/posts/feed-composer.tsx` |
+| Landing page gold gradient hero | `src/app/page.tsx` |
+| Footer | `src/components/footer.tsx` |
+| ThemeProvider | `src/components/providers.tsx` |
+| Design docs | `docs/01_DESIGN_SYSTEM.md`, `docs/02_BRAND_TOKENS.md` |
 
 ---
 
-## Phase 6 — Notifications + Moderation
-**სტატუსი: ❌ ჯერ არ დაწყებულა**
+## Phase 3 — Posts v1 ✅
 
-| რა უნდა | სტატუსი |
-|---|:---:|
-| Notification triggers (DB) | ✅ | `0002_rls.sql`-ში უკვე არის |
-| `/notifications` page | ❌ |
-| Report + block UI | ❌ |
+| რა გაკეთდა | ფაილები |
+|---|---|
+| PostComposer (story/lesson/invite type) | `src/components/posts/post-composer.tsx` |
+| ტექსტი (min 3 chars) + ფოტო upload (max 4) | `src/components/posts/post-composer.tsx` |
+| Supabase Storage bucket: `posts` | `database/0005_storage_posts.sql` |
+| პოსტები circle page-ზე | `src/app/c/[slug]/page.tsx` |
+| Post detail გვერდი | `src/app/p/[id]/page.tsx` |
+| FeedComposer with circle selector | `src/components/posts/feed-composer.tsx` |
+
+---
+
+## Phase 4 — Feed ✅
+
+| რა გაკეთდა | ფაილები |
+|---|---|
+| /feed — joined circles-ის პოსტები | `src/app/feed/page.tsx` |
+| PostCard (author, time, type badge, media, actions) | `src/components/posts/post-card.tsx` |
+| Empty state + CTA | `src/app/feed/page.tsx` |
+| "Load more" pagination (page size 20, `.range()`) | `src/app/feed/page.tsx` |
+
+---
+
+## Phase 5 — Comments + Reactions ✅
+
+| რა გაკეთდა | ფაილები |
+|---|---|
+| Comment system on /p/[id] (list, add, delete own) | `src/app/p/[id]/page.tsx` |
+| Delete confirmation UX | `src/app/p/[id]/page.tsx` |
+| Reaction (like) toggle + optimistic UI | `src/app/p/[id]/page.tsx`, `src/components/posts/post-card.tsx` |
+| Real comment/reaction counts on PostCard | `src/components/posts/post-card.tsx` |
+| `useReactions` hook (batched liked-state) | `src/hooks/use-reactions.ts` |
+| Red filled heart / outline toggle | `src/components/posts/post-card.tsx` |
+| Comment icon → /p/[id]?focus=comment | `src/components/posts/post-card.tsx` |
+
+---
+
+## Phase 6 — Notifications + Moderation ✅
+
+| რა გაკეთდა | ფაილები |
+|---|---|
+| DB triggers: auto-create notifications | `database/0002_rls.sql` |
+| /notifications page + mark-as-read | `src/app/notifications/page.tsx` |
+| Unread badge (Navbar + Left sidebar) | `src/components/navbar.tsx`, `src/components/layout/left-sidebar.tsx` |
+| `useUnreadCount` hook | `src/hooks/use-notifications.ts` |
+| PostCard overflow: Report post | `src/components/posts/post-card.tsx` |
+| PostCard overflow: Block user | `src/components/posts/post-card.tsx` |
+| Blocked users filtered from /feed, /c/[slug] | `src/app/feed/page.tsx`, `src/app/c/[slug]/page.tsx` |
+| /settings/blocked page (unblock) | `src/app/settings/blocked/page.tsx` |
+| `useBlocklist` hook | `src/hooks/use-blocklist.ts` |
+
+---
+
+## Phase 7 — Launch Polish Pack v1 ✅
+
+| რა გაკეთდა | ფაილები |
+|---|---|
+| Mobile hamburger menu + Sheet drawer (< lg) | `src/components/mobile-drawer.tsx` |
+| Navbar compact layout for mobile | `src/components/navbar.tsx` |
+| Bottom navigation bar for mobile (< sm) | `src/components/bottom-nav.tsx` |
+| PostCard responsive media grid + mobile padding | `src/components/posts/post-card.tsx` |
+| main content pb-20 for BottomNav clearance | `src/app/layout.tsx` |
+| Toaster position → top-center | `src/app/layout.tsx` |
+| "Load more" pagination on /feed and /c/[slug] | `src/app/feed/page.tsx`, `src/app/c/[slug]/page.tsx` |
+| SEO: site-wide metadata template | `src/app/layout.tsx` |
+| Per-page metadata (static pages) | `src/app/*/layout.tsx` |
+| Dynamic metadata (generateMetadata) | `src/app/c/[slug]/layout.tsx`, `src/app/p/[id]/layout.tsx`, `src/app/u/[username]/layout.tsx` |
+| Server Supabase client (for metadata) | `src/lib/supabase/server.ts` |
+| robots.txt | `public/robots.txt` |
+| Sitemap | `src/app/sitemap.ts` |
+
+---
+
+## Phase 8.1 — Explore Circles + Real Onboarding ✅
+
+| რა გაკეთდა | ფაილები |
+|---|---|
+| /circles/explore page (popular + active this week) | `src/app/circles/explore/page.tsx` |
+| Inline Join button on explore cards + optimistic UI | `src/app/circles/explore/page.tsx` |
+| Explore link: sidebar, mobile drawer, /circles header | `src/components/layout/left-sidebar.tsx`, `src/components/mobile-drawer.tsx`, `src/app/circles/page.tsx` |
+| Right sidebar: real trending circles from DB | `src/components/layout/right-sidebar.tsx` |
+| `useTrendingCircles` hook | `src/hooks/use-trending-circles.ts` |
+| Right sidebar: real onboarding widget (3 steps) | `src/components/layout/right-sidebar.tsx` |
+| `useOnboarding` hook (profile, circle, post checks) | `src/hooks/use-onboarding.ts` |
+| Feed empty state → CTA to /circles/explore | `src/app/feed/page.tsx` |
+
+---
+
+## Phase 8.2 — Sharing + Invites ✅
+
+| რა გაკეთდა | ფაილები |
+|---|---|
+| Share utility (Web Share API / clipboard / prompt) | `src/lib/share.ts` |
+| PostCard: "გაზიარება" button (share/copy post link) | `src/components/posts/post-card.tsx` |
+| /p/[id]: Share button in reaction bar | `src/app/p/[id]/page.tsx` |
+| /c/[slug]: Share button in circle header | `src/app/c/[slug]/page.tsx` |
+| /c/[slug]: "მოწვევა" button (public circles) | `src/app/c/[slug]/page.tsx` |
+| Invite Dialog (link + copy + native share) | `src/app/c/[slug]/page.tsx` |
+| UTM params: ?ref=share, ?ref=invite | `src/lib/share.ts` |
+
+---
+
+## Phase 8.3 — Launch Safety & Ops Pack ✅
+
+| რა გაკეთდა | ფაილები |
+|---|---|
+| /rules page (Community Rules, Georgian) | `src/app/rules/page.tsx` |
+| /privacy page (Privacy Policy, Georgian) | `src/app/privacy/page.tsx` |
+| /contact page (Contact info, Georgian) | `src/app/contact/page.tsx` |
+| Footer links → real legal pages | `src/components/footer.tsx` |
+| Vercel Analytics (privacy-friendly) | `src/app/layout.tsx`, `@vercel/analytics` |
+| Admin reports page (/admin/reports) | `src/app/admin/reports/page.tsx` |
+| isAdmin() helper (env-based access) | `src/lib/admin.ts` |
+| NEXT_PUBLIC_ADMIN_USER_IDS env var | `.env.example` |
 
 ---
 
 ## Database Migrations
 
-| ფაილი | აღწერა | SQL Editor-ში გაშვებული? |
-|---|---|:---:|
-| `database/0001_init.sql` | ტაბლები, enums, indexes, profile trigger | ⬜ დასადასტურებელი |
-| `database/0002_rls.sql` | RLS policies, helper functions, notification triggers | ⬜ დასადასტურებელი |
-| `database/0003_profile_metadata_patch.sql` | Profile trigger patch (display_name from metadata) | ⬜ დასადასტურებელი |
+| ფაილი | აღწერა |
+|---|---|
+| `database/0001_init.sql` | Tables: profiles, circles, circle_members, posts, comments, reactions, reports, blocklist, notifications + profile trigger |
+| `database/0002_rls.sql` | RLS policies, helper functions, notification triggers |
+| `database/0003_profile_metadata_patch.sql` | Profile trigger patch (display_name from metadata) |
+| `database/0004_storage_avatars.sql` | Avatars bucket + policies |
+| `database/0005_storage_posts.sql` | Posts media bucket + policies |
 
 ---
 
 ## shadcn/ui კომპონენტები (დაინსტალირებული)
 
-Button, Card, Input, Label, Badge, Switch, Skeleton, Textarea
+Button, Card, Input, Label, Avatar, Badge, Dialog, DropdownMenu, Command, Skeleton, Switch, Textarea, Sheet, Sonner
 
 ---
 
-## შემდეგი ნაბიჯები
+## რა არ არის ჯერ გაკეთებული (Phase 9+)
 
-1. **დაადასტურე:** SQL migrations გაშვებულია Supabase-ში (0001 → 0002 → 0003)
-2. **დაადასტურე:** Register/Login მუშაობს (`npm run dev`)
-3. **დაადასტურე:** Circle create/join/leave მუშაობს
-4. **შემდეგ:** Phase 1 დასრულება (profile edit + avatar)
-5. **შემდეგ:** Phase 3 — Posts
+- [ ] Dark mode toggle UI
+- [ ] Google OAuth login
+- [ ] Search results page
+- [ ] Messages / chat system
+- [ ] Performance optimization (lazy loading, bundle analysis)
+- [ ] Image optimization (next/image for user media)
+- [ ] Video uploads
+- [ ] Realtime subscriptions
+
+---
+
+# END

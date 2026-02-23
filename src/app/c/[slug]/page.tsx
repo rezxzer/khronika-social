@@ -20,11 +20,24 @@ import {
   Loader2,
   CircleDot,
   PenLine,
+  Share2,
+  UserPlus,
+  Copy,
+  Check,
 } from "lucide-react";
 import { getCircleAccent } from "@/lib/ui/circle-style";
+import { shareOrCopy } from "@/lib/share";
 import { AppShell } from "@/components/layout/app-shell";
 import { PostCard, type PostData } from "@/components/posts/post-card";
 import { PostComposer } from "@/components/posts/post-composer";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
 const PAGE_SIZE = 20;
@@ -56,6 +69,8 @@ export default function CircleDetailPage() {
   const [postsLoading, setPostsLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const fetchCircle = useCallback(async () => {
     if (!slug) return;
@@ -272,9 +287,33 @@ export default function CircleDetailPage() {
               {circle.description && (
                 <p className="text-sm text-muted-foreground sm:text-base">{circle.description}</p>
               )}
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                <Users className="h-4 w-4" />
-                <span>{memberCount} წევრი</span>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Users className="h-4 w-4" />
+                  {memberCount} წევრი
+                </span>
+                <button
+                  type="button"
+                  onClick={() => shareOrCopy({
+                    title: circle.name,
+                    text: circle.description || `${circle.name} — წრე ქრონიკაში`,
+                    path: `/c/${circle.slug}`,
+                  })}
+                  className="flex items-center gap-1 rounded-md px-1.5 py-0.5 transition-colors hover:bg-accent hover:text-foreground"
+                >
+                  <Share2 className="h-3.5 w-3.5" />
+                  <span className="text-xs">გაზიარება</span>
+                </button>
+                {!circle.is_private && (
+                  <button
+                    type="button"
+                    onClick={() => setInviteOpen(true)}
+                    className="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-seal transition-colors hover:bg-seal-muted"
+                  >
+                    <UserPlus className="h-3.5 w-3.5" />
+                    <span className="text-xs font-medium">მოწვევა</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -387,6 +426,64 @@ export default function CircleDetailPage() {
         )}
       </div>
     </div>
+
+    {/* Invite Dialog */}
+    <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="font-serif">მეგობრის მოწვევა</DialogTitle>
+          <DialogDescription>
+            გააზიარე ეს ლინკი მეგობრებთან, რომ შემოუერთდნენ წრეს „{circle.name}".
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex items-center gap-2">
+          <Input
+            readOnly
+            value={`${typeof window !== "undefined" ? window.location.origin : ""}/c/${circle.slug}?ref=invite`}
+            className="flex-1 text-sm"
+            onFocus={(e) => e.target.select()}
+          />
+          <Button
+            variant="seal"
+            size="sm"
+            onClick={async () => {
+              const url = `${window.location.origin}/c/${circle.slug}?ref=invite`;
+              try {
+                await navigator.clipboard.writeText(url);
+                setLinkCopied(true);
+                toast.success("ლინკი დაკოპირდა");
+                setTimeout(() => setLinkCopied(false), 2000);
+              } catch {
+                prompt("დააკოპირე ლინკი:", url);
+              }
+            }}
+            className="shrink-0"
+          >
+            {linkCopied ? (
+              <Check className="h-4 w-4" />
+            ) : (
+              <Copy className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+        {typeof navigator !== "undefined" && !!navigator.share && (
+          <Button
+            variant="outline"
+            onClick={() => {
+              shareOrCopy({
+                title: circle.name,
+                text: `შემოუერთდი წრეს „${circle.name}" ქრონიკაში!`,
+                path: `/c/${circle.slug}`,
+              });
+            }}
+            className="w-full"
+          >
+            <Share2 className="mr-2 h-4 w-4" />
+            სხვა აპით გაზიარება
+          </Button>
+        )}
+      </DialogContent>
+    </Dialog>
     </AppShell>
   );
 }

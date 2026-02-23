@@ -17,7 +17,9 @@ import {
   Heart,
   Send,
   Trash2,
+  Share2,
 } from "lucide-react";
+import { shareOrCopy } from "@/lib/share";
 import { toast } from "sonner";
 
 interface PostDetail {
@@ -318,6 +320,22 @@ export default function PostDetailPage() {
             <MessageCircle className="h-4 w-4" />
             <span>{comments.length}</span>
           </span>
+          <button
+            type="button"
+            onClick={() => {
+              const snippet = post.content.slice(0, 60);
+              const authorLabel = author.display_name || author.username || "";
+              shareOrCopy({
+                title: snippet || "პოსტი ქრონიკაში",
+                text: `${authorLabel} — ${snippet}`,
+                path: `/p/${post.id}`,
+              });
+            }}
+            className="ml-auto flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <Share2 className="h-4 w-4" />
+            <span>გაზიარება</span>
+          </button>
         </div>
       </article>
 

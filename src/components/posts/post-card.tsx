@@ -20,6 +20,7 @@ import {
   Ban,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { shareOrCopy } from "@/lib/share";
 import { toast } from "sonner";
 
 export interface PostData {
@@ -286,10 +287,19 @@ export function PostCard({
         </button>
         <button
           type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            const snippet = post.content.slice(0, 60);
+            shareOrCopy({
+              title: snippet || "პოსტი ქრონიკაში",
+              text: `${authorName} — ${snippet}`,
+              path: `/p/${post.id}`,
+            });
+          }}
           className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >
           <Share2 className="h-4 w-4" />
-          <span>Share</span>
+          <span>გაზიარება</span>
         </button>
       </div>
     </article>

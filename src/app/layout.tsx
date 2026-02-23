@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Source_Serif_4 } from "next/font/google";
 import NextTopLoader from "nextjs-toploader";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { Navbar } from "@/components/navbar";
 import { BottomNav } from "@/components/bottom-nav";
@@ -61,6 +62,7 @@ export default function RootLayout({
           <Footer />
           <BottomNav />
           <Toaster position="top-center" />
+          <Analytics />
         </Providers>
       </body>
     </html>

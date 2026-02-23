@@ -25,8 +25,10 @@ import {
   ChevronDown,
   Ban,
   Menu,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isAdmin } from "@/lib/admin";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { useUnreadCount } from "@/hooks/use-notifications";
@@ -238,6 +240,17 @@ export function Navbar() {
                         დაბლოკილები
                       </Link>
                     </DropdownMenuItem>
+                    {isAdmin(user.id) && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin/reports">
+                            <Shield className="mr-2 h-4 w-4" />
+                            ადმინ პანელი
+                          </Link>
+                        </DropdownMenuItem>
+                      </>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut}>
                       <LogOut className="mr-2 h-4 w-4" />

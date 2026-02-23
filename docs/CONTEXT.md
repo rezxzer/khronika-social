@@ -1,6 +1,6 @@
 # Khronika — Project Context (for AI assistants)
 
-> Last updated: 2026-02-22 (Phase 7 — Launch Polish Pack v1)
+> Last updated: 2026-02-22 (Phase 8.3 — Launch Safety & Ops Pack)
 > This document is the single source of truth for any AI assistant helping develop Khronika.
 > It will be updated incrementally as the project evolves.
 
@@ -210,6 +210,25 @@ Body has a fixed multi-layer gradient:
 - Onboarding widget auto-hides when all steps complete
 - Feed empty state enhanced with strong CTA to `/circles/explore`
 
+### Phase 8.2 — Sharing + Invites ✅
+- Shared utility `src/lib/share.ts`: Web Share API on mobile → clipboard copy on desktop → prompt fallback
+- PostCard action bar: working "გაზიარება" button copies/shares post link `/p/[id]?ref=share`
+- Post detail `/p/[id]`: Share button in reaction bar
+- Circle header `/c/[slug]`: Share button next to member count + "მოწვევა" (Invite) button (seal accent, public circles only)
+- Invite Dialog: shows circle link with `?ref=invite`, copy button, and native share option on mobile
+- All share links include `?ref=share` or `?ref=invite` UTM parameter
+
+### Phase 8.3 — Launch Safety & Ops Pack ✅
+- Legal pages: `/rules` (Community Rules), `/privacy` (Privacy Policy), `/contact` (Contact info) — all Georgian
+- Footer links wired to real legal pages
+- Vercel Analytics (`@vercel/analytics`) integrated in root layout — privacy-friendly, no IP storage
+- Admin reports page `/admin/reports`:
+  - Access controlled via `NEXT_PUBLIC_ADMIN_USER_IDS` env var (comma-separated UUIDs)
+  - Shows all reports ordered by time, with reporter name, target type, reason
+  - Actions: "ნახვა" (link to target), "განხილული" (mark reviewed, client-side), "დაბლოკე" (block author via blocklist)
+  - Non-admins see "არ გაქვს წვდომა" screen
+- Admin utility: `src/lib/admin.ts` — `isAdmin(userId)` helper
+
 ---
 
 ## What Is NOT Built Yet
@@ -233,6 +252,11 @@ src/
 │   ├── layout.tsx               ← Root layout (fonts, providers, navbar, metadata template)
 │   ├── sitemap.ts               ← Static sitemap for SEO
 │   ├── page.tsx                 ← Landing page
+│   ├── rules/page.tsx           ← Community rules
+│   ├── privacy/page.tsx         ← Privacy policy
+│   ├── contact/page.tsx         ← Contact info
+│   ├── admin/
+│   │   └── reports/page.tsx     ← Admin reports review (protected)
 │   ├── login/
 │   │   ├── layout.tsx           ← SEO metadata
 │   │   └── page.tsx
@@ -265,6 +289,7 @@ src/
 │       └── blocked/page.tsx
 ├── components/
 │   ├── navbar.tsx               ← Responsive navbar with hamburger on mobile
+│   ├── bottom-nav.tsx           ← Fixed bottom navigation for mobile (< sm)
 │   ├── mobile-drawer.tsx        ← Sheet-based left drawer for < lg
 │   ├── footer.tsx
 │   ├── providers.tsx            ← ThemeProvider wrapper
@@ -295,6 +320,8 @@ src/
 │   └── use-trending-circles.ts ← Top active circles this week
 ├── lib/
 │   ├── utils.ts                 ← cn() helper
+│   ├── share.ts                 ← Share utility (Web Share API / clipboard / prompt fallback)
+│   ├── admin.ts                 ← isAdmin() helper (reads NEXT_PUBLIC_ADMIN_USER_IDS)
 │   ├── supabase/client.ts       ← Supabase browser client
 │   ├── supabase/server.ts       ← Supabase server client (for metadata)
 │   ├── auth/normalize.ts        ← Email normalize, error translate, rate limit detect
@@ -341,6 +368,13 @@ RLS enabled: users can only read public circle posts, insert when logged in, upd
 6. **Supabase**: Use client-side `supabase` from `@/lib/supabase/client`. Respect RLS.
 7. **Error handling**: Show Georgian toast messages via sonner. Graceful empty states.
 8. **Accessibility**: Support `prefers-reduced-motion`. Focus-visible styles on interactive elements.
+9. **Mobile-first (critical!)**: Every new feature MUST work on mobile (375px+). Check:
+   - Buttons/actions accessible via `BottomNav` or in-page UI (not hidden behind desktop-only sidebars).
+   - No horizontal overflow — use responsive grid (`grid-cols-1 sm:grid-cols-*`).
+   - Padding: `p-3 sm:p-5` pattern for compact mobile spacing.
+   - Toasts at `top-center` (bottom is occupied by BottomNav).
+   - Dialogs/Sheets: use `sm:max-w-md` to avoid full-bleed on desktop.
+   - Test at 375px viewport width before considering a feature complete.
 
 ---
 

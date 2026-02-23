@@ -20,17 +20,14 @@ export function Footer() {
 
           {/* Center: nav links */}
           <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
-            <Link href="/" className="transition-colors hover:text-foreground">
-              About
+            <Link href="/rules" className="transition-colors hover:text-foreground">
+              წესები
             </Link>
-            <Link href="/" className="transition-colors hover:text-foreground">
-              Rules
+            <Link href="/privacy" className="transition-colors hover:text-foreground">
+              კონფიდენციალურობა
             </Link>
-            <Link href="/" className="transition-colors hover:text-foreground">
-              Privacy
-            </Link>
-            <Link href="/" className="transition-colors hover:text-foreground">
-              Contact
+            <Link href="/contact" className="transition-colors hover:text-foreground">
+              კონტაქტი
             </Link>
           </nav>
 

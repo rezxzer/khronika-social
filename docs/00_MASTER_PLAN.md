@@ -289,6 +289,24 @@
 - Right sidebar: რეალური onboarding widget 3 ნაბიჯით (`useOnboarding`)
 - Feed empty state გაუმჯობესებული CTA-ით `/circles/explore`-ზე
 
+### Phase 8.2 — Sharing + Invites ✅
+**სრულია.** მოიცავს:
+- საერთო share utility (`src/lib/share.ts`): Web Share API მობაილზე, clipboard copy დესკტოპზე
+- PostCard-ზე "გაზიარება" ღილაკი — პოსტის ლინკს აზიარებს/კოპირებს
+- პოსტის დეტალურ გვერდზე (`/p/[id]`) Share ღილაკი reaction bar-ში
+- წრის გვერდზე (`/c/[slug]`) Share + "მოწვევა" ღილაკები header-ში
+- Invite Dialog: წრის ლინკი + copy ღილაკი + native share მობაილზე
+- UTM პარამეტრები: `?ref=share` და `?ref=invite`
+
+### Phase 8.3 — Launch Safety & Ops Pack ✅
+**სრულია.** მოიცავს:
+- სამართლებრივი გვერდები: `/rules`, `/privacy`, `/contact` (ქართულად)
+- Footer ლინკები რეალურ გვერდებზე
+- Vercel Analytics — privacy-friendly pageview tracking
+- `/admin/reports` — ადმინის რეპორტების განხილვის გვერდი
+- `isAdmin()` helper (`NEXT_PUBLIC_ADMIN_USER_IDS` env var-ით)
+- რეპორტის ქმედებები: ნახვა, განხილული, ავტორის დაბლოკვა
+
 ### Phase 9 — Remaining Polish (შემდეგი)
 **Done როცა:**
 - Dark mode toggle UI მუშაობს
@@ -338,7 +356,15 @@ Rules:
 - Storage bucket rules
 - Error/toast UX
 - Empty states
-- Mobile-first
+- **Mobile-first (კრიტიკული!):**
+  - ყველა ახალ ფუნქციაში buttons/actions ხელმისაწვდომი მობაილზე (375px+)
+  - BottomNav: Feed, Explore, Create, Notifications, Profile
+  - MobileDrawer (hamburger): nav + My Circles
+  - No horizontal overflow (responsive grid)
+  - Padding: p-3 sm:p-5
+  - Toasts: top-center (BottomNav covers bottom)
+  - Dialog/Sheet: sm:max-w-md
+  - Test at 375px viewport before shipping
 
 ---
 
