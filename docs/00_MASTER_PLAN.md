@@ -397,11 +397,18 @@
 - Unread badge: 10s polling fallback + DELETE subscription
 - REPLICA IDENTITY FULL on messages
 
-### Phase 17 — Remaining Polish (შემდეგი)
+### Phase 17.1 — Feed Algorithm ✅
+**სრულია (2026-02-23).** მოიცავს:
+- 3-tab feed: „ჩემი წრეები" / „გამოწერილები" / „ტრენდული"
+- Trending: ბოლო 7 დღის პოსტები reactions count-ით
+- Blocklist + dedup + pagination + empty states ყველა tab-ზე
+- Mobile-friendly pill toggle
+
+### Phase 18 — Remaining Polish (შემდეგი)
 **Done როცა:**
 - Image optimization (next/image)
-- Feed algorithm (Following + Trending)
 - Performance optimization
+- Video uploads
 
 ---
 

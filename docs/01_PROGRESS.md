@@ -1,7 +1,7 @@
 # ქრონიკა — პროგრესის ტრეკერი (Changelog)
 
 > ყოველი ახალი ფუნქციის დამატებისას აქ ვწერთ.
-> ბოლო განახლება: 2026-02-23 (Phase 16.2 — Comment Replies + Messaging Polish)
+> ბოლო განახლება: 2026-02-23 (Phase 17.1 — Feed Algorithm)
 
 ---
 
@@ -439,7 +439,28 @@ Button, Card, Input, Label, Avatar, Badge, Dialog, DropdownMenu, Command, Skelet
 
 ---
 
-## რა არ არის ჯერ გაკეთებული (Phase 17+)
+## Phase 17.1 — Feed Algorithm ✅ (2026-02-23)
+
+| ფაილი | აღწერა | სტატუსი |
+|---|---|---|
+| `src/app/feed/page.tsx` | 3-tab feed: circles / following / trending | ✅ |
+
+**ცვლილებები:**
+- **3-tab pill toggle**: „ჩემი წრეები" (CircleDot), „გამოწერილები" (Users), „ტრენდული" (Flame)
+- **Circles tab**: არსებული ლოგიკა — joined circles-ის პოსტები, ქრონოლოგიურად
+- **Following tab**: `follows` table → `following_ids` → `posts.author_id in(...)` — გამოწერილი მომხმარებლების პოსტები
+- **Trending tab**: ბოლო 7 დღის პოსტები reactions count-ით (desc), tie-breaker: created_at desc
+  - Trending query: reactions table → post_id group count → sorted → paginated fetch
+  - Fallback: თუ reactions არ არის, ქრონოლოგიური ბოლო 7 დღის პოსტები
+- **Blocklist filter**: `blockedIds` ფილტრი ყველა tab-ზე
+- **Dedup**: `Set<post.id>` — დუბლიკატები ფილტრდება append-ისას
+- **Empty states**: ყველა tab-ს აქვს ქართული empty state + CTA (circles → explore, following → search)
+- **Pagination**: "მეტის ჩატვირთვა" ყველა tab-ზე (PAGE_SIZE=20)
+- **Mobile**: pill tabs horizontally scrollable, compact design
+
+---
+
+## რა არ არის ჯერ გაკეთებული (Phase 18+)
 
 **დასრულებული:**
 - [x] Dark mode toggle UI (Phase 11.1)
@@ -451,10 +472,10 @@ Button, Card, Input, Label, Avatar, Badge, Dialog, DropdownMenu, Command, Skelet
 - [x] Realtime Notifications (Phase 16)
 - [x] Comment Replies (Phase 16.1)
 - [x] Messaging Polish — delete, optimistic send, Broadcast sync (Phase 16.2)
+- [x] Feed Algorithm — 3-tab feed: circles / following / trending (Phase 17.1)
 
 **შემდეგი:**
 - [ ] Image optimization (next/image for user media)
-- [ ] Feed algorithm (Follow-ების პოსტები + Trending)
 - [ ] Performance optimization (lazy loading, bundle analysis)
 - [ ] Typing indicator (Realtime Presence)
 - [ ] Push notifications (Service Worker)

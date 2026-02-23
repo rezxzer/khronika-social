@@ -1,6 +1,6 @@
 # Khronika — Project Context (for AI assistants)
 
-> Last updated: 2026-02-23 (Phase 16.2 — Comment Replies + Messaging Polish)
+> Last updated: 2026-02-23 (Phase 17.1 — Feed Algorithm)
 > This document is the single source of truth for any AI assistant helping develop Khronika.
 > It will be updated incrementally as the project evolves.
 
@@ -369,13 +369,26 @@ Body has a fixed multi-layer gradient:
 
 ---
 
+### Phase 17.1 — Feed Algorithm ✅
+- 3-tab feed UI: „ჩემი წრეები", „გამოწერილები", „ტრენდული" (pill-style toggle)
+- **Circles tab**: existing logic (joined circles posts, chronological)
+- **Following tab**: posts from followed users (`follows` table → `author_id in following_ids`)
+- **Trending tab**: last 7 days posts sorted by reaction count (desc), fallback to chronological
+- Blocklist filter on all tabs
+- Duplicate filtering via `Set<post.id>`
+- Empty states with Georgian text + CTA for each tab
+- "მეტის ჩატვირთვა" pagination on all tabs
+- Mobile-first: horizontal scrollable pill tabs
+
+---
+
 ## What Is NOT Built Yet
 
-### Phase 17 — Remaining Polish
+### Phase 18 — Remaining Polish
 - Performance optimization (lazy loading, bundle analysis)
 - Image optimization (next/image for user media)
-- Feed algorithm (Follow-ების posts + Trending)
 - Video uploads
+- Typing indicator (Realtime Presence)
 
 ---
 
