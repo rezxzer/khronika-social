@@ -1,7 +1,7 @@
 # ქრონიკა — პროგრესის ტრეკერი (Changelog)
 
 > ყოველი ახალი ფუნქციის დამატებისას აქ ვწერთ.
-> ბოლო განახლება: 2026-02-22 (Phase 8.4)
+> ბოლო განახლება: 2026-02-22 (Phase 9.1)
 
 ---
 
@@ -208,6 +208,36 @@
 | NEXT_PUBLIC_ADMIN_USER_IDS deprecated (UI only) | `src/lib/admin.ts` (unchanged, cosmetic) |
 
 **რატომ**: `NEXT_PUBLIC_ADMIN_USER_IDS` client-ზე ექსპოზდებოდა — ნებისმიერ ბრაუზერში ჩანდა. ახლა admin ვერიფიკაცია სრულად server-side-ია (`ADMIN_USER_IDS` + `SUPABASE_SERVICE_ROLE_KEY`), client-ს არ აქვს წვდომა.
+
+---
+
+## Phase 10 — Profile 📋 (Plan Added)
+
+| რა | სტატუსი |
+|---|---|
+| სრული გეგმა დაიწერა | ✅ `docs/04_PROFILE_PHASE10.md` |
+| Public profile `/u/[username]` enhancement | ⬜ დაგეგმილი |
+| Profile stats (posts, circles, reactions) | ⬜ დაგეგმილი |
+| Block/Report/Share on profile | ⬜ დაგეგმილი |
+| Account deletion (`/settings/profile`) | ⬜ დაგეგმილი |
+| Blocked user → content hidden | ⬜ დაგეგმილი |
+
+**შენიშვნა**: DB schema ცვლილება არ სჭირდება. Account deletion-ისთვის `SUPABASE_SERVICE_ROLE_KEY` უკვე კონფიგურირებულია.
+
+---
+
+## Phase 9.1 — Post Edit/Delete ✅
+
+| რა გაკეთდა | ფაილები |
+|---|---|
+| PostCard: author overflow menu (Edit/Delete) | `src/components/posts/post-card.tsx` |
+| PostEditDialog (reusable edit modal) | `src/components/posts/post-edit-dialog.tsx` |
+| Delete confirm dialog + toast | `src/components/posts/post-card.tsx` |
+| /p/[id]: author Edit/Delete actions | `src/app/p/[id]/page.tsx` |
+| /feed: onDeleted/onEdited callbacks | `src/app/feed/page.tsx` |
+| /c/[slug]: onDeleted/onEdited callbacks | `src/app/c/[slug]/page.tsx` |
+
+**UX**: ავტორი ხედავს „რედაქტირება" + „წაშლა"; სხვა მომხმარებელი ხედავს „დაარეპორტე" + „დაბლოკე". წაშლა მოითხოვს დადასტურებას (Dialog). რედაქტირება ხსნის მოდალს content + type ცვლილებით. Media editing v1-ში არ არის.
 
 ---
 

@@ -316,10 +316,30 @@
 - `/admin/reports` converted to server component (service-role fetch)
 - `NEXT_PUBLIC_ADMIN_USER_IDS` deprecated (UI hiding only, optional)
 
-### Phase 9 — Remaining Polish (შემდეგი)
+### Phase 9.1 — Post Edit/Delete ✅
+**სრულია (2026-02-22).** მოიცავს:
+- ავტორის PostCard overflow: „რედაქტირება" + „წაშლა"
+- Edit Dialog: content + type ცვლილება, media read-only
+- Delete: confirm dialog → წაშლა → toast → card removal
+- `/p/[id]` detail page-ზეც Edit/Delete ავტორისთვის
+- `onDeleted`/`onEdited` callbacks feed/circle pages-ში
+
+### Phase 10 — Profile 📋 (დაგეგმილია)
+> სრული გეგმა: `docs/04_PROFILE_PHASE10.md`
+
+**Done როცა:**
+- `/u/[username]` აჩვენებს real posts + circles + stats
+- Share/Block/Report ვიზიტორისთვის
+- `/settings/profile` ანგარიშის წაშლა მკაცრი confirm-ით
+- Blocked user profile → კონტენტი დამალული
+- Mobile 375px usable
+- `npm run build` passes
+
+### Phase 11 — Remaining Polish (შემდეგი)
 **Done როცა:**
 - Dark mode toggle UI მუშაობს
 - Google OAuth ინტეგრირებულია
+- Follow/Friend system (new DB table)
 - Search results page
 - Performance optimization
 

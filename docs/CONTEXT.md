@@ -1,6 +1,6 @@
 # Khronika — Project Context (for AI assistants)
 
-> Last updated: 2026-02-22 (Phase 8.4 — Admin Server-side Hardening)
+> Last updated: 2026-02-22 (Phase 9.1 — Post Edit/Delete)
 > This document is the single source of truth for any AI assistant helping develop Khronika.
 > It will be updated incrementally as the project evolves.
 
@@ -243,6 +243,31 @@ Body has a fixed multi-layer gradient:
 
 ---
 
+### Phase 9.1 — Post Edit/Delete ✅
+- Author-only Edit and Delete actions in PostCard overflow menu and `/p/[id]` detail page
+- Edit: opens `PostEditDialog` (Dialog modal) — change content + post type, media read-only for v1
+- Delete: confirmation Dialog → removes post → toast "პოსტი წაიშალა" → card removed from list
+- `/p/[id]` delete redirects to circle page
+- Non-author users see Report/Block instead (unchanged)
+- RLS enforced: only author can UPDATE/DELETE own posts
+- `src/components/posts/post-edit-dialog.tsx`: reusable editor dialog
+- `onDeleted` / `onEdited` callbacks wired in `/feed` and `/c/[slug]` for live list updates
+
+---
+
+### Phase 10 — Profile (დაგეგმილია) 📋
+> სრული გეგმა: `docs/04_PROFILE_PHASE10.md`
+
+სკოპი:
+- `/u/[username]` enhancement: real posts (paginated), user circles, stats row, Block/Report/Share
+- `/settings/profile` extension: email display, account deletion (hard delete via service role API)
+- Blocked user profile → content hidden
+- Mobile-first, same UX patterns (Load more, PostCard reuse, sonner toasts)
+- DB schema changes არ სჭირდება (existing tables sufficient)
+- Account deletion needs `SUPABASE_SERVICE_ROLE_KEY` (already configured for admin)
+
+---
+
 ## What Is NOT Built Yet
 
 ### Phase 9 — Remaining Polish
@@ -316,6 +341,7 @@ src/
 │   ├── posts/
 │   │   ├── post-card.tsx        ← Responsive PostCard with moderation
 │   │   ├── post-composer.tsx    ← Composer inside circle page
+│   │   ├── post-edit-dialog.tsx ← Reusable edit dialog (content + type)
 │   │   └── feed-composer.tsx    ← Composer on /feed with circle selector
 │   ├── admin/
 │   │   └── reports-list.tsx     ← Client-side interactive reports table
