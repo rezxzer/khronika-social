@@ -313,12 +313,27 @@ Button, Card, Input, Label, Avatar, Badge, Dialog, DropdownMenu, Command, Skelet
 
 ---
 
-## რა არ არის ჯერ გაკეთებული (Phase 13+)
+## Phase 13.1 — Google OAuth ✅ (2026-02-22)
+
+| ფაილი | აღწერა | სტატუსი |
+|---|---|---|
+| `src/app/login/page.tsx` | Google OAuth ღილაკი + divider "ან" | ✅ |
+| `src/app/register/page.tsx` | Google OAuth ღილაკი + divider "ან" | ✅ |
+| `src/app/auth/callback/route.ts` | OAuth callback — code to session exchange | ✅ |
+
+**Manual setup საჭიროა:**
+- Google Cloud Console: OAuth 2.0 Client ID (Web)
+- Supabase Dashboard → Auth → Providers → Google → Enable + paste credentials
+- Redirect URI: `https://<project>.supabase.co/auth/v1/callback`
+
+---
+
+## რა არ არის ჯერ გაკეთებული (Phase 14+)
 
 - [x] Dark mode toggle UI
 - [x] Search results page
 - [x] Follow/Friend system
-- [ ] Google OAuth login
+- [x] Google OAuth login
 - [ ] Messages / chat system
 - [ ] Performance optimization (lazy loading, bundle analysis)
 - [ ] Image optimization (next/image for user media)

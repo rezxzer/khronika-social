@@ -1,6 +1,6 @@
 # Khronika — Project Context (for AI assistants)
 
-> Last updated: 2026-02-22 (Phase 12 — Follow System)
+> Last updated: 2026-02-22 (Phase 13.1 — Google OAuth)
 > This document is the single source of truth for any AI assistant helping develop Khronika.
 > It will be updated incrementally as the project evolves.
 
@@ -298,10 +298,19 @@ Body has a fixed multi-layer gradient:
 
 ---
 
+### Phase 13.1 — Google OAuth ✅
+- Google OAuth sign-in/sign-up buttons on `/login` and `/register`
+- `signInWithOAuth({ provider: 'google' })` via Supabase Auth
+- Auth callback route `/auth/callback` — exchanges code for session
+- Google logo SVG inline (no external dependencies)
+- Divider "ან" between email form and Google button
+- Requires Supabase Dashboard setup (see Manual Supabase Steps)
+
+---
+
 ## What Is NOT Built Yet
 
-### Phase 13 — Remaining Polish
-- Google OAuth login
+### Phase 14 — Remaining Polish
 - Messages / chat system
 - Follow/Friend system (new DB table)
 - Performance optimization (lazy loading, bundle analysis)
@@ -325,12 +334,14 @@ src/
 │   ├── admin/
 │   │   ├── layout.tsx           ← Server-side admin gate (notFound if not admin)
 │   │   └── reports/page.tsx     ← Admin reports (server component, service-role fetch)
+│   ├── auth/
+│   │   └── callback/route.ts    ← OAuth callback (code → session)
 │   ├── login/
 │   │   ├── layout.tsx           ← SEO metadata
-│   │   └── page.tsx
+│   │   └── page.tsx             ← Email + Google OAuth login
 │   ├── register/
 │   │   ├── layout.tsx           ← SEO metadata
-│   │   └── page.tsx
+│   │   └── page.tsx             ← Email + Google OAuth register
 │   ├── feed/
 │   │   ├── layout.tsx           ← SEO metadata
 │   │   └── page.tsx             ← Feed with "Load more" pagination
@@ -441,7 +452,15 @@ These steps cannot be automated via migrations and must be done manually in the 
 3. **Run all SQL migrations in order:**
    - `0001_init.sql` → `0002_rls.sql` → `0003_profile_metadata_patch.sql` → `0004_storage_avatars.sql` → `0005_storage_posts.sql` → `0006_reports_select_policy.sql` → `0007_follows.sql`
 
-4. **Set environment variables on Vercel:**
+4. **Enable Google OAuth in Supabase:**
+   - Go to [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials
+   - Create OAuth 2.0 Client ID (Web application)
+   - Authorized redirect URI: `https://<your-supabase-project>.supabase.co/auth/v1/callback`
+   - Copy Client ID and Client Secret
+   - Supabase Dashboard → Authentication → Providers → Google → Enable → Paste Client ID + Secret
+   - Save
+
+5. **Set environment variables on Vercel:**
    - `ADMIN_USER_IDS` = comma-separated admin UUIDs (server-only, **required** for admin security gate)
    - `SUPABASE_SERVICE_ROLE_KEY` = Supabase service role key (server-only, for admin data access)
    - `NEXT_PUBLIC_ADMIN_USER_IDS` = same UUIDs (optional — only shows/hides admin link in navbar UI)

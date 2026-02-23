@@ -353,9 +353,15 @@
 - Notifications: 'follow' type — "გამოგიწერა"
 - Account deletion cascade: follows cleanup
 
-### Phase 13 — Remaining Polish (შემდეგი)
+### Phase 13.1 — Google OAuth ✅
+**სრულია (2026-02-22).** მოიცავს:
+- Google OAuth ღილაკი login + register გვერდებზე
+- `/auth/callback` route (code → session exchange)
+- Supabase Auth Google provider (Dashboard-ში manual setup)
+
+### Phase 14 — Remaining Polish (შემდეგი)
 **Done როცა:**
-- Google OAuth ინტეგრირებულია
+- Messages / chat system
 - Performance optimization
 
 ---
