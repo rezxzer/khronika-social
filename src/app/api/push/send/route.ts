@@ -4,12 +4,17 @@ import webpush from "web-push";
 
 export const dynamic = "force-dynamic";
 
-const VAPID_PUBLIC = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
-const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY ?? "";
-const VAPID_SUBJECT = process.env.VAPID_SUBJECT ?? "mailto:admin@khronika.ge";
+let vapidConfigured = false;
 
-if (VAPID_PUBLIC && VAPID_PRIVATE) {
-  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE);
+function ensureVapid() {
+  if (vapidConfigured) return true;
+  const pub = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const priv = process.env.VAPID_PRIVATE_KEY;
+  const subject = process.env.VAPID_SUBJECT ?? "mailto:admin@khronika.ge";
+  if (!pub || !priv) return false;
+  webpush.setVapidDetails(subject, pub, priv);
+  vapidConfigured = true;
+  return true;
 }
 
 export async function POST(request: NextRequest) {
@@ -22,7 +27,7 @@ export async function POST(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!url || !serviceKey || !VAPID_PUBLIC || !VAPID_PRIVATE) {
+  if (!url || !serviceKey || !ensureVapid()) {
     return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
   }
 
