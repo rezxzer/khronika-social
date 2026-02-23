@@ -337,9 +337,30 @@ src/
     ├── 0001_init.sql            ← Tables: profiles, circles, circle_members, posts, comments, reactions, reports, blocklist, notifications
     ├── 0002_rls.sql             ← Row-level security policies + triggers
     ├── 0003_profile_metadata_patch.sql
-    ├── 0004_storage_avatars.sql ← Avatars bucket
-    └── 0005_storage_posts.sql   ← Posts media bucket
+    ├── 0004_storage_avatars.sql ← Avatars bucket policies
+    ├── 0005_storage_posts.sql   ← Posts media bucket policies
+    └── 0006_reports_select_policy.sql ← Reports SELECT policy + admin RPC
 ```
+
+---
+
+## Manual Supabase Steps (must do once)
+
+These steps cannot be automated via migrations and must be done manually in the Supabase Dashboard:
+
+1. **Create `avatars` storage bucket:**
+   - Dashboard → Storage → New Bucket → Name: `avatars`, Public: **ON**
+   - Then run `database/0004_storage_avatars.sql` in SQL Editor
+
+2. **Create `posts` storage bucket:**
+   - Dashboard → Storage → New Bucket → Name: `posts`, Public: **ON**
+   - Then run `database/0005_storage_posts.sql` in SQL Editor
+
+3. **Run all SQL migrations in order:**
+   - `0001_init.sql` → `0002_rls.sql` → `0003_profile_metadata_patch.sql` → `0004_storage_avatars.sql` → `0005_storage_posts.sql` → `0006_reports_select_policy.sql`
+
+4. **Set environment variable on Vercel:**
+   - `NEXT_PUBLIC_ADMIN_USER_IDS` = comma-separated admin UUIDs
 
 ---
 

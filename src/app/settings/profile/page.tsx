@@ -26,7 +26,15 @@ import {
   CheckCircle2,
   Camera,
   User,
+  TriangleAlert,
 } from "lucide-react";
+
+function sanitizeFilename(name: string): string {
+  const ext = name.lastIndexOf(".") >= 0 ? name.slice(name.lastIndexOf(".")) : "";
+  const base = name.slice(0, name.length - ext.length);
+  const safe = base.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 60);
+  return (safe || "avatar") + ext.toLowerCase();
+}
 
 export default function ProfileSettingsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -44,6 +52,7 @@ export default function ProfileSettingsPage() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [bucketWarning, setBucketWarning] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -59,6 +68,30 @@ export default function ProfileSettingsPage() {
       setAvatarUrl(profile.avatar_url);
     }
   }, [profile]);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      try {
+        const { data, error: listErr } = await supabase.storage.from("avatars").list(user.id, { limit: 1 });
+        if (listErr) {
+          const msg = listErr.message.toLowerCase();
+          if (msg.includes("not found") || msg.includes("bucket")) {
+            setBucketWarning(
+              "avatars bucket არ არსებობს. Supabase Dashboard → Storage → Buckets → შექმენი 'avatars' (Public ON) და გაუშვი database/0004_storage_avatars.sql",
+            );
+          } else if (msg.includes("not authorized") || msg.includes("policy")) {
+            setBucketWarning(
+              "avatars bucket private-ია ან policy არ გაშვებულა. Dashboard → Storage → avatars → გადართე Public ON და გაუშვი database/0004_storage_avatars.sql",
+            );
+          }
+        }
+        void data;
+      } catch {
+        // ignore network errors
+      }
+    })();
+  }, [user]);
 
   async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -78,7 +111,8 @@ export default function ProfileSettingsPage() {
     setUploading(true);
     setError(null);
 
-    const path = `${user.id}/${Date.now()}_${file.name}`;
+    const safeName = sanitizeFilename(file.name);
+    const path = `${user.id}/${Date.now()}_${safeName}`;
     const { error: uploadError } = await supabase.storage
       .from("avatars")
       .upload(path, file, { upsert: true });
@@ -106,10 +140,14 @@ export default function ProfileSettingsPage() {
     setSuccess(false);
     setSaving(true);
 
+    const avatarWithCacheBust = avatarUrl
+      ? avatarUrl.split("?")[0] + `?v=${Date.now()}`
+      : null;
+
     const updates: Record<string, unknown> = {
       display_name: displayName.trim() || null,
       bio: bio.trim() || null,
-      avatar_url: avatarUrl,
+      avatar_url: avatarWithCacheBust,
     };
 
     if (username.trim()) {
@@ -170,6 +208,12 @@ export default function ProfileSettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {bucketWarning && (
+              <div className="flex items-start gap-2 rounded-lg border border-amber-400/40 bg-amber-50/50 px-3 py-2.5 text-sm text-amber-800">
+                <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>{bucketWarning}</span>
+              </div>
+            )}
             {error && (
               <div className="flex items-start gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2.5 text-sm text-destructive">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />

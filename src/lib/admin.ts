@@ -1,4 +1,4 @@
-const adminIds: string[] = (process.env.NEXT_PUBLIC_ADMIN_USER_IDS || "")
+export const adminIds: string[] = (process.env.NEXT_PUBLIC_ADMIN_USER_IDS || "")
   .split(",")
   .map((id) => id.trim())
   .filter(Boolean);

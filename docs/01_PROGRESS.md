@@ -188,7 +188,9 @@
 | Vercel Analytics (privacy-friendly) | `src/app/layout.tsx`, `@vercel/analytics` |
 | Admin reports page (/admin/reports) | `src/app/admin/reports/page.tsx` |
 | isAdmin() helper (env-based access) | `src/lib/admin.ts` |
-| NEXT_PUBLIC_ADMIN_USER_IDS env var | `.env.example` |
+| Admin link in navbar dropdown (admin-only) | `src/components/navbar.tsx` |
+| NEXT_PUBLIC_ADMIN_USER_IDS env var | `.env.example`, `.env.local` |
+| **Vercel deploy დადასტურებული ✅** | admin panel, legal pages, footer — ყველაფერი მუშაობს production-ზე |
 
 ---
 

@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
-import { isAdmin } from "@/lib/admin";
+import { isAdmin, adminIds } from "@/lib/admin";
 import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -54,17 +54,49 @@ export default function AdminReportsPage() {
 
   const fetchReports = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("reports")
-      .select(
-        "id, reporter_id, target_type, target_id, reason, created_at, reporter:reporter_id(username, display_name)",
-      )
-      .order("created_at", { ascending: false })
-      .limit(100);
 
-    if (!error && data) {
-      setReports(data as unknown as Report[]);
+    const { data: rpcData, error: rpcError } = await supabase.rpc(
+      "get_admin_reports",
+      { admin_ids: adminIds },
+    );
+
+    if (rpcError || !rpcData) {
+      // Fallback: try direct query (works if SELECT policy exists)
+      const { data: fallback } = await supabase
+        .from("reports")
+        .select(
+          "id, reporter_id, target_type, target_id, reason, created_at, reporter:reporter_id(username, display_name)",
+        )
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      if (fallback) setReports(fallback as unknown as Report[]);
+      setLoading(false);
+      return;
     }
+
+    const reporterIds = [...new Set((rpcData as Report[]).map((r) => r.reporter_id))];
+    let profileMap: Record<string, { username: string | null; display_name: string | null }> = {};
+
+    if (reporterIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, username, display_name")
+        .in("id", reporterIds);
+
+      if (profiles) {
+        profileMap = Object.fromEntries(
+          profiles.map((p) => [p.id, { username: p.username, display_name: p.display_name }]),
+        );
+      }
+    }
+
+    setReports(
+      (rpcData as Report[]).map((r) => ({
+        ...r,
+        reporter: profileMap[r.reporter_id] || null,
+      })),
+    );
     setLoading(false);
   }, []);
 
