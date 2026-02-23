@@ -224,14 +224,18 @@ export function Navbar() {
                       )}
                     </div>
                     <DropdownMenuSeparator />
-                    {profile?.username && (
-                      <DropdownMenuItem asChild>
-                        <Link href={`/u/${profile.username}`}>
-                          <User className="mr-2 h-4 w-4" />
-                          ჩემი პროფილი
-                        </Link>
-                      </DropdownMenuItem>
-                    )}
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href={
+                          profile?.username
+                            ? `/u/${profile.username}`
+                            : "/settings/profile"
+                        }
+                      >
+                        <User className="mr-2 h-4 w-4" />
+                        ჩემი პროფილი
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link href="/settings/profile">
                         <Settings className="mr-2 h-4 w-4" />
