@@ -57,33 +57,26 @@ export function useMessages(conversationId?: string, currentUserId?: string) {
 
     const channel = supabase
       .channel(`messages:${conversationId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-          filter: `conversation_id=eq.${conversationId}`,
-        },
-        (payload) => {
-          const newMsg = payload.new as MessageRow;
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === newMsg.id)) return prev;
-            const withoutOptimistic = prev.filter(
-              (m) => !m.id.startsWith("optimistic-"),
-            );
-            return [...withoutOptimistic, newMsg];
-          });
+      .on("broadcast", { event: "new_message" }, (payload) => {
+        const msg = payload.payload as MessageRow | undefined;
+        if (!msg) return;
 
-          if (currentUserId && newMsg.sender_id !== currentUserId) {
-            supabase
-              .from("messages")
-              .update({ is_read: true })
-              .eq("id", newMsg.id)
-              .then();
-          }
-        },
-      )
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === msg.id)) return prev;
+          const withoutOptimistic = prev.filter(
+            (m) => !m.id.startsWith("optimistic-"),
+          );
+          return [...withoutOptimistic, msg];
+        });
+
+        if (currentUserId && msg.sender_id !== currentUserId) {
+          supabase
+            .from("messages")
+            .update({ is_read: true })
+            .eq("id", msg.id)
+            .then();
+        }
+      })
       .on("broadcast", { event: "message_deleted" }, (payload) => {
         const deletedId = payload.payload?.id as string | undefined;
         if (deletedId) {
@@ -115,17 +108,36 @@ export function useMessages(conversationId?: string, currentUserId?: string) {
       };
       setMessages((prev) => [...prev, optimisticMsg]);
 
-      const { error } = await supabase
+      const { data: inserted, error } = await supabase
         .from("messages")
         .insert({
           conversation_id: conversationId,
           sender_id: currentUserId,
           content: content.trim(),
-        });
+        })
+        .select()
+        .single();
 
-      if (error) {
+      if (error || !inserted) {
         setMessages((prev) => prev.filter((m) => m.id !== optimisticMsg.id));
       } else {
+        setMessages((prev) => {
+          const withoutOptimistic = prev.filter(
+            (m) => m.id !== optimisticMsg.id,
+          );
+          if (withoutOptimistic.some((m) => m.id === inserted.id))
+            return withoutOptimistic;
+          return [...withoutOptimistic, inserted as MessageRow];
+        });
+
+        if (channelRef.current) {
+          channelRef.current.send({
+            type: "broadcast",
+            event: "new_message",
+            payload: inserted,
+          });
+        }
+
         await supabase
           .from("conversations")
           .update({ last_message_at: new Date().toISOString() })
