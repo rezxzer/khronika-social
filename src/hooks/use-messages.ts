@@ -84,19 +84,12 @@ export function useMessages(conversationId?: string, currentUserId?: string) {
           }
         },
       )
-      .on(
-        "postgres_changes",
-        {
-          event: "DELETE",
-          schema: "public",
-          table: "messages",
-          filter: `conversation_id=eq.${conversationId}`,
-        },
-        (payload) => {
-          const deletedId = (payload.old as { id: string }).id;
+      .on("broadcast", { event: "message_deleted" }, (payload) => {
+        const deletedId = payload.payload?.id as string | undefined;
+        if (deletedId) {
           setMessages((prev) => prev.filter((m) => m.id !== deletedId));
-        },
-      )
+        }
+      })
       .subscribe();
 
     channelRef.current = channel;
@@ -160,6 +153,15 @@ export function useMessages(conversationId?: string, currentUserId?: string) {
         setMessages(prev);
         return false;
       }
+
+      if (channelRef.current) {
+        channelRef.current.send({
+          type: "broadcast",
+          event: "message_deleted",
+          payload: { id: messageId },
+        });
+      }
+
       return true;
     },
     [messages, currentUserId],
