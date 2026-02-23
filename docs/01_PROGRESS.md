@@ -1,7 +1,7 @@
 # ქრონიკა — პროგრესის ტრეკერი (Changelog)
 
 > ყოველი ახალი ფუნქციის დამატებისას აქ ვწერთ.
-> ბოლო განახლება: 2026-02-22 (Phase 8.3)
+> ბოლო განახლება: 2026-02-22 (Phase 8.4)
 
 ---
 
@@ -194,15 +194,33 @@
 
 ---
 
+## Phase 8.4 — Admin Server-side Hardening ✅
+
+| რა გაკეთდა | ფაილები |
+|---|---|
+| `@supabase/ssr` ინტეგრაცია (cookie-based auth) | `package.json`, `src/lib/supabase/client.ts`, `src/lib/supabase/server.ts` |
+| Supabase session middleware | `src/middleware.ts` |
+| Server-only admin check (ADMIN_USER_IDS) | `src/lib/admin-server.ts` |
+| Server-side admin gate layout | `src/app/admin/layout.tsx` |
+| Admin reports → server component | `src/app/admin/reports/page.tsx` |
+| Interactive reports list (client) | `src/components/admin/reports-list.tsx` |
+| .env.example: ADMIN_USER_IDS + SUPABASE_SERVICE_ROLE_KEY | `.env.example` |
+| NEXT_PUBLIC_ADMIN_USER_IDS deprecated (UI only) | `src/lib/admin.ts` (unchanged, cosmetic) |
+
+**რატომ**: `NEXT_PUBLIC_ADMIN_USER_IDS` client-ზე ექსპოზდებოდა — ნებისმიერ ბრაუზერში ჩანდა. ახლა admin ვერიფიკაცია სრულად server-side-ია (`ADMIN_USER_IDS` + `SUPABASE_SERVICE_ROLE_KEY`), client-ს არ აქვს წვდომა.
+
+---
+
 ## Database Migrations
 
-| ფაილი | აღწერა |
-|---|---|
-| `database/0001_init.sql` | Tables: profiles, circles, circle_members, posts, comments, reactions, reports, blocklist, notifications + profile trigger |
-| `database/0002_rls.sql` | RLS policies, helper functions, notification triggers |
-| `database/0003_profile_metadata_patch.sql` | Profile trigger patch (display_name from metadata) |
-| `database/0004_storage_avatars.sql` | Avatars bucket + policies |
-| `database/0005_storage_posts.sql` | Posts media bucket + policies |
+| ფაილი | აღწერა | Supabase-ში გაშვებული? |
+|---|---|:---:|
+| `database/0001_init.sql` | Tables: profiles, circles, circle_members, posts, comments, reactions, reports, blocklist, notifications + profile trigger | ✅ |
+| `database/0002_rls.sql` | RLS policies, helper functions, notification triggers | ✅ |
+| `database/0003_profile_metadata_patch.sql` | Profile trigger patch (display_name from metadata) | ✅ |
+| `database/0004_storage_avatars.sql` | Avatars bucket policies (bucket must be created manually, Public ON) | ✅ |
+| `database/0005_storage_posts.sql` | Posts media bucket policies (bucket must be created manually, Public ON) | ✅ |
+| `database/0006_reports_select_policy.sql` | Reports SELECT policy + `get_admin_reports` RPC function | ✅ |
 
 ---
 

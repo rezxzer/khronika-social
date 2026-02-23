@@ -1,6 +1,6 @@
 # Khronika — Project Context (for AI assistants)
 
-> Last updated: 2026-02-22 (Phase 8.3 — Launch Safety & Ops Pack)
+> Last updated: 2026-02-22 (Phase 8.4 — Admin Server-side Hardening)
 > This document is the single source of truth for any AI assistant helping develop Khronika.
 > It will be updated incrementally as the project evolves.
 
@@ -223,11 +223,23 @@ Body has a fixed multi-layer gradient:
 - Footer links wired to real legal pages
 - Vercel Analytics (`@vercel/analytics`) integrated in root layout — privacy-friendly, no IP storage
 - Admin reports page `/admin/reports`:
-  - Access controlled via `NEXT_PUBLIC_ADMIN_USER_IDS` env var (comma-separated UUIDs)
+  - Originally client-side gated via `NEXT_PUBLIC_ADMIN_USER_IDS` (deprecated in Phase 8.4)
   - Shows all reports ordered by time, with reporter name, target type, reason
   - Actions: "ნახვა" (link to target), "განხილული" (mark reviewed, client-side), "დაბლოკე" (block author via blocklist)
-  - Non-admins see "არ გაქვს წვდომა" screen
-- Admin utility: `src/lib/admin.ts` — `isAdmin(userId)` helper
+- Admin utility: `src/lib/admin.ts` — client-side `isAdmin()` (UI hiding only)
+
+### Phase 8.4 — Admin Server-side Hardening ✅
+- **Security**: Admin access now enforced server-side — NOT reliant on client-exposed `NEXT_PUBLIC_ADMIN_USER_IDS`
+- Server-only env vars: `ADMIN_USER_IDS` (comma-separated UUIDs) + `SUPABASE_SERVICE_ROLE_KEY`
+- `@supabase/ssr` integration: cookie-based auth for server components
+- `src/middleware.ts`: Supabase session refresh on every request (syncs auth cookies)
+- `src/lib/supabase/server.ts`: `createAuthServerClient()` (reads session from cookies) + `createAdminClient()` (service-role, bypasses RLS)
+- `src/lib/admin-server.ts`: server-only `isAdminServer()` — reads `ADMIN_USER_IDS`
+- `src/app/admin/layout.tsx`: server-side gate — calls `notFound()` for non-admins
+- `src/app/admin/reports/page.tsx`: converted to server component — fetches reports via service-role client
+- `src/components/admin/reports-list.tsx`: client-side interactive list (mark reviewed, block)
+- `src/lib/admin.ts` retained for navbar UI hiding only (`NEXT_PUBLIC_ADMIN_USER_IDS`, optional)
+- `src/lib/supabase/client.ts`: upgraded to `createBrowserClient` from `@supabase/ssr` (stores auth tokens in cookies + localStorage)
 
 ---
 
@@ -247,6 +259,7 @@ Body has a fixed multi-layer gradient:
 
 ```
 src/
+├── middleware.ts                ← Supabase session refresh (cookie sync for server auth)
 ├── app/
 │   ├── globals.css              ← CSS tokens (source of truth for colors)
 │   ├── layout.tsx               ← Root layout (fonts, providers, navbar, metadata template)
@@ -256,7 +269,8 @@ src/
 │   ├── privacy/page.tsx         ← Privacy policy
 │   ├── contact/page.tsx         ← Contact info
 │   ├── admin/
-│   │   └── reports/page.tsx     ← Admin reports review (protected)
+│   │   ├── layout.tsx           ← Server-side admin gate (notFound if not admin)
+│   │   └── reports/page.tsx     ← Admin reports (server component, service-role fetch)
 │   ├── login/
 │   │   ├── layout.tsx           ← SEO metadata
 │   │   └── page.tsx
@@ -303,6 +317,8 @@ src/
 │   │   ├── post-card.tsx        ← Responsive PostCard with moderation
 │   │   ├── post-composer.tsx    ← Composer inside circle page
 │   │   └── feed-composer.tsx    ← Composer on /feed with circle selector
+│   ├── admin/
+│   │   └── reports-list.tsx     ← Client-side interactive reports table
 │   └── ui/                      ← shadcn components
 │       ├── button.tsx, card.tsx, input.tsx, label.tsx, avatar.tsx
 │       ├── badge.tsx, skeleton.tsx, switch.tsx, textarea.tsx
@@ -321,9 +337,10 @@ src/
 ├── lib/
 │   ├── utils.ts                 ← cn() helper
 │   ├── share.ts                 ← Share utility (Web Share API / clipboard / prompt fallback)
-│   ├── admin.ts                 ← isAdmin() helper (reads NEXT_PUBLIC_ADMIN_USER_IDS)
-│   ├── supabase/client.ts       ← Supabase browser client
-│   ├── supabase/server.ts       ← Supabase server client (for metadata)
+│   ├── admin.ts                 ← Client-side isAdmin() (UI hiding only, NEXT_PUBLIC_ADMIN_USER_IDS)
+│   ├── admin-server.ts          ← Server-side isAdminServer() (reads ADMIN_USER_IDS, never exposed to client)
+│   ├── supabase/client.ts       ← Supabase browser client (@supabase/ssr, stores tokens in cookies)
+│   ├── supabase/server.ts       ← createServerSupabase() (anon), createAuthServerClient() (cookie auth), createAdminClient() (service role)
 │   ├── auth/normalize.ts        ← Email normalize, error translate, rate limit detect
 │   └── ui/circle-style.ts       ← Deterministic circle colors
 ├── public/
@@ -359,8 +376,10 @@ These steps cannot be automated via migrations and must be done manually in the 
 3. **Run all SQL migrations in order:**
    - `0001_init.sql` → `0002_rls.sql` → `0003_profile_metadata_patch.sql` → `0004_storage_avatars.sql` → `0005_storage_posts.sql` → `0006_reports_select_policy.sql`
 
-4. **Set environment variable on Vercel:**
-   - `NEXT_PUBLIC_ADMIN_USER_IDS` = comma-separated admin UUIDs
+4. **Set environment variables on Vercel:**
+   - `ADMIN_USER_IDS` = comma-separated admin UUIDs (server-only, **required** for admin security gate)
+   - `SUPABASE_SERVICE_ROLE_KEY` = Supabase service role key (server-only, for admin data access)
+   - `NEXT_PUBLIC_ADMIN_USER_IDS` = same UUIDs (optional — only shows/hides admin link in navbar UI)
 
 ---
 
@@ -379,6 +398,24 @@ RLS enabled: users can only read public circle posts, insert when logged in, upd
 
 ---
 
+## Admin Access Control
+
+**Server-side enforced.** The admin gate does NOT rely on client-exposed env vars for security.
+
+| Env var | Scope | Purpose |
+|---|---|---|
+| `ADMIN_USER_IDS` | Server-only | Comma-separated UUIDs. Used by `src/lib/admin-server.ts` for security gate. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-only | Service role key — admin data fetching (bypasses RLS). Never exposed to browser. |
+| `NEXT_PUBLIC_ADMIN_USER_IDS` | Client (optional) | Same UUIDs. Only used to show/hide admin link in navbar. **Has NO security role.** |
+
+**Architecture:**
+- `src/app/admin/layout.tsx` reads user session from cookies (`@supabase/ssr`), checks `ADMIN_USER_IDS`. Returns `notFound()` if not admin.
+- `src/app/admin/reports/page.tsx` is a server component — fetches reports using service-role client (no admin IDs sent from client).
+- `src/middleware.ts` refreshes Supabase session cookies on every request.
+- Client-side `isAdmin()` in `src/lib/admin.ts` is cosmetic only (navbar UI hiding).
+
+---
+
 ## Development Guidelines
 
 1. **Language**: Code and filenames in English. UI text in Georgian (ქართული).
@@ -386,7 +423,7 @@ RLS enabled: users can only read public circle posts, insert when logged in, upd
 3. **Components**: Use shadcn/ui components. Custom components go in `src/components/`.
 4. **Seal accent**: Blue (#3B82F6) only for interactive elements (buttons, active states). Background stays gold.
 5. **Typography**: `font-serif` for headings/titles, `font-sans` for everything else.
-6. **Supabase**: Use client-side `supabase` from `@/lib/supabase/client`. Respect RLS.
+6. **Supabase**: Client-side: `supabase` from `@/lib/supabase/client`. Server auth: `createAuthServerClient()`. Admin ops: `createAdminClient()` (service role). Respect RLS for user-facing queries.
 7. **Error handling**: Show Georgian toast messages via sonner. Graceful empty states.
 8. **Accessibility**: Support `prefers-reduced-motion`. Focus-visible styles on interactive elements.
 9. **Mobile-first (critical!)**: Every new feature MUST work on mobile (375px+). Check:

@@ -1,6 +1,10 @@
 -- 0004_storage_avatars.sql
--- Storage policies for avatars bucket
--- Run AFTER creating the "avatars" bucket (public) in Supabase Dashboard
+-- Creates avatars bucket + storage policies
+
+-- Create the bucket if it doesn't exist (public = true for avatar URLs to work)
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('avatars', 'avatars', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
 
 -- Public read for avatars
 CREATE POLICY "avatars_public_read"

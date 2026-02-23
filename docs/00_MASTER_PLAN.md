@@ -307,6 +307,15 @@
 - `isAdmin()` helper (`NEXT_PUBLIC_ADMIN_USER_IDS` env var-ით)
 - რეპორტის ქმედებები: ნახვა, განხილული, ავტორის დაბლოკვა
 
+### Phase 8.4 — Admin Server-side Hardening ✅
+**სრულია (2026-02-22).** მოიცავს:
+- Admin access server-side enforced (`ADMIN_USER_IDS` + `SUPABASE_SERVICE_ROLE_KEY`)
+- `@supabase/ssr` ინტეგრაცია: cookie-based auth server components-ისთვის
+- `src/middleware.ts`: Supabase session refresh
+- `src/app/admin/layout.tsx`: server-side admin gate (`notFound()`)
+- `/admin/reports` converted to server component (service-role fetch)
+- `NEXT_PUBLIC_ADMIN_USER_IDS` deprecated (UI hiding only, optional)
+
 ### Phase 9 — Remaining Polish (შემდეგი)
 **Done როცა:**
 - Dark mode toggle UI მუშაობს
