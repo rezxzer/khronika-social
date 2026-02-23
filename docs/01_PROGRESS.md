@@ -1,7 +1,7 @@
 # ქრონიკა — პროგრესის ტრეკერი (Changelog)
 
 > ყოველი ახალი ფუნქციის დამატებისას აქ ვწერთ.
-> ბოლო განახლება: 2026-02-23 (Phase 17.3 — Performance Optimization)
+> ბოლო განახლება: 2026-02-23 (Phase 17.4 — Typing Indicator)
 
 ---
 
@@ -506,6 +506,26 @@ Button, Card, Input, Label, Avatar, Badge, Dialog, DropdownMenu, Command, Skelet
 
 ---
 
+## Phase 17.4 — Typing Indicator ✅ (2026-02-23)
+
+| ფაილი | აღწერა | სტატუსი |
+|---|---|---|
+| `src/hooks/use-typing-indicator.ts` | Supabase Presence hook — track/untrack, throttle, auto-clear | ✅ |
+| `src/app/messages/[id]/page.tsx` | Hook integration + "წერს..." animated UI | ✅ |
+
+**დეტალები:**
+- **Presence channel**: `typing:{conversationId}`, key = `currentUserId`
+- **Throttle**: max 1 `track()` call per 2 seconds (prevents flood on fast typing)
+- **Auto-clear**: 3-second inactivity timeout → `untrack()` (indicator disappears)
+- **Send/empty clears**: მესიჯის გაგზავნა ან input-ის გასუფთავება → `untrack()` დაუყოვნებლივ
+- **Self-filter**: Presence state-ში მხოლოდ სხვა user-ის `typing: true` ჩანს
+- **UI**: animated dots (3 bounce) + "X წერს..." text, messages-ის ქვემოთ, input-ის ზემოთ
+- **Cleanup**: unmount-ზე channel remove + timeout clear
+- DB ცვლილებები: არ სჭირდება
+- Manual Supabase steps: არ სჭირდება (Presence built-in)
+
+---
+
 ## რა არ არის ჯერ გაკეთებული (Phase 18+)
 
 **დასრულებული:**
@@ -521,9 +541,9 @@ Button, Card, Input, Label, Avatar, Badge, Dialog, DropdownMenu, Command, Skelet
 - [x] Feed Algorithm — 3-tab feed: circles / following / trending (Phase 17.1)
 - [x] Image Optimization — next/image for post media (Phase 17.2)
 - [x] Performance Optimization — bundle, lazy loading, memo, skeletons (Phase 17.3)
+- [x] Typing Indicator — Realtime Presence "წერს..." (Phase 17.4)
 
 **შემდეგი:**
-- [ ] Typing indicator (Realtime Presence)
 - [ ] Push notifications (Service Worker)
 - [ ] Video uploads
 

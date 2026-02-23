@@ -1,6 +1,6 @@
 # Khronika — Project Context (for AI assistants)
 
-> Last updated: 2026-02-23 (Phase 17.3 — Performance Optimization)
+> Last updated: 2026-02-23 (Phase 17.4 — Typing Indicator)
 > This document is the single source of truth for any AI assistant helping develop Khronika.
 > It will be updated incrementally as the project evolves.
 
@@ -398,13 +398,23 @@ Body has a fixed multi-layer gradient:
 - Added `loading.tsx` skeleton files for `/feed`, `/notifications`, `/messages`, `/messages/[id]` — server-side instant skeletons
 - No UI/UX changes, no DB changes
 
+### Phase 17.4 — Typing Indicator ✅
+- Supabase Realtime Presence on channel `typing:{conversationId}`
+- New hook `useTypingIndicator` — `track({ typing: true })` / `untrack()`
+- Throttle: max 1 Presence update per 2 seconds
+- Auto-clear: 3-second inactivity timeout → `untrack()`
+- Send clears typing immediately
+- Empty input clears typing immediately
+- UI: animated dots + "X წერს..." between messages and input
+- Self-filter: only other user's typing state is shown
+- No DB changes, no manual Supabase steps
+
 ---
 
 ## What Is NOT Built Yet
 
 ### Phase 18 — Remaining Polish
 - Video uploads
-- Typing indicator (Realtime Presence)
 
 ---
 
@@ -502,6 +512,7 @@ src/
 │   ├── use-blocklist.ts
 │   ├── use-conversations.ts    ← Conversations list + unread count
 │   ├── use-messages.ts         ← Chat messages + send
+│   ├── use-typing-indicator.ts ← Realtime Presence typing indicator
 │   ├── use-follow.ts           ← Follow/unfollow toggle + counts
 │   ├── use-onboarding.ts       ← 3-step onboarding progress
 │   └── use-trending-circles.ts ← Top active circles this week

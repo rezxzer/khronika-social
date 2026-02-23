@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { useMessages } from "@/hooks/use-messages";
+import { useTypingIndicator } from "@/hooks/use-typing-indicator";
 import { supabase } from "@/lib/supabase/client";
 import { AppShell } from "@/components/layout/app-shell";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -40,6 +41,11 @@ export default function ChatPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { messages, loading, sending, sendMessage, deleteMessage } = useMessages(
+    conversationId,
+    user?.id,
+  );
+
+  const { otherTyping, sendTyping, stopTyping } = useTypingIndicator(
     conversationId,
     user?.id,
   );
@@ -85,8 +91,19 @@ export default function ChatPage() {
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
     if (!input.trim()) return;
+    stopTyping();
     const ok = await sendMessage(input);
     if (ok) setInput("");
+  }
+
+  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = e.target.value;
+    setInput(val);
+    if (val.trim()) {
+      sendTyping();
+    } else {
+      stopTyping();
+    }
   }
 
   if (authLoading || !user) {
@@ -246,6 +263,20 @@ export default function ChatPage() {
           )}
         </div>
 
+        {/* Typing indicator */}
+        {otherTyping && (
+          <div className="flex items-center gap-2 pb-1 pl-1">
+            <div className="flex gap-0.5">
+              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-seal [animation-delay:0ms]" />
+              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-seal [animation-delay:150ms]" />
+              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-seal [animation-delay:300ms]" />
+            </div>
+            <span className="text-xs text-muted-foreground">
+              {otherUser?.display_name || otherUser?.username || "მომხმარებელი"} წერს...
+            </span>
+          </div>
+        )}
+
         {/* Input */}
         <form
           onSubmit={handleSend}
@@ -254,7 +285,7 @@ export default function ChatPage() {
           <input
             type="text"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={handleInputChange}
             placeholder="დაწერე მესიჯი..."
             className="flex-1 rounded-full border bg-card px-4 py-2.5 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-seal/30"
             autoComplete="off"

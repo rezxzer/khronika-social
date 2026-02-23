@@ -419,6 +419,13 @@
 - `loading.tsx` skeletons: feed, notifications, messages, chat
 - No UI/UX or DB changes
 
+### Phase 17.4 — Typing Indicator ✅
+**სრულია (2026-02-23).** მოიცავს:
+- Supabase Realtime Presence: `typing:{conversationId}` channel
+- `useTypingIndicator` hook: track/untrack, throttle (2s), auto-clear (3s)
+- Animated "წერს..." UI between messages and input
+- No DB or manual Supabase changes
+
 ### Phase 18 — Remaining Polish (შემდეგი)
 **Done როცა:**
 - Video uploads
