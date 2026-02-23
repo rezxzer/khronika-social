@@ -12,15 +12,27 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import {
   MessageCircle,
   Heart,
   Share2,
   MoreHorizontal,
   Flag,
   Ban,
+  Pencil,
+  Trash2,
+  Loader2,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { shareOrCopy } from "@/lib/share";
+import { PostEditDialog, type PostType } from "@/components/posts/post-edit-dialog";
 import { toast } from "sonner";
 
 export interface PostData {
@@ -78,6 +90,8 @@ interface PostCardProps {
   ) => void;
   currentUserId?: string;
   onBlock?: (blockedUserId: string) => void;
+  onDeleted?: (postId: string) => void;
+  onEdited?: (postId: string, content: string, type: PostData["type"]) => void;
 }
 
 export function PostCard({
@@ -86,6 +100,8 @@ export function PostCard({
   onLikeToggle,
   currentUserId,
   onBlock,
+  onDeleted,
+  onEdited,
 }: PostCardProps) {
   const router = useRouter();
   const author = post.profiles;
@@ -97,6 +113,9 @@ export function PostCard({
   const { title, body } = extractTitle(post.content);
 
   const [localCount, setLocalCount] = useState(post.reaction_count);
+  const [editOpen, setEditOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const isSelf = currentUserId === post.author_id;
 
@@ -146,7 +165,25 @@ export function PostCard({
     }
   }
 
+  async function handleDeletePost() {
+    setDeleting(true);
+    const { error } = await supabase
+      .from("posts")
+      .delete()
+      .eq("id", post.id);
+
+    if (error) {
+      toast.error("პოსტის წაშლა ვერ მოხერხდა");
+      setDeleting(false);
+    } else {
+      toast.success("პოსტი წაიშალა");
+      setConfirmDelete(false);
+      onDeleted?.(post.id);
+    }
+  }
+
   return (
+    <>
     <article className="rounded-xl border bg-card transition-all duration-200 hover:shadow-sm">
       <div className="p-3 sm:p-5">
         <div className="flex items-start gap-3">
@@ -179,8 +216,7 @@ export function PostCard({
                 )}
               </div>
 
-              {/* Overflow menu with report/block */}
-              {currentUserId && !isSelf && (
+              {currentUserId && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
@@ -191,28 +227,37 @@ export function PostCard({
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem onClick={handleReport}>
-                      <Flag className="mr-2 h-4 w-4" />
-                      დაარეპორტე
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={handleBlock}
-                      className="text-destructive focus:text-destructive"
-                    >
-                      <Ban className="mr-2 h-4 w-4" />
-                      დაბლოკე მომხმარებელი
-                    </DropdownMenuItem>
+                    {isSelf ? (
+                      <>
+                        <DropdownMenuItem onClick={() => setEditOpen(true)}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          რედაქტირება
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setConfirmDelete(true)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          წაშლა
+                        </DropdownMenuItem>
+                      </>
+                    ) : (
+                      <>
+                        <DropdownMenuItem onClick={handleReport}>
+                          <Flag className="mr-2 h-4 w-4" />
+                          დაარეპორტე
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={handleBlock}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Ban className="mr-2 h-4 w-4" />
+                          დაბლოკე მომხმარებელი
+                        </DropdownMenuItem>
+                      </>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
-              )}
-
-              {(isSelf || !currentUserId) && (
-                <button
-                  type="button"
-                  className="ml-auto shrink-0 rounded-lg p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                >
-                  <MoreHorizontal className="h-4 w-4" />
-                </button>
               )}
             </div>
             <div className="flex items-center gap-2">
@@ -303,5 +348,53 @@ export function PostCard({
         </button>
       </div>
     </article>
+
+    {editOpen && (
+      <PostEditDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        postId={post.id}
+        initialContent={post.content}
+        initialType={post.type}
+        mediaUrls={post.media_urls}
+        onSaved={(newContent, newType) => {
+          onEdited?.(post.id, newContent, newType);
+        }}
+      />
+    )}
+
+    <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="font-serif">პოსტის წაშლა</DialogTitle>
+          <DialogDescription>
+            ნამდვილად გსურს ამ პოსტის წაშლა? ეს მოქმედება შეუქცევადია.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex justify-end gap-2 pt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setConfirmDelete(false)}
+            disabled={deleting}
+          >
+            გაუქმება
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleDeletePost}
+            disabled={deleting}
+          >
+            {deleting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              "წაშლა"
+            )}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

@@ -11,6 +11,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PostTypeBadge } from "@/components/ui/post-type-badge";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   ArrowLeft,
   Loader2,
   MessageCircle,
@@ -18,7 +31,10 @@ import {
   Send,
   Trash2,
   Share2,
+  MoreHorizontal,
+  Pencil,
 } from "lucide-react";
+import { PostEditDialog } from "@/components/posts/post-edit-dialog";
 import { shareOrCopy } from "@/lib/share";
 import { toast } from "sonner";
 
@@ -86,6 +102,9 @@ export default function PostDetailPage() {
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [confirmDeletePost, setConfirmDeletePost] = useState(false);
+  const [deletingPost, setDeletingPost] = useState(false);
 
   const fetchPost = useCallback(async () => {
     if (!id) return;
@@ -211,6 +230,23 @@ export default function PostDetailPage() {
     }
   }
 
+  async function handleDeletePost() {
+    if (!post) return;
+    setDeletingPost(true);
+    const { error } = await supabase
+      .from("posts")
+      .delete()
+      .eq("id", post.id);
+
+    if (error) {
+      toast.error("პოსტის წაშლა ვერ მოხერხდა");
+      setDeletingPost(false);
+    } else {
+      toast.success("პოსტი წაიშალა");
+      router.replace(`/c/${post.circles.slug}`);
+    }
+  }
+
   if (authLoading || loading) {
     return (
       <div className="mx-auto max-w-2xl space-y-4">
@@ -272,6 +308,32 @@ export default function PostDetailPage() {
                 {timeAgo(post.created_at)}
               </span>
               <PostTypeBadge type={post.type} className="ml-auto" />
+
+              {user?.id === post.author_id && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="shrink-0 rounded-lg p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem onClick={() => setEditOpen(true)}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      რედაქტირება
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setConfirmDeletePost(true)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      წაშლა
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
           </div>
         </div>
@@ -463,6 +525,55 @@ export default function PostDetailPage() {
           </div>
         )}
       </div>
+
+      {post && editOpen && (
+        <PostEditDialog
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          postId={post.id}
+          initialContent={post.content}
+          initialType={post.type}
+          mediaUrls={post.media_urls}
+          onSaved={(newContent, newType) => {
+            setPost((prev) =>
+              prev ? { ...prev, content: newContent, type: newType as typeof prev.type } : prev,
+            );
+          }}
+        />
+      )}
+
+      <Dialog open={confirmDeletePost} onOpenChange={setConfirmDeletePost}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-serif">პოსტის წაშლა</DialogTitle>
+            <DialogDescription>
+              ნამდვილად გსურს ამ პოსტის წაშლა? ეს მოქმედება შეუქცევადია.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setConfirmDeletePost(false)}
+              disabled={deletingPost}
+            >
+              გაუქმება
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleDeletePost}
+              disabled={deletingPost}
+            >
+              {deletingPost ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "წაშლა"
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

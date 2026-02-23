@@ -400,6 +400,16 @@ export default function CircleDetailPage() {
                   setPosts((prev) => prev.filter((p) => p.author_id !== id));
                   refreshBlocklist();
                 }}
+                onDeleted={(postId) => {
+                  setPosts((prev) => prev.filter((p) => p.id !== postId));
+                }}
+                onEdited={(postId, content, type) => {
+                  setPosts((prev) =>
+                    prev.map((p) =>
+                      p.id === postId ? { ...p, content, type } : p,
+                    ),
+                  );
+                }}
               />
             ))}
 

@@ -107,6 +107,16 @@ export default function FeedPage() {
     refreshBlocklist();
   }
 
+  function handleDeleted(postId: string) {
+    setPosts((prev) => prev.filter((p) => p.id !== postId));
+  }
+
+  function handleEdited(postId: string, content: string, type: PostData["type"]) {
+    setPosts((prev) =>
+      prev.map((p) => (p.id === postId ? { ...p, content, type } : p)),
+    );
+  }
+
   function handleLoadMore() {
     if (loadingMore) return;
     fetchFeed(posts.length, true);
@@ -177,6 +187,8 @@ export default function FeedPage() {
                 onLikeToggle={toggle}
                 currentUserId={user.id}
                 onBlock={handleBlock}
+                onDeleted={handleDeleted}
+                onEdited={handleEdited}
               />
             ))}
 
