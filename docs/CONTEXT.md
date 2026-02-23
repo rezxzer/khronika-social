@@ -1,6 +1,6 @@
 # Khronika — Project Context (for AI assistants)
 
-> Last updated: 2026-02-23 (Phase 17.2 — Image Optimization)
+> Last updated: 2026-02-23 (Phase 17.3 — Performance Optimization)
 > This document is the single source of truth for any AI assistant helping develop Khronika.
 > It will be updated incrementally as the project evolves.
 
@@ -389,12 +389,20 @@ Body has a fixed multi-layer gradient:
 - Automatic lazy loading, responsive sizing, WebP/AVIF via Vercel Image Optimization
 - No DB changes required
 
+### Phase 17.3 — Performance Optimization ✅
+- Replaced `framer-motion` PageTransition with CSS `@keyframes` — removed ~30KB gzipped dependency
+- Dynamic imports (`next/dynamic`, `ssr: false`): `CommandPalette`, `MobileDrawer`, `PostEditDialog` — loaded on demand
+- `React.memo` on `PostCard` — prevents re-renders in post lists
+- `useMemo` for `visiblePosts` filter in feed page
+- Static `EMPTY_STATES` moved outside component (no re-creation per render)
+- Added `loading.tsx` skeleton files for `/feed`, `/notifications`, `/messages`, `/messages/[id]` — server-side instant skeletons
+- No UI/UX changes, no DB changes
+
 ---
 
 ## What Is NOT Built Yet
 
 ### Phase 18 — Remaining Polish
-- Performance optimization (lazy loading, bundle analysis)
 - Video uploads
 - Typing indicator (Realtime Presence)
 

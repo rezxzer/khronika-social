@@ -33,9 +33,18 @@ import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { useUnreadCount } from "@/hooks/use-notifications";
 import { useUnreadMessages } from "@/hooks/use-conversations";
-import { CommandPalette } from "@/components/command-palette";
-import { MobileDrawer } from "@/components/mobile-drawer";
+import dynamic from "next/dynamic";
 import { ThemeToggle } from "@/components/theme-toggle";
+
+const CommandPalette = dynamic(
+  () => import("@/components/command-palette").then((m) => m.CommandPalette),
+  { ssr: false },
+);
+
+const MobileDrawer = dynamic(
+  () => import("@/components/mobile-drawer").then((m) => m.MobileDrawer),
+  { ssr: false },
+);
 
 export function Navbar() {
   const pathname = usePathname();

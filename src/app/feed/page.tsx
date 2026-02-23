@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
@@ -25,6 +25,26 @@ import { cn } from "@/lib/utils";
 const PAGE_SIZE = 20;
 
 type FeedTab = "circles" | "following" | "trending";
+
+const EMPTY_STATES: Record<FeedTab, { icon: typeof Compass; title: string; description: string; cta?: { href: string; label: string } }> = {
+  circles: {
+    icon: Compass,
+    title: "შენი ფიდი ცარიელია",
+    description: "აღმოაჩინე საინტერესო წრეები და შეუერთდი თემებს — პოსტები აქ გამოჩნდება.",
+    cta: { href: "/circles/explore", label: "წრეების აღმოჩენა" },
+  },
+  following: {
+    icon: Users,
+    title: "გამოწერილების პოსტები არ არის",
+    description: "გამოიწერე მომხმარებლები რომ მათი პოსტები აქ გამოჩნდეს.",
+    cta: { href: "/search", label: "მომხმარებლების ძებნა" },
+  },
+  trending: {
+    icon: Flame,
+    title: "ტრენდული პოსტები ჯერ არ არის",
+    description: "ბოლო 7 დღის ყველაზე პოპულარული პოსტები აქ გამოჩნდება.",
+  },
+};
 
 const TABS: { key: FeedTab; label: string; icon: typeof CircleDot }[] = [
   { key: "circles", label: "ჩემი წრეები", icon: CircleDot },
@@ -292,7 +312,10 @@ export default function FeedPage() {
     fetchFeed(posts.length, true);
   }
 
-  const visiblePosts = posts.filter((p) => !blockedIds.includes(p.author_id));
+  const visiblePosts = useMemo(
+    () => posts.filter((p) => !blockedIds.includes(p.author_id)),
+    [posts, blockedIds],
+  );
 
   if (authLoading || !user) {
     return (
@@ -302,27 +325,7 @@ export default function FeedPage() {
     );
   }
 
-  const emptyStates: Record<FeedTab, { icon: typeof Compass; title: string; description: string; cta?: { href: string; label: string } }> = {
-    circles: {
-      icon: Compass,
-      title: "შენი ფიდი ცარიელია",
-      description: "აღმოაჩინე საინტერესო წრეები და შეუერთდი თემებს — პოსტები აქ გამოჩნდება.",
-      cta: { href: "/circles/explore", label: "წრეების აღმოჩენა" },
-    },
-    following: {
-      icon: Users,
-      title: "გამოწერილების პოსტები არ არის",
-      description: "გამოიწერე მომხმარებლები რომ მათი პოსტები აქ გამოჩნდეს.",
-      cta: { href: "/search", label: "მომხმარებლების ძებნა" },
-    },
-    trending: {
-      icon: Flame,
-      title: "ტრენდული პოსტები ჯერ არ არის",
-      description: "ბოლო 7 დღის ყველაზე პოპულარული პოსტები აქ გამოჩნდება.",
-    },
-  };
-
-  const empty = emptyStates[tab];
+  const empty = EMPTY_STATES[tab];
 
   return (
     <AppShell>

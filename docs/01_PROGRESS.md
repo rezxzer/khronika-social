@@ -1,7 +1,7 @@
 # ქრონიკა — პროგრესის ტრეკერი (Changelog)
 
 > ყოველი ახალი ფუნქციის დამატებისას აქ ვწერთ.
-> ბოლო განახლება: 2026-02-23 (Phase 17.2 — Image Optimization)
+> ბოლო განახლება: 2026-02-23 (Phase 17.3 — Performance Optimization)
 
 ---
 
@@ -479,6 +479,33 @@ Button, Card, Input, Label, Avatar, Badge, Dialog, DropdownMenu, Command, Skelet
 
 ---
 
+## Phase 17.3 — Performance Optimization ✅ (2026-02-23)
+
+| ფაილი | აღწერა | სტატუსი |
+|---|---|---|
+| `src/components/page-transition.tsx` | `framer-motion` → CSS `@keyframes` animation (~30KB removed) | ✅ |
+| `src/components/navbar.tsx` | Dynamic import: `CommandPalette`, `MobileDrawer` (`next/dynamic`, `ssr: false`) | ✅ |
+| `src/components/posts/post-card.tsx` | `React.memo` + dynamic import `PostEditDialog` | ✅ |
+| `src/app/feed/page.tsx` | `useMemo` visiblePosts, static `EMPTY_STATES` outside component | ✅ |
+| `src/app/feed/loading.tsx` | Server-side skeleton (tab pills + post cards) | ✅ |
+| `src/app/notifications/loading.tsx` | Server-side skeleton (header + notification rows) | ✅ |
+| `src/app/messages/loading.tsx` | Server-side skeleton (conversation list) | ✅ |
+| `src/app/messages/[id]/loading.tsx` | Server-side skeleton (chat bubbles + input) | ✅ |
+| `package.json` | Removed `framer-motion` dependency | ✅ |
+
+**დეტალები:**
+- **Bundle reduction**: `framer-motion` (~30KB gzipped) წაშლილია — მხოლოდ `page-transition.tsx`-ში გამოიყენებოდა, CSS animation-ით ჩანაცვლდა
+- **Code splitting**: `CommandPalette` (cmdk dialog), `MobileDrawer` (Sheet), `PostEditDialog` — ყველა lazy-loaded `next/dynamic`-ით, initial bundle-ში აღარ შედის
+- **Re-render prevention**: `PostCard` wrapped in `React.memo` — ლისტში ახალი პოსტის ჩატვირთვისას ძველი card-ები აღარ re-render-დება
+- **Memoization**: `visiblePosts` filter `useMemo`-ით — ყოველ render-ზე არ გაეშვება `.filter()`
+- **Static hoisting**: `EMPTY_STATES` object გატანილია component-ის გარეთ module-level-ზე
+- **Server skeletons**: 4 `loading.tsx` ფაილი — JS ჩატვირთვამდე ბრაუზერი skeleton-ს აჩვენებს (server-streamed HTML)
+- **`prefers-reduced-motion` respected**: CSS animation duration 0.01ms in reduced-motion mode (already existed)
+- DB ცვლილებები: არ სჭირდება
+- UI/UX ცვლილებები: არ არის
+
+---
+
 ## რა არ არის ჯერ გაკეთებული (Phase 18+)
 
 **დასრულებული:**
@@ -493,9 +520,9 @@ Button, Card, Input, Label, Avatar, Badge, Dialog, DropdownMenu, Command, Skelet
 - [x] Messaging Polish — delete, optimistic send, Broadcast sync (Phase 16.2)
 - [x] Feed Algorithm — 3-tab feed: circles / following / trending (Phase 17.1)
 - [x] Image Optimization — next/image for post media (Phase 17.2)
+- [x] Performance Optimization — bundle, lazy loading, memo, skeletons (Phase 17.3)
 
 **შემდეგი:**
-- [ ] Performance optimization (lazy loading, bundle analysis)
 - [ ] Typing indicator (Realtime Presence)
 - [ ] Push notifications (Service Worker)
 - [ ] Video uploads

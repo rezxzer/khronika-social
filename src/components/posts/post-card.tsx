@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { memo, useState } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -33,8 +34,12 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { shareOrCopy } from "@/lib/share";
-import { PostEditDialog, type PostType } from "@/components/posts/post-edit-dialog";
 import { toast } from "sonner";
+
+const PostEditDialog = dynamic(
+  () => import("@/components/posts/post-edit-dialog").then((m) => m.PostEditDialog),
+  { ssr: false },
+);
 
 export interface PostData {
   id: string;
@@ -95,7 +100,7 @@ interface PostCardProps {
   onEdited?: (postId: string, content: string, type: PostData["type"]) => void;
 }
 
-export function PostCard({
+export const PostCard = memo(function PostCard({
   post,
   liked = false,
   onLikeToggle,
@@ -399,4 +404,4 @@ export function PostCard({
     </Dialog>
     </>
   );
-}
+});

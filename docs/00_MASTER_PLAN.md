@@ -411,9 +411,16 @@
 - Post detail media: `<img>` → `next/image` (responsive sizes)
 - Georgian alt texts, aspect ratio preserved, no DB changes
 
+### Phase 17.3 — Performance Optimization ✅
+**სრულია (2026-02-23).** მოიცავს:
+- `framer-motion` → CSS `@keyframes` PageTransition (~30KB removed)
+- Dynamic imports: `CommandPalette`, `MobileDrawer`, `PostEditDialog`
+- `React.memo` PostCard, `useMemo` visiblePosts
+- `loading.tsx` skeletons: feed, notifications, messages, chat
+- No UI/UX or DB changes
+
 ### Phase 18 — Remaining Polish (შემდეგი)
 **Done როცა:**
-- Performance optimization
 - Video uploads
 
 ---
