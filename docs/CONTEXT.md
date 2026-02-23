@@ -1,6 +1,6 @@
 # Khronika — Project Context (for AI assistants)
 
-> Last updated: 2026-02-22 (Phase 11.2 — Search Results Page)
+> Last updated: 2026-02-22 (Phase 12 — Follow System)
 > This document is the single source of truth for any AI assistant helping develop Khronika.
 > It will be updated incrementally as the project evolves.
 
@@ -285,9 +285,22 @@ Body has a fixed multi-layer gradient:
 
 ---
 
+### Phase 12 — Follow System ✅
+- `follows` table (follower_id, following_id, unique, no self-follow)
+- RLS: authenticated can select, self can insert/delete
+- Notification trigger: 'follow' type auto-created on follow
+- `useFollow` hook: follow/unfollow toggle, follower/following counts
+- Profile page (`/u/[username]`): Follow/Unfollow button, follower/following stats (clickable)
+- `/u/[username]/followers` and `/u/[username]/following` list pages
+- Notifications page: 'follow' type support (icon + "გამოგიწერა" text + link to profile)
+- Account deletion: follows cleanup added
+- DB migration: `database/0007_follows.sql`
+
+---
+
 ## What Is NOT Built Yet
 
-### Phase 11 — Remaining Polish
+### Phase 13 — Remaining Polish
 - Google OAuth login
 - Messages / chat system
 - Follow/Friend system (new DB table)
@@ -334,7 +347,9 @@ src/
 │   │   └── page.tsx             ← Post detail + comments
 │   ├── u/[username]/
 │   │   ├── layout.tsx           ← Dynamic SEO (generateMetadata)
-│   │   └── page.tsx             ← Public profile
+│   │   ├── page.tsx             ← Public profile (follow, stats, posts)
+│   │   ├── followers/page.tsx   ← Followers list
+│   │   └── following/page.tsx   ← Following list
 │   ├── search/
 │   │   ├── layout.tsx           ← SEO metadata
 │   │   └── page.tsx             ← Full search (circles + posts)
@@ -380,6 +395,7 @@ src/
 │   ├── use-reactions.ts
 │   ├── use-notifications.ts
 │   ├── use-blocklist.ts
+│   ├── use-follow.ts           ← Follow/unfollow toggle + counts
 │   ├── use-onboarding.ts       ← 3-step onboarding progress
 │   └── use-trending-circles.ts ← Top active circles this week
 ├── lib/
@@ -404,7 +420,8 @@ src/
     ├── 0003_profile_metadata_patch.sql
     ├── 0004_storage_avatars.sql ← Avatars bucket policies
     ├── 0005_storage_posts.sql   ← Posts media bucket policies
-    └── 0006_reports_select_policy.sql ← Reports SELECT policy + admin RPC
+    ├── 0006_reports_select_policy.sql ← Reports SELECT policy + admin RPC
+    └── 0007_follows.sql             ← Follows table + RLS + notification trigger
 ```
 
 ---
@@ -422,7 +439,7 @@ These steps cannot be automated via migrations and must be done manually in the 
    - Then run `database/0005_storage_posts.sql` in SQL Editor
 
 3. **Run all SQL migrations in order:**
-   - `0001_init.sql` → `0002_rls.sql` → `0003_profile_metadata_patch.sql` → `0004_storage_avatars.sql` → `0005_storage_posts.sql` → `0006_reports_select_policy.sql`
+   - `0001_init.sql` → `0002_rls.sql` → `0003_profile_metadata_patch.sql` → `0004_storage_avatars.sql` → `0005_storage_posts.sql` → `0006_reports_select_policy.sql` → `0007_follows.sql`
 
 4. **Set environment variables on Vercel:**
    - `ADMIN_USER_IDS` = comma-separated admin UUIDs (server-only, **required** for admin security gate)
@@ -433,7 +450,7 @@ These steps cannot be automated via migrations and must be done manually in the 
 
 ## Database Schema (Supabase PostgreSQL)
 
-Tables: `profiles`, `circles`, `circle_members`, `posts`, `comments`, `reactions`, `reports`, `blocklist`, `notifications`
+Tables: `profiles`, `circles`, `circle_members`, `posts`, `comments`, `reactions`, `reports`, `blocklist`, `notifications`, `follows`
 
 Key relationships:
 - `posts.circle_id` → `circles.id`
@@ -441,8 +458,10 @@ Key relationships:
 - `comments.post_id` → `posts.id`
 - `reactions.post_id` → `posts.id` (unique per user)
 - `circle_members` links users to circles with role (owner/mod/member)
+- `follows` (follower_id, following_id) — unique pair, no self-follow constraint
+- Notification types: `comment`, `reaction`, `follow`
 
-RLS enabled: users can only read public circle posts, insert when logged in, update/delete only own content.
+RLS enabled: users can only read public circle posts, insert when logged in, update/delete only own content. Follows: authenticated can select, self can insert/delete.
 
 ---
 

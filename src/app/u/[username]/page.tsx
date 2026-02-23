@@ -13,6 +13,7 @@ import { PostCard, type PostData } from "@/components/posts/post-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useFollow } from "@/hooks/use-follow";
 import {
   CalendarDays,
   UserX,
@@ -25,6 +26,8 @@ import {
   Users,
   Heart,
   CircleDot,
+  UserPlus,
+  UserCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Profile } from "@/hooks/use-profile";
@@ -66,6 +69,17 @@ export default function PublicProfilePage() {
   const profileIdRef = useRef<string | null>(null);
 
   const isSelf = user?.id === profile?.id;
+
+  const {
+    isFollowing,
+    followerCount,
+    followingCount,
+    toggling: followToggling,
+    toggleFollow,
+  } = useFollow({
+    currentUserId: user?.id,
+    targetUserId: profile?.id,
+  });
 
   const fetchProfile = useCallback(async () => {
     if (!username) return;
@@ -344,6 +358,22 @@ export default function PublicProfilePage() {
                 ) : user ? (
                   <>
                     <Button
+                      variant={isFollowing ? "outline" : "seal"}
+                      size="sm"
+                      className="rounded-full"
+                      onClick={toggleFollow}
+                      disabled={followToggling}
+                    >
+                      {followToggling ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : isFollowing ? (
+                        <UserCheck className="h-4 w-4" />
+                      ) : (
+                        <UserPlus className="h-4 w-4" />
+                      )}
+                      {isFollowing ? "გამოწერილი" : "გამოწერა"}
+                    </Button>
+                    <Button
                       variant="outline"
                       size="sm"
                       className="rounded-full"
@@ -388,23 +418,34 @@ export default function PublicProfilePage() {
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="flex flex-col items-center rounded-xl border bg-card p-3 text-center">
-            <FileText className="mb-1 h-4 w-4 text-muted-foreground" />
+        <div className="grid grid-cols-5 gap-2">
+          <Link
+            href={`/u/${profile.username}/followers`}
+            className="flex flex-col items-center rounded-xl border bg-card p-2.5 text-center transition-colors hover:bg-accent sm:p-3"
+          >
+            <span className="text-lg font-bold">{followerCount}</span>
+            <span className="text-[10px] text-muted-foreground sm:text-xs">მიმდევარი</span>
+          </Link>
+          <Link
+            href={`/u/${profile.username}/following`}
+            className="flex flex-col items-center rounded-xl border bg-card p-2.5 text-center transition-colors hover:bg-accent sm:p-3"
+          >
+            <span className="text-lg font-bold">{followingCount}</span>
+            <span className="text-[10px] text-muted-foreground sm:text-xs">გამოწერილი</span>
+          </Link>
+          <div className="flex flex-col items-center rounded-xl border bg-card p-2.5 text-center sm:p-3">
             <span className="text-lg font-bold">{postCount}</span>
-            <span className="text-xs text-muted-foreground">პოსტი</span>
+            <span className="text-[10px] text-muted-foreground sm:text-xs">პოსტი</span>
           </div>
-          <div className="flex flex-col items-center rounded-xl border bg-card p-3 text-center">
-            <Users className="mb-1 h-4 w-4 text-muted-foreground" />
+          <div className="flex flex-col items-center rounded-xl border bg-card p-2.5 text-center sm:p-3">
             <span className="text-lg font-bold">{circleCount}</span>
-            <span className="text-xs text-muted-foreground">წრე</span>
+            <span className="text-[10px] text-muted-foreground sm:text-xs">წრე</span>
           </div>
-          <div className="flex flex-col items-center rounded-xl border bg-card p-3 text-center">
-            <Heart className="mb-1 h-4 w-4 text-muted-foreground" />
+          <div className="flex flex-col items-center rounded-xl border bg-card p-2.5 text-center sm:p-3">
             <span className="text-lg font-bold">
               {reactionCount !== null ? reactionCount : "—"}
             </span>
-            <span className="text-xs text-muted-foreground">რეაქცია</span>
+            <span className="text-[10px] text-muted-foreground sm:text-xs">რეაქცია</span>
           </div>
         </div>
 

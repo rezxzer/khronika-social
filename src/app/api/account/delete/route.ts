@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
     await adminClient.from("comments").delete().eq("author_id", uid);
     await adminClient.from("posts").delete().eq("author_id", uid);
     await adminClient.from("circle_members").delete().eq("user_id", uid);
+    await adminClient.from("follows").delete().or(`follower_id.eq.${uid},following_id.eq.${uid}`);
     await adminClient.from("blocklist").delete().or(`blocker_id.eq.${uid},blocked_id.eq.${uid}`);
     await adminClient.from("reports").delete().eq("reporter_id", uid);
     await adminClient.from("notifications").delete().or(`user_id.eq.${uid},actor_id.eq.${uid}`);

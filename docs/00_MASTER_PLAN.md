@@ -344,10 +344,18 @@
 - Navbar search bar → `/search`, command palette "ძებნა" item
 - Circle results: identity dot, member count; Post results: PostCard with pagination
 
-### Phase 11 — Remaining Polish (შემდეგი)
+### Phase 12 — Follow System ✅
+**სრულია (2026-02-22).** მოიცავს:
+- `follows` table + RLS + notification trigger (`0007_follows.sql`)
+- `useFollow` hook: toggle + counts
+- Profile: Follow/Unfollow button + follower/following stats
+- `/u/[username]/followers` და `/u/[username]/following` list pages
+- Notifications: 'follow' type — "გამოგიწერა"
+- Account deletion cascade: follows cleanup
+
+### Phase 13 — Remaining Polish (შემდეგი)
 **Done როცა:**
 - Google OAuth ინტეგრირებულია
-- Follow/Friend system (new DB table)
 - Performance optimization
 
 ---

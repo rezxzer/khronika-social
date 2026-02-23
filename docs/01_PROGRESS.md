@@ -294,10 +294,30 @@ Button, Card, Input, Label, Avatar, Badge, Dialog, DropdownMenu, Command, Skelet
 
 ---
 
-## რა არ არის ჯერ გაკეთებული (Phase 11+)
+## Phase 12 — Follow System ✅ (2026-02-22)
+
+| ფაილი | აღწერა | სტატუსი |
+|---|---|---|
+| `database/0007_follows.sql` | follows table + RLS + notification trigger (follow type) | ✅ |
+| `src/hooks/use-follow.ts` | Follow/unfollow toggle + follower/following counts hook | ✅ |
+| `src/app/u/[username]/page.tsx` | Follow button + 5-stat row (followers, following, posts, circles, reactions) | ✅ |
+| `src/app/u/[username]/followers/page.tsx` | Followers list page with pagination | ✅ |
+| `src/app/u/[username]/following/page.tsx` | Following list page with pagination | ✅ |
+| `src/app/notifications/page.tsx` | 'follow' notification type support (icon, text, link to profile) | ✅ |
+| `src/app/api/account/delete/route.ts` | follows cleanup added to cascade deletion | ✅ |
+
+**DB ცვლილებები:**
+- ახალი ტაბულა: `follows` (follower_id, following_id, created_at, PK composite, no_self_follow constraint)
+- `notification_type` enum: 'follow' value added
+- Trigger: `on_follow_create_notify` — auto-creates notification on follow
+
+---
+
+## რა არ არის ჯერ გაკეთებული (Phase 13+)
 
 - [x] Dark mode toggle UI
 - [x] Search results page
+- [x] Follow/Friend system
 - [ ] Google OAuth login
 - [ ] Messages / chat system
 - [ ] Performance optimization (lazy loading, bundle analysis)

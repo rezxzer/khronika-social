@@ -14,6 +14,7 @@ import {
   BellOff,
   Heart,
   MessageCircle,
+  UserPlus,
   CheckCheck,
   Loader2,
 } from "lucide-react";
@@ -22,7 +23,7 @@ import { cn } from "@/lib/utils";
 
 interface NotificationRow {
   id: string;
-  type: "comment" | "reaction";
+  type: "comment" | "reaction" | "follow";
   entity_id: string;
   is_read: boolean;
   created_at: string;
@@ -79,7 +80,7 @@ export default function NotificationsPage() {
 
     const rows = data as unknown as Array<{
       id: string;
-      type: "comment" | "reaction";
+      type: "comment" | "reaction" | "follow";
       entity_id: string;
       is_read: boolean;
       created_at: string;
@@ -106,7 +107,9 @@ export default function NotificationsPage() {
       post_id:
         n.type === "reaction"
           ? n.entity_id
-          : commentPostMap[n.entity_id] ?? null,
+          : n.type === "follow"
+            ? null
+            : commentPostMap[n.entity_id] ?? null,
     }));
 
     setNotifications(mapped);
@@ -210,11 +213,16 @@ export default function NotificationsPage() {
               const actorName =
                 n.actor?.display_name || n.actor?.username || "ვიღაცა";
               const actorInitials = actorName.slice(0, 2).toUpperCase();
-              const href = n.post_id
-                ? n.type === "comment"
-                  ? `/p/${n.post_id}?focus=comment`
-                  : `/p/${n.post_id}`
-                : "#";
+              const href =
+                n.type === "follow"
+                  ? n.actor?.username
+                    ? `/u/${n.actor.username}`
+                    : "#"
+                  : n.post_id
+                    ? n.type === "comment"
+                      ? `/p/${n.post_id}?focus=comment`
+                      : `/p/${n.post_id}`
+                    : "#";
 
               return (
                 <Link
@@ -240,7 +248,9 @@ export default function NotificationsPage() {
                       <span className="font-semibold">{actorName}</span>{" "}
                       {n.type === "comment"
                         ? "დაკომენტარა შენს პოსტზე"
-                        : "მოიწონა შენი პოსტი"}
+                        : n.type === "follow"
+                          ? "გამოგიწერა"
+                          : "მოიწონა შენი პოსტი"}
                     </p>
                     <span className="text-xs text-muted-foreground">
                       {timeAgo(n.created_at)}
@@ -250,6 +260,8 @@ export default function NotificationsPage() {
                   <div className="shrink-0">
                     {n.type === "comment" ? (
                       <MessageCircle className="h-4 w-4 text-seal" />
+                    ) : n.type === "follow" ? (
+                      <UserPlus className="h-4 w-4 text-seal" />
                     ) : (
                       <Heart className="h-4 w-4 fill-red-500 text-red-500" />
                     )}
