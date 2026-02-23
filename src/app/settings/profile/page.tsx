@@ -71,7 +71,13 @@ export default function ProfileSettingsPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [deleting, setDeleting] = useState(false);
-  const { state: pushState, loading: pushLoading, subscribe: pushSubscribe, unsubscribe: pushUnsubscribe } = useWebPush(user?.id);
+  const {
+    state: pushState,
+    loading: pushLoading,
+    subscribe: pushSubscribe,
+    unsubscribe: pushUnsubscribe,
+    lastError: pushLastError,
+  } = useWebPush(user?.id);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -419,13 +425,13 @@ export default function ProfileSettingsPage() {
                   disabled={pushLoading}
                   onCheckedChange={async (checked) => {
                     if (checked) {
-                      const ok = await pushSubscribe();
-                      if (ok) toast.success("Push შეტყობინებები ჩართულია");
-                      else toast.error("ვერ ჩაირთო push შეტყობინებები");
+                      const result = await pushSubscribe();
+                      if (result.ok) toast.success("Push შეტყობინებები ჩართულია");
+                      else toast.error(result.message || pushLastError || "ვერ ჩაირთო push შეტყობინებები");
                     } else {
-                      const ok = await pushUnsubscribe();
-                      if (ok) toast.success("Push შეტყობინებები გამოირთო");
-                      else toast.error("ვერ გამოირთო push შეტყობინებები");
+                      const result = await pushUnsubscribe();
+                      if (result.ok) toast.success("Push შეტყობინებები გამოირთო");
+                      else toast.error(result.message || pushLastError || "ვერ გამოირთო push შეტყობინებები");
                     }
                   }}
                 />

@@ -13,10 +13,18 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 }
 
 type PushState = "unsupported" | "default" | "denied" | "granted" | "subscribed";
+type PushActionResult = { ok: true } | { ok: false; message: string };
 
 export function useWebPush(userId: string | undefined) {
   const [state, setState] = useState<PushState>("default");
   const [loading, setLoading] = useState(false);
+  const [lastError, setLastError] = useState<string | null>(null);
+
+  function getVapidKey() {
+    const raw = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+    if (!raw) return null;
+    return raw.replace(/\s+/g, "");
+  }
 
   useEffect(() => {
     if (!userId) return;
@@ -52,39 +60,70 @@ export function useWebPush(userId: string | undefined) {
     }
   }, [userId]);
 
-  const subscribe = useCallback(async () => {
-    if (!userId) return false;
+  const subscribe = useCallback(async (): Promise<PushActionResult> => {
+    if (!userId) return { ok: false, message: "მომხმარებელი ვერ მოიძებნა" };
     setLoading(true);
+    setLastError(null);
 
     try {
+      if (
+        typeof window === "undefined" ||
+        !("serviceWorker" in navigator) ||
+        !("PushManager" in window)
+      ) {
+        setState("unsupported");
+        setLoading(false);
+        const message = "ეს ბრაუზერი push შეტყობინებებს არ უჭერს მხარს";
+        setLastError(message);
+        return { ok: false, message };
+      }
+
       const permission = await Notification.requestPermission();
       if (permission !== "granted") {
         setState("denied");
         setLoading(false);
-        return false;
+        const message = "ბრაუზერში შეტყობინებების ნებართვა არ არის ჩართული";
+        setLastError(message);
+        return { ok: false, message };
       }
 
       const reg = await navigator.serviceWorker.register("/sw.js");
       await navigator.serviceWorker.ready;
 
-      const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      const vapidKey = getVapidKey();
       if (!vapidKey) {
         setLoading(false);
-        return false;
+        const message = "NEXT_PUBLIC_VAPID_PUBLIC_KEY ვერ მოიძებნა";
+        setLastError(message);
+        return { ok: false, message };
       }
 
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidKey).buffer as ArrayBuffer,
-      });
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        const appServerKey = Uint8Array.from(urlBase64ToUint8Array(vapidKey));
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: appServerKey as unknown as BufferSource,
+        });
+      }
 
       const json = sub.toJSON();
+      const endpoint = json.endpoint;
+      const p256dh = json.keys?.p256dh;
+      const auth = json.keys?.auth;
+      if (!endpoint || !p256dh || !auth) {
+        setLoading(false);
+        const message = "Push subscription data არასრულია";
+        setLastError(message);
+        return { ok: false, message };
+      }
+
       const { error } = await supabase.from("push_subscriptions").upsert(
         {
           user_id: userId,
-          endpoint: json.endpoint!,
-          p256dh: json.keys!.p256dh!,
-          auth: json.keys!.auth!,
+          endpoint,
+          p256dh,
+          auth,
           is_active: true,
           updated_at: new Date().toISOString(),
         },
@@ -93,44 +132,63 @@ export function useWebPush(userId: string | undefined) {
 
       if (error) {
         setLoading(false);
-        return false;
+        const message = `Subscription შენახვა ვერ მოხერხდა: ${error.message}`;
+        setLastError(message);
+        return { ok: false, message };
       }
 
       setState("subscribed");
       setLoading(false);
-      return true;
-    } catch {
+      return { ok: true };
+    } catch (err) {
       setLoading(false);
-      return false;
+      const domErr = err as DOMException;
+      const message =
+        domErr?.name === "InvalidCharacterError"
+          ? "VAPID public key არასწორი ფორმატისაა"
+          : domErr?.name === "NotAllowedError"
+            ? "ბრაუზერმა Push subscription დაბლოკა"
+            : "Push subscription ვერ შეიქმნა";
+      setLastError(message);
+      return { ok: false, message };
     }
   }, [userId]);
 
-  const unsubscribe = useCallback(async () => {
-    if (!userId) return false;
+  const unsubscribe = useCallback(async (): Promise<PushActionResult> => {
+    if (!userId) return { ok: false, message: "მომხმარებელი ვერ მოიძებნა" };
     setLoading(true);
+    setLastError(null);
 
     try {
       const reg = await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.getSubscription();
 
       if (sub) {
-        await supabase
+        const { error } = await supabase
           .from("push_subscriptions")
           .delete()
           .eq("user_id", userId)
           .eq("endpoint", sub.endpoint);
+        if (error) {
+          setLoading(false);
+          const message = `Subscription წაშლა ვერ მოხერხდა: ${error.message}`;
+          setLastError(message);
+          return { ok: false, message };
+        }
 
         await sub.unsubscribe();
       }
 
       setState("granted");
       setLoading(false);
-      return true;
+      return { ok: true };
     } catch {
       setLoading(false);
-      return false;
+      const message = "Push subscription გამორთვა ვერ მოხერხდა";
+      setLastError(message);
+      return { ok: false, message };
     }
   }, [userId]);
 
-  return { state, loading, subscribe, unsubscribe };
+  return { state, loading, subscribe, unsubscribe, lastError };
 }
