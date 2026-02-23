@@ -1,55 +1,79 @@
-import { createAdminClient } from "@/lib/supabase/server";
+"use client";
+
+import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/lib/supabase/client";
 import { ReportsList, type Report } from "@/components/admin/reports-list";
 import { Shield } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export const dynamic = "force-dynamic";
+export default function AdminReportsPage() {
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
+  const [reports, setReports] = useState<Report[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [denied, setDenied] = useState(false);
 
-interface ReportRow {
-  id: string;
-  reporter_id: string;
-  target_type: string;
-  target_id: string;
-  reason: string | null;
-  created_at: string;
-}
+  const fetchReports = useCallback(async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
-export default async function AdminReportsPage() {
-  const admin = createAdminClient();
-
-  const { data: reports } = await admin
-    .from("reports")
-    .select("id, reporter_id, target_type, target_id, reason, created_at")
-    .order("created_at", { ascending: false })
-    .limit(200);
-
-  const rows = (reports || []) as ReportRow[];
-
-  const reporterIds = [...new Set(rows.map((r) => r.reporter_id))];
-  let profileMap: Record<
-    string,
-    { username: string | null; display_name: string | null }
-  > = {};
-
-  if (reporterIds.length > 0) {
-    const { data: profiles } = await admin
-      .from("profiles")
-      .select("id, username, display_name")
-      .in("id", reporterIds);
-
-    if (profiles) {
-      profileMap = Object.fromEntries(
-        profiles.map((p) => [
-          p.id,
-          { username: p.username, display_name: p.display_name },
-        ])
-      );
+    if (!session?.access_token) {
+      setDenied(true);
+      setLoading(false);
+      return;
     }
+
+    const res = await fetch("/api/admin/reports", {
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    });
+
+    if (res.status === 403 || res.status === 401) {
+      setDenied(true);
+      setLoading(false);
+      return;
+    }
+
+    const data = await res.json();
+    setReports(data.reports || []);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      router.replace("/login");
+      return;
+    }
+    fetchReports();
+  }, [authLoading, user, router, fetchReports]);
+
+  if (authLoading || loading) {
+    return (
+      <div className="mx-auto max-w-3xl space-y-4 py-4">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-40 w-full rounded-xl" />
+      </div>
+    );
   }
 
-  const enrichedReports: Report[] = rows.map((r) => ({
-    ...r,
-    reporter: profileMap[r.reporter_id] || null,
-  }));
+  if (denied || !user) {
+    return (
+      <div className="mx-auto max-w-3xl py-16 text-center">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+          <Shield className="h-7 w-7 text-muted-foreground" />
+        </div>
+        <h1 className="font-serif text-xl font-bold">არ გაქვს წვდომა</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          ეს გვერდი მხოლოდ ადმინისტრატორებისთვისაა.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 py-4">
@@ -62,12 +86,12 @@ export default async function AdminReportsPage() {
             რეპორტები
           </h1>
           <p className="text-xs text-muted-foreground">
-            {enrichedReports.length} რეპორტი სულ
+            {reports.length} რეპორტი სულ
           </p>
         </div>
       </div>
 
-      <ReportsList reports={enrichedReports} />
+      <ReportsList reports={reports} />
     </div>
   );
 }
