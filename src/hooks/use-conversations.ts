@@ -199,10 +199,24 @@ export function useUnreadMessages(userId?: string) {
           fetchCount();
         },
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "messages",
+        },
+        () => {
+          fetchCount();
+        },
+      )
       .subscribe();
+
+    const interval = setInterval(fetchCount, 10_000);
 
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(interval);
     };
   }, [userId, fetchCount]);
 
