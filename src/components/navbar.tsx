@@ -34,6 +34,7 @@ import { useProfile } from "@/hooks/use-profile";
 import { useUnreadCount } from "@/hooks/use-notifications";
 import { CommandPalette } from "@/components/command-palette";
 import { MobileDrawer } from "@/components/mobile-drawer";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -165,6 +166,9 @@ export function Navbar() {
                   </Link>
                 </Button>
 
+                {/* Dark mode toggle */}
+                <ThemeToggle />
+
                 {/* Messages — visible on md+ */}
                 <Button
                   variant="ghost"
@@ -239,6 +243,9 @@ export function Navbar() {
                         <Ban className="mr-2 h-4 w-4" />
                         დაბლოკილები
                       </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <ThemeToggle variant="full" />
                     </DropdownMenuItem>
                     {isAdmin(user.id) && (
                       <>

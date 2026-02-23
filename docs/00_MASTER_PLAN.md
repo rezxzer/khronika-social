@@ -332,9 +332,14 @@
 - Blocked user → კონტენტი დამალული
 - Report user → Phase 11 (DB enum limit)
 
+### Phase 11.1 — Dark Mode Toggle ✅
+**სრულია (2026-02-22).** მოიცავს:
+- `ThemeToggle` component Navbar-ში (icon + dropdown full variant)
+- System preference detection (`enableSystem`)
+- Dark tokens უკვე არსებობდა CSS-ში
+
 ### Phase 11 — Remaining Polish (შემდეგი)
 **Done როცა:**
-- Dark mode toggle UI მუშაობს
 - Google OAuth ინტეგრირებულია
 - Follow/Friend system (new DB table)
 - Search results page

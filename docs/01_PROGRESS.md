@@ -1,7 +1,7 @@
 # ქრონიკა — პროგრესის ტრეკერი (Changelog)
 
 > ყოველი ახალი ფუნქციის დამატებისას აქ ვწერთ.
-> ბოლო განახლება: 2026-02-22 (Phase 9.1)
+> ბოლო განახლება: 2026-02-22 (Phase 11.1)
 
 ---
 
@@ -208,6 +208,18 @@
 | NEXT_PUBLIC_ADMIN_USER_IDS deprecated (UI only) | `src/lib/admin.ts` (unchanged, cosmetic) |
 
 **რატომ**: `NEXT_PUBLIC_ADMIN_USER_IDS` client-ზე ექსპოზდებოდა — ნებისმიერ ბრაუზერში ჩანდა. ახლა admin ვერიფიკაცია სრულად server-side-ია (`ADMIN_USER_IDS` + `SUPABASE_SERVICE_ROLE_KEY`), client-ს არ აქვს წვდომა.
+
+---
+
+## Phase 11.1 — Dark Mode Toggle ✅
+
+| რა გაკეთდა | ფაილები |
+|---|---|
+| ThemeToggle component (icon + full variants) | `src/components/theme-toggle.tsx` |
+| Navbar: icon toggle + dropdown menu item | `src/components/navbar.tsx` |
+| ThemeProvider: enableSystem | `src/components/providers.tsx` |
+
+**UX**: Navbar-ში მზე/მთვარის icon. User dropdown-ში "მუქი რეჟიმი" / "ნათელი რეჟიმი" ტექსტით. System preference-ს ავტომატურად ცნობს.
 
 ---
 

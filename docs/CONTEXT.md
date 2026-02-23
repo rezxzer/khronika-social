@@ -1,6 +1,6 @@
 # Khronika — Project Context (for AI assistants)
 
-> Last updated: 2026-02-22 (Phase 9.1 — Post Edit/Delete)
+> Last updated: 2026-02-22 (Phase 11.1 — Dark Mode Toggle)
 > This document is the single source of truth for any AI assistant helping develop Khronika.
 > It will be updated incrementally as the project evolves.
 
@@ -25,7 +25,7 @@
 | Icons | lucide-react |
 | Toasts | sonner (shadcn/sonner) |
 | Command Palette | cmdk |
-| Theme | next-themes (light mode active, dark tokens defined, toggle not yet built) |
+| Theme | next-themes (light/dark/system, toggle in navbar + dropdown) |
 | Mobile Drawer | shadcn/ui Sheet (left-side drawer for < lg) |
 
 ---
@@ -267,13 +267,21 @@ Body has a fixed multi-layer gradient:
 
 ---
 
+### Phase 11.1 — Dark Mode Toggle ✅
+- `ThemeToggle` component: icon in navbar + full text in user dropdown menu
+- ThemeProvider: `enableSystem` enabled, `defaultTheme="light"`, `attribute="class"`
+- Dark tokens already existed in `globals.css` (`.dark` block)
+- `src/components/theme-toggle.tsx`: new component, two variants (icon / full)
+
+---
+
 ## What Is NOT Built Yet
 
-### Phase 9 — Remaining Polish
-- Dark mode toggle (tokens exist, toggle UI not built)
+### Phase 11 — Remaining Polish
 - Google OAuth login
 - Search results page (currently only command palette)
 - Messages / chat system
+- Follow/Friend system (new DB table)
 - Performance optimization (lazy loading, bundle analysis)
 - Image optimization (next/image for user media)
 
