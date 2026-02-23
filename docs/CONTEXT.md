@@ -1,6 +1,6 @@
 # Khronika — Project Context (for AI assistants)
 
-> Last updated: 2026-02-22 (Phase 16 — Realtime Notifications)
+> Last updated: 2026-02-23 (Phase 16.2 — Comment Replies + Messaging Polish)
 > This document is the single source of truth for any AI assistant helping develop Khronika.
 > It will be updated incrementally as the project evolves.
 
@@ -325,10 +325,10 @@ Body has a fixed multi-layer gradient:
 ---
 
 ### Phase 15.1 — Realtime Messages ✅
-- Supabase Realtime `postgres_changes` replaces polling in all message hooks
-- `useMessages`: INSERT subscription on `messages` table (instant message delivery in chat)
+- **Supabase Broadcast** (pub/sub) for instant message delivery in chat (replaced postgres_changes)
+- `useMessages`: Broadcast `new_message` + `message_deleted` events on conversation channel
 - `useConversations`: Realtime on `conversations` + `messages` tables (inbox auto-refresh)
-- `useUnreadMessages`: Realtime INSERT/UPDATE on `messages` table (badge auto-update)
+- `useUnreadMessages`: Realtime INSERT/UPDATE/DELETE + 10s polling fallback (badge auto-update)
 - Removed 5s/30s polling intervals — zero-latency message delivery
 - Mobile bottom nav: replaced "შექმნა" tab with "მესიჯები" (unread badge)
 - Requires Supabase Dashboard: enable Realtime on `messages` and `conversations` tables
@@ -342,6 +342,30 @@ Body has a fixed multi-layer gradient:
 - mark-as-read / mark-all-as-read: explicitly calls `refreshBadge()` for immediate badge sync
 - Navbar + Left sidebar badges: auto-update via shared `useUnreadCount` hook
 - Requires Supabase Dashboard: enable Realtime on `notifications` table
+
+---
+
+### Phase 16.1 — Comment Replies ✅
+- `parent_id` column added to `comments` table (self-referencing FK, nullable)
+- Reply UI: "პასუხი" button on each comment (circle members only)
+- Reply indicator above input: "**username**-ს პასუხობ" with cancel button
+- Reply label on comments: "↩ username-ს პასუხობს" for threaded context
+- Non-member UX: comment form replaced with "კომენტარის დასაწერად შეუერთდი წრეს" link
+- DB migration: `database/0009_comment_replies.sql`
+
+---
+
+### Phase 16.2 — Messaging Polish ✅
+- **Message deletion**: sender can delete own messages (RLS DELETE policy)
+- **Optimistic send**: messages appear instantly before server confirmation
+- **Supabase Broadcast**: replaced `postgres_changes` with Broadcast pub/sub for both send and delete
+  - `new_message` event: sender broadcasts, recipient receives instantly
+  - `message_deleted` event: sender broadcasts, recipient's message disappears instantly
+  - RLS-independent — works reliably unlike `postgres_changes` with complex subquery RLS
+- **Unread badge reliability**: 10-second polling fallback + DELETE event subscription in `useUnreadMessages`
+- **REPLICA IDENTITY FULL** on messages table (for future postgres_changes compatibility)
+- Chat UI: hover trash icon on own messages + "წაშლა / არა" confirmation
+- DB migrations: `database/0010_message_delete_policy.sql`, `database/0011_messages_replica_identity.sql`
 
 ---
 
@@ -476,7 +500,10 @@ src/
     ├── 0005_storage_posts.sql   ← Posts media bucket policies
     ├── 0006_reports_select_policy.sql ← Reports SELECT policy + admin RPC
     ├── 0007_follows.sql             ← Follows table + RLS + notification trigger
-    └── 0008_messages.sql            ← Conversations + messages tables + RLS
+    ├── 0008_messages.sql            ← Conversations + messages tables + RLS
+    ├── 0009_comment_replies.sql     ← parent_id column on comments (reply threading)
+    ├── 0010_message_delete_policy.sql ← Messages DELETE RLS policy (sender only)
+    └── 0011_messages_replica_identity.sql ← REPLICA IDENTITY FULL for Realtime
 ```
 
 ---
@@ -494,7 +521,7 @@ These steps cannot be automated via migrations and must be done manually in the 
    - Then run `database/0005_storage_posts.sql` in SQL Editor
 
 3. **Run all SQL migrations in order:**
-   - `0001_init.sql` → `0002_rls.sql` → `0003_profile_metadata_patch.sql` → `0004_storage_avatars.sql` → `0005_storage_posts.sql` → `0006_reports_select_policy.sql` → `0007_follows.sql` → `0008_messages.sql`
+   - `0001_init.sql` → `0002_rls.sql` → `0003_profile_metadata_patch.sql` → `0004_storage_avatars.sql` → `0005_storage_posts.sql` → `0006_reports_select_policy.sql` → `0007_follows.sql` → `0008_messages.sql` → `0009_comment_replies.sql` → `0010_message_delete_policy.sql` → `0011_messages_replica_identity.sql`
 
 4. **Enable Google OAuth in Supabase:**
    - Go to [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials
@@ -519,7 +546,7 @@ These steps cannot be automated via migrations and must be done manually in the 
 
 ## Database Schema (Supabase PostgreSQL)
 
-Tables: `profiles`, `circles`, `circle_members`, `posts`, `comments`, `reactions`, `reports`, `blocklist`, `notifications`, `follows`, `conversations`, `messages`
+Tables: `profiles`, `circles`, `circle_members`, `posts`, `comments` (with `parent_id` for replies), `reactions`, `reports`, `blocklist`, `notifications`, `follows`, `conversations`, `messages`
 
 Key relationships:
 - `posts.circle_id` → `circles.id`
@@ -532,7 +559,7 @@ Key relationships:
 - `messages` (conversation_id, sender_id, content, is_read)
 - Notification types: `comment`, `reaction`, `follow`
 
-RLS enabled: users can only read public circle posts, insert when logged in, update/delete only own content. Follows: authenticated can select, self can insert/delete. Messages: only conversation participants can access.
+RLS enabled: users can only read public circle posts, insert when logged in, update/delete only own content. Comments: only circle members can insert (non-members see "join circle" prompt). Follows: authenticated can select, self can insert/delete. Messages: only conversation participants can access; sender can delete own messages.
 
 ---
 

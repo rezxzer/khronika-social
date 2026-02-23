@@ -383,6 +383,20 @@
 - mark-as-read badge sync via `refreshBadge()`
 - Requires Supabase Dashboard: enable Realtime on `notifications` table
 
+### Phase 16.1 — Comment Replies ✅
+**სრულია (2026-02-23).** მოიცავს:
+- `parent_id` სვეტი comments ცხრილში (reply threading)
+- Reply ღილაკი + input indicator + "↩ username-ს პასუხობს" label
+- Non-member UX: "შეუერთდი წრეს" prompt ფორმის ნაცვლად
+
+### Phase 16.2 — Messaging Polish ✅
+**სრულია (2026-02-23).** მოიცავს:
+- საკუთარი მესიჯის წაშლა (DELETE RLS policy + UI)
+- ოპტიმისტური გაგზავნა (მყისიერი UI)
+- Supabase Broadcast: send + delete სინქრონიზაცია (RLS-independent)
+- Unread badge: 10s polling fallback + DELETE subscription
+- REPLICA IDENTITY FULL on messages
+
 ### Phase 17 — Remaining Polish (შემდეგი)
 **Done როცა:**
 - Image optimization (next/image)

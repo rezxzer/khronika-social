@@ -1,7 +1,7 @@
 # ქრონიკა — პროგრესის ტრეკერი (Changelog)
 
 > ყოველი ახალი ფუნქციის დამატებისას აქ ვწერთ.
-> ბოლო განახლება: 2026-02-22 (Phase 16 — Realtime Notifications)
+> ბოლო განახლება: 2026-02-23 (Phase 16.2 — Comment Replies + Messaging Polish)
 
 ---
 
@@ -270,6 +270,9 @@
 | `database/0006_reports_select_policy.sql` | Reports SELECT policy + `get_admin_reports` RPC function | ✅ |
 | `database/0007_follows.sql` | Follows table + RLS + notification trigger (follow type) | ✅ |
 | `database/0008_messages.sql` | Conversations + messages tables + RLS policies | ✅ |
+| `database/0009_comment_replies.sql` | Comments parent_id column (reply threading) | ✅ |
+| `database/0010_message_delete_policy.sql` | Messages DELETE RLS policy (sender only) | ✅ |
+| `database/0011_messages_replica_identity.sql` | REPLICA IDENTITY FULL on messages | ✅ |
 
 ---
 
@@ -359,8 +362,8 @@ Button, Card, Input, Label, Avatar, Badge, Dialog, DropdownMenu, Command, Skelet
 
 | ფაილი | აღწერა | სტატუსი |
 |---|---|---|
-| `src/hooks/use-messages.ts` | Realtime INSERT subscription, removed polling | ✅ |
-| `src/hooks/use-conversations.ts` | Realtime on conversations + messages, removed polling | ✅ |
+| `src/hooks/use-messages.ts` | Supabase Broadcast for send/delete (replaced postgres_changes) | ✅ |
+| `src/hooks/use-conversations.ts` | Realtime on conversations + messages + 10s polling fallback | ✅ |
 | `src/components/bottom-nav.tsx` | "მესიჯები" tab + unread badge (replaced "შექმნა") | ✅ |
 
 **UX ცვლილებები:**
@@ -391,6 +394,51 @@ Button, Card, Input, Label, Avatar, Badge, Dialog, DropdownMenu, Command, Skelet
 
 ---
 
+## Phase 16.1 — Comment Replies ✅ (2026-02-23)
+
+| ფაილი | აღწერა | სტატუსი |
+|---|---|---|
+| `database/0009_comment_replies.sql` | parent_id column + index on comments | ✅ |
+| `src/app/p/[id]/page.tsx` | Reply button, reply indicator, reply-to label, non-member prompt | ✅ |
+
+**ცვლილებები:**
+- `comments` ცხრილში `parent_id` სვეტი (self-referencing FK, nullable, cascade delete)
+- თითოეულ კომენტარზე "პასუხი" ღილაკი (მხოლოდ წრის წევრებისთვის)
+- Input-ის ზემოთ "**username**-ს პასუხობ" indicator + X ღილაკი გასაუქმებლად
+- Reply კომენტარებზე "↩ username-ს პასუხობს" label
+- **RLS fix**: არაწევრებს კომენტარის ფორმის ნაცვლად "კომენტარის დასაწერად შეუერთდი წრეს" ჩანს
+- Membership check: `circle_members` query `fetchPost`-ში
+
+---
+
+## Phase 16.2 — Messaging Polish ✅ (2026-02-23)
+
+| ფაილი | აღწერა | სტატუსი |
+|---|---|---|
+| `database/0010_message_delete_policy.sql` | Messages DELETE RLS policy (sender only) | ✅ |
+| `database/0011_messages_replica_identity.sql` | REPLICA IDENTITY FULL on messages | ✅ |
+| `src/hooks/use-messages.ts` | Broadcast send/delete, optimistic UI, deleteMessage | ✅ |
+| `src/hooks/use-conversations.ts` | Unread badge: 10s polling fallback + DELETE subscription | ✅ |
+| `src/app/messages/[id]/page.tsx` | Delete UI: hover trash + confirmation | ✅ |
+
+**ცვლილებები:**
+- **მესიჯის წაშლა**: `messages_delete_sender` RLS policy — მხოლოდ გამგზავნი წაშლის საკუთარს
+- **ოპტიმისტური გაგზავნა**: მესიჯი მყისიერად ჩანს, server-ის შემდეგ ნამდვილი ID-ით ჩანაცვლდება
+- **Supabase Broadcast (pub/sub)**: postgres_changes-ს ჩაანაცვლა (RLS subquery-სთან არასანდო იყო)
+  - `new_message` event: გამგზავნი broadcasts → მიმღებს მყისიერად ეჩვენება
+  - `message_deleted` event: გამგზავნი broadcasts → მიმღებს მყისიერად ქრება
+- **Unread badge**: 10-წამიანი polling fallback + DELETE event subscription
+- **REPLICA IDENTITY FULL**: messages table-ზე (DELETE events-ში ყველა სვეტი)
+- **Chat UI**: hover-ზე trash icon საკუთარ მესიჯებზე + "წაშლა / არა" confirmation
+
+**კონფიდენციალურობა (RLS summary):**
+- `messages_select_participant`: მხოლოდ მონაწილეები კითხულობენ
+- `messages_insert_sender`: მხოლოდ მონაწილე წერს
+- `messages_update_read`: მხოლოდ მიმღები ნიშნავს წაკითხულად
+- `messages_delete_sender`: მხოლოდ გამგზავნი წაშლის
+
+---
+
 ## რა არ არის ჯერ გაკეთებული (Phase 17+)
 
 **დასრულებული:**
@@ -401,6 +449,8 @@ Button, Card, Input, Label, Avatar, Badge, Dialog, DropdownMenu, Command, Skelet
 - [x] Direct Messages (Phase 14)
 - [x] Realtime Messages (Phase 15.1)
 - [x] Realtime Notifications (Phase 16)
+- [x] Comment Replies (Phase 16.1)
+- [x] Messaging Polish — delete, optimistic send, Broadcast sync (Phase 16.2)
 
 **შემდეგი:**
 - [ ] Image optimization (next/image for user media)
