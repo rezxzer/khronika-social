@@ -14,6 +14,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,7 +34,10 @@ import {
   Camera,
   User,
   TriangleAlert,
+  Trash2,
+  Mail,
 } from "lucide-react";
+import { toast } from "sonner";
 
 function sanitizeFilename(name: string): string {
   const ext = name.lastIndexOf(".") >= 0 ? name.slice(name.lastIndexOf(".")) : "";
@@ -53,6 +63,10 @@ export default function ProfileSettingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [bucketWarning, setBucketWarning] = useState<string | null>(null);
+
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -172,7 +186,42 @@ export default function ProfileSettingsPage() {
     setSuccess(true);
     setSaving(false);
     refetch();
+    toast.success("პროფილი წარმატებით განახლდა");
     setTimeout(() => setSuccess(false), 3000);
+  }
+
+  async function handleDeleteAccount() {
+    if (!user || deleteConfirm !== "წაშლა") return;
+    setDeleting(true);
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) {
+        toast.error("სესია ვერ მოიძებნა, გადაიტვირთე გვერდი");
+        setDeleting(false);
+        return;
+      }
+
+      const res = await fetch("/api/account/delete", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        toast.error(body.error || "ანგარიშის წაშლა ვერ მოხერხდა");
+        setDeleting(false);
+        return;
+      }
+
+      await supabase.auth.signOut();
+      toast.success("ანგარიში წაიშალა");
+      router.replace("/");
+    } catch {
+      toast.error("ანგარიშის წაშლა ვერ მოხერხდა");
+      setDeleting(false);
+    }
   }
 
   if (authLoading || profileLoading) {
@@ -317,6 +366,101 @@ export default function ProfileSettingsPage() {
           </CardFooter>
         </form>
       </Card>
+      {/* Email Info */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-4 w-4" />
+            ელფოსტა
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            {user.email || "ელფოსტა მიუწვდომელია"}
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Danger Zone */}
+      <Card className="border-destructive/30">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <Trash2 className="h-4 w-4" />
+            საშიში ზონა
+          </CardTitle>
+          <CardDescription>
+            ანგარიშის წაშლა შეუქცევადია
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            ანგარიშის წაშლით სამუდამოდ წაიშლება შენი პროფილი, პოსტები,
+            კომენტარები, რეაქციები და წრეების წევრობა.
+          </p>
+        </CardContent>
+        <CardFooter>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => {
+              setDeleteConfirm("");
+              setDeleteOpen(true);
+            }}
+          >
+            <Trash2 className="h-4 w-4" />
+            ანგარიშის წაშლა
+          </Button>
+        </CardFooter>
+      </Card>
+
+      {/* Delete Confirm Dialog */}
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-serif text-destructive">
+              ანგარიშის წაშლა
+            </DialogTitle>
+            <DialogDescription>
+              ეს მოქმედება შეუქცევადია. წაიშლება შენი პროფილი, ყველა
+              პოსტი, კომენტარი და წრეების წევრობა.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm">
+              დასადასტურებლად ჩაწერე:{" "}
+              <span className="font-bold text-destructive">წაშლა</span>
+            </p>
+            <Input
+              value={deleteConfirm}
+              onChange={(e) => setDeleteConfirm(e.target.value)}
+              placeholder="წაშლა"
+              autoComplete="off"
+            />
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setDeleteOpen(false)}
+                disabled={deleting}
+              >
+                გაუქმება
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleDeleteAccount}
+                disabled={deleteConfirm !== "წაშლა" || deleting}
+              >
+                {deleting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "სამუდამოდ წაშლა"
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
     </AppShell>
   );

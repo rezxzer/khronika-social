@@ -211,18 +211,23 @@
 
 ---
 
-## Phase 10 — Profile 📋 (Plan Added)
+## Phase 10 — Profile ✅
 
-| რა | სტატუსი |
+| რა გაკეთდა | ფაილები |
 |---|---|
-| სრული გეგმა დაიწერა | ✅ `docs/04_PROFILE_PHASE10.md` |
-| Public profile `/u/[username]` enhancement | ⬜ დაგეგმილი |
-| Profile stats (posts, circles, reactions) | ⬜ დაგეგმილი |
-| Block/Report/Share on profile | ⬜ დაგეგმილი |
-| Account deletion (`/settings/profile`) | ⬜ დაგეგმილი |
-| Blocked user → content hidden | ⬜ დაგეგმილი |
+| Public Profile: header + accent strip + stats | `src/app/u/[username]/page.tsx` |
+| Real posts list + "მეტის ჩატვირთვა" pagination | `src/app/u/[username]/page.tsx` |
+| User circles section (public only) | `src/app/u/[username]/page.tsx` |
+| Stats row: posts, circles, reactions | `src/app/u/[username]/page.tsx` |
+| Self action: "პროფილის რედაქტირება" | `src/app/u/[username]/page.tsx` |
+| Visitor actions: Share + Block/Unblock | `src/app/u/[username]/page.tsx` |
+| Blocked user → "კონტენტი მიუწვდომელია" | `src/app/u/[username]/page.tsx` |
+| Email display (read-only) | `src/app/settings/profile/page.tsx` |
+| Account deletion (მკაცრი confirm) | `src/app/settings/profile/page.tsx` |
+| Account delete API route | `src/app/api/account/delete/route.ts` |
+| Report user | ⬜ Phase 11 (DB enum მხოლოდ 'post','comment') |
 
-**შენიშვნა**: DB schema ცვლილება არ სჭირდება. Account deletion-ისთვის `SUPABASE_SERVICE_ROLE_KEY` უკვე კონფიგურირებულია.
+**UX**: ავტორი ხედავს „რედაქტირება", სხვა ხედავს „გაზიარება"+„დაბლოკვა". Blocked user-ის პროფილზე პოსტები/წრეები დამალულია. ანგარიშის წაშლა მოითხოვს „წაშლა" ტექსტის ჩაწერას.
 
 ---
 

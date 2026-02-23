@@ -324,16 +324,13 @@
 - `/p/[id]` detail page-ზეც Edit/Delete ავტორისთვის
 - `onDeleted`/`onEdited` callbacks feed/circle pages-ში
 
-### Phase 10 — Profile 📋 (დაგეგმილია)
-> სრული გეგმა: `docs/04_PROFILE_PHASE10.md`
-
-**Done როცა:**
-- `/u/[username]` აჩვენებს real posts + circles + stats
-- Share/Block/Report ვიზიტორისთვის
-- `/settings/profile` ანგარიშის წაშლა მკაცრი confirm-ით
-- Blocked user profile → კონტენტი დამალული
-- Mobile 375px usable
-- `npm run build` passes
+### Phase 10 — Profile ✅
+**სრულია (2026-02-22).** მოიცავს:
+- `/u/[username]`: header, stats, real posts (paginated), circles, Share/Block
+- `/settings/profile`: email display, account deletion (მკაცრი confirm)
+- `POST /api/account/delete`: service role key cascade deletion
+- Blocked user → კონტენტი დამალული
+- Report user → Phase 11 (DB enum limit)
 
 ### Phase 11 — Remaining Polish (შემდეგი)
 **Done როცა:**

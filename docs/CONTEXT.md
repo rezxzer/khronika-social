@@ -255,16 +255,15 @@ Body has a fixed multi-layer gradient:
 
 ---
 
-### Phase 10 — Profile (დაგეგმილია) 📋
+### Phase 10 — Profile ✅
 > სრული გეგმა: `docs/04_PROFILE_PHASE10.md`
 
-სკოპი:
-- `/u/[username]` enhancement: real posts (paginated), user circles, stats row, Block/Report/Share
-- `/settings/profile` extension: email display, account deletion (hard delete via service role API)
-- Blocked user profile → content hidden
-- Mobile-first, same UX patterns (Load more, PostCard reuse, sonner toasts)
-- DB schema changes არ სჭირდება (existing tables sufficient)
-- Account deletion needs `SUPABASE_SERVICE_ROLE_KEY` (already configured for admin)
+გაკეთდა:
+- `/u/[username]`: header + accent strip, stats row (posts/circles/reactions), real posts (PostCard + Load more), user circles, Share/Block visitor actions, self edit button
+- `/settings/profile`: email display (read-only), account deletion (მკაცრი confirm + API route)
+- Blocked user profile → content hidden ("კონტენტი მიუწვდომელია")
+- `POST /api/account/delete`: service role key-ით auth user deletion + cascade data cleanup
+- Report user → Phase 11 (DB enum არ უჭერს 'user' target_type-ს)
 
 ---
 
@@ -343,6 +342,9 @@ src/
 │   │   ├── post-composer.tsx    ← Composer inside circle page
 │   │   ├── post-edit-dialog.tsx ← Reusable edit dialog (content + type)
 │   │   └── feed-composer.tsx    ← Composer on /feed with circle selector
+├── api/
+│   ├── admin/reports/route.ts   ← Admin reports API (service role)
+│   └── account/delete/route.ts  ← Account deletion API (service role)
 │   ├── admin/
 │   │   └── reports-list.tsx     ← Client-side interactive reports table
 │   └── ui/                      ← shadcn components
