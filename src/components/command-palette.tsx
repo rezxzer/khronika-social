@@ -89,6 +89,10 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         {user ? (
           <>
             <CommandGroup heading="ნავიგაცია">
+              <CommandItem onSelect={() => go("/search")}>
+                <Search className="mr-2 h-4 w-4" />
+                ძებნა
+              </CommandItem>
               <CommandItem onSelect={() => go("/feed")}>
                 <Rss className="mr-2 h-4 w-4" />
                 ფიდი

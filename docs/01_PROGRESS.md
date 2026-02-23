@@ -277,11 +277,28 @@ Button, Card, Input, Label, Avatar, Badge, Dialog, DropdownMenu, Command, Skelet
 
 ---
 
-## რა არ არის ჯერ გაკეთებული (Phase 9+)
+## Phase 11.2 — Search Results Page ✅ (2026-02-22)
 
-- [ ] Dark mode toggle UI
+| ფაილი | აღწერა | სტატუსი |
+|---|---|---|
+| `src/app/search/page.tsx` | სრული ძებნის გვერდი — წრეები (name/slug/description ilike) + პოსტები (content ilike) | ✅ |
+| `src/app/search/layout.tsx` | SEO metadata | ✅ |
+| `src/components/navbar.tsx` | Search bar → `/search` (ნაცვლად command palette-ის) | ✅ |
+| `src/components/command-palette.tsx` | "ძებნა" item-ის დამატება | ✅ |
+
+**UX:**
+- Circle results: identity dot, name, description, member count
+- Post results: PostCard + likes + edit/delete + "მეტის ჩატვირთვა" (page size 20)
+- Empty state: search prompt icon
+- Mobile search icon → `/search`
+
+---
+
+## რა არ არის ჯერ გაკეთებული (Phase 11+)
+
+- [x] Dark mode toggle UI
+- [x] Search results page
 - [ ] Google OAuth login
-- [ ] Search results page
 - [ ] Messages / chat system
 - [ ] Performance optimization (lazy loading, bundle analysis)
 - [ ] Image optimization (next/image for user media)

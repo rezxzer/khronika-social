@@ -122,7 +122,7 @@ export function Navbar() {
           <div className="hidden flex-1 justify-center md:flex">
             <button
               type="button"
-              onClick={() => setCmdOpen(true)}
+              onClick={() => router.push("/search")}
               className="flex w-full max-w-[340px] items-center gap-2 rounded-full border bg-muted/40 px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted"
             >
               <Search className="h-4 w-4" />
@@ -139,10 +139,10 @@ export function Navbar() {
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             ) : user ? (
               <>
-                {/* Search icon on mobile (opens command palette) */}
+                {/* Search icon on mobile */}
                 <button
                   type="button"
-                  onClick={() => setCmdOpen(true)}
+                  onClick={() => router.push("/search")}
                   className="shrink-0 rounded-full p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:hidden"
                   aria-label="ძებნა"
                 >

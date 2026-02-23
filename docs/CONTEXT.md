@@ -1,6 +1,6 @@
 # Khronika — Project Context (for AI assistants)
 
-> Last updated: 2026-02-22 (Phase 11.1 — Dark Mode Toggle)
+> Last updated: 2026-02-22 (Phase 11.2 — Search Results Page)
 > This document is the single source of truth for any AI assistant helping develop Khronika.
 > It will be updated incrementally as the project evolves.
 
@@ -273,13 +273,22 @@ Body has a fixed multi-layer gradient:
 - Dark tokens already existed in `globals.css` (`.dark` block)
 - `src/components/theme-toggle.tsx`: new component, two variants (icon / full)
 
+### Phase 11.2 — Search Results Page ✅
+- Full search page at `/search` with query param `?q=`
+- Searches circles (name, slug, description) and posts (content) via `ilike`
+- Circle results show identity dot, name, description, member count
+- Post results use existing `PostCard` with likes, edit/delete, pagination
+- "მეტის ჩატვირთვა" for posts (page size 20)
+- Navbar search bar and mobile search icon now navigate to `/search`
+- Command palette includes "ძებნა" item linking to `/search`
+- SEO layout with metadata
+
 ---
 
 ## What Is NOT Built Yet
 
 ### Phase 11 — Remaining Polish
 - Google OAuth login
-- Search results page (currently only command palette)
 - Messages / chat system
 - Follow/Friend system (new DB table)
 - Performance optimization (lazy loading, bundle analysis)
@@ -326,6 +335,9 @@ src/
 │   ├── u/[username]/
 │   │   ├── layout.tsx           ← Dynamic SEO (generateMetadata)
 │   │   └── page.tsx             ← Public profile
+│   ├── search/
+│   │   ├── layout.tsx           ← SEO metadata
+│   │   └── page.tsx             ← Full search (circles + posts)
 │   ├── notifications/
 │   │   ├── layout.tsx           ← SEO metadata
 │   │   └── page.tsx
@@ -339,7 +351,7 @@ src/
 │   ├── mobile-drawer.tsx        ← Sheet-based left drawer for < lg
 │   ├── footer.tsx
 │   ├── providers.tsx            ← ThemeProvider wrapper
-│   ├── command-palette.tsx      ← Ctrl+K global search
+│   ├── command-palette.tsx      ← Ctrl+K command palette + search shortcut
 │   ├── page-transition.tsx      ← framer-motion wrapper
 │   ├── layout/
 │   │   ├── app-shell.tsx        ← 3-column layout

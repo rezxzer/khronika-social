@@ -338,11 +338,16 @@
 - System preference detection (`enableSystem`)
 - Dark tokens უკვე არსებობდა CSS-ში
 
+### Phase 11.2 — Search Results Page ✅
+**სრულია (2026-02-22).** მოიცავს:
+- `/search?q=` სრული ძებნის გვერდი (წრეები + პოსტები)
+- Navbar search bar → `/search`, command palette "ძებნა" item
+- Circle results: identity dot, member count; Post results: PostCard with pagination
+
 ### Phase 11 — Remaining Polish (შემდეგი)
 **Done როცა:**
 - Google OAuth ინტეგრირებულია
 - Follow/Friend system (new DB table)
-- Search results page
 - Performance optimization
 
 ---
