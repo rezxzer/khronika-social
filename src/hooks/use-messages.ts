@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase/client";
 
 export interface MessageRow {
@@ -12,12 +12,13 @@ export interface MessageRow {
   created_at: string;
 }
 
-const PAGE_SIZE = 40;
+const PAGE_SIZE = 50;
 
 export function useMessages(conversationId?: string, currentUserId?: string) {
   const [messages, setMessages] = useState<MessageRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   const fetchMessages = useCallback(async () => {
     if (!conversationId) return;
@@ -49,28 +50,61 @@ export function useMessages(conversationId?: string, currentUserId?: string) {
 
   useEffect(() => {
     fetchMessages();
-    const interval = setInterval(fetchMessages, 5000);
-    return () => clearInterval(interval);
   }, [fetchMessages]);
+
+  useEffect(() => {
+    if (!conversationId) return;
+
+    const channel = supabase
+      .channel(`messages:${conversationId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload) => {
+          const newMsg = payload.new as MessageRow;
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === newMsg.id)) return prev;
+            return [...prev, newMsg];
+          });
+
+          if (currentUserId && newMsg.sender_id !== currentUserId) {
+            supabase
+              .from("messages")
+              .update({ is_read: true })
+              .eq("id", newMsg.id)
+              .then();
+          }
+        },
+      )
+      .subscribe();
+
+    channelRef.current = channel;
+
+    return () => {
+      supabase.removeChannel(channel);
+      channelRef.current = null;
+    };
+  }, [conversationId, currentUserId]);
 
   const sendMessage = useCallback(
     async (content: string) => {
       if (!conversationId || !currentUserId || !content.trim()) return false;
       setSending(true);
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("messages")
         .insert({
           conversation_id: conversationId,
           sender_id: currentUserId,
           content: content.trim(),
-        })
-        .select()
-        .single();
+        });
 
-      if (!error && data) {
-        setMessages((prev) => [...prev, data as MessageRow]);
-
+      if (!error) {
         await supabase
           .from("conversations")
           .update({ last_message_at: new Date().toISOString() })

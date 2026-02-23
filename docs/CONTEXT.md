@@ -1,6 +1,6 @@
 # Khronika — Project Context (for AI assistants)
 
-> Last updated: 2026-02-22 (Phase 14 — Direct Messages)
+> Last updated: 2026-02-22 (Phase 15.1 — Realtime Messages)
 > This document is the single source of truth for any AI assistant helping develop Khronika.
 > It will be updated incrementally as the project evolves.
 
@@ -323,12 +323,23 @@ Body has a fixed multi-layer gradient:
 
 ---
 
+### Phase 15.1 — Realtime Messages ✅
+- Supabase Realtime `postgres_changes` replaces polling in all message hooks
+- `useMessages`: INSERT subscription on `messages` table (instant message delivery in chat)
+- `useConversations`: Realtime on `conversations` + `messages` tables (inbox auto-refresh)
+- `useUnreadMessages`: Realtime INSERT/UPDATE on `messages` table (badge auto-update)
+- Removed 5s/30s polling intervals — zero-latency message delivery
+- Mobile bottom nav: replaced "შექმნა" tab with "მესიჯები" (unread badge)
+- Requires Supabase Dashboard: enable Realtime on `messages` and `conversations` tables
+
+---
+
 ## What Is NOT Built Yet
 
-### Phase 15 — Remaining Polish
+### Phase 16 — Remaining Polish
 - Performance optimization (lazy loading, bundle analysis)
 - Image optimization (next/image for user media)
-- Realtime subscriptions (Supabase Realtime for messages/notifications)
+- Realtime notifications (Supabase Realtime for notifications)
 - Video uploads
 
 ---

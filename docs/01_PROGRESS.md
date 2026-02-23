@@ -350,13 +350,33 @@ Button, Card, Input, Label, Avatar, Badge, Dialog, DropdownMenu, Command, Skelet
 
 ---
 
-## რა არ არის ჯერ გაკეთებული (Phase 15+)
+## Phase 15.1 — Realtime Messages ✅ (2026-02-22)
+
+| ფაილი | აღწერა | სტატუსი |
+|---|---|---|
+| `src/hooks/use-messages.ts` | Realtime INSERT subscription, removed polling | ✅ |
+| `src/hooks/use-conversations.ts` | Realtime on conversations + messages, removed polling | ✅ |
+| `src/components/bottom-nav.tsx` | "მესიჯები" tab + unread badge (replaced "შექმნა") | ✅ |
+
+**UX ცვლილებები:**
+- ჩატში მესიჯები მყისიერად ჩნდება (polling-ის ნაცვლად Realtime)
+- Inbox ავტომატურად განახლდება ახალი მესიჯისას
+- Unread badge ავტომატურად განახლდება
+- მობილურ bottom nav-ზე "მესიჯები" ტაბი დაემატა
+
+**Manual Supabase Steps:**
+- Supabase Dashboard → Database → Replication → Enable Realtime on `messages` and `conversations` tables
+
+---
+
+## რა არ არის ჯერ გაკეთებული (Phase 16+)
 
 - [x] Dark mode toggle UI
 - [x] Search results page
 - [x] Follow/Friend system
 - [x] Google OAuth login
 - [x] Messages / chat system
+- [x] Realtime messages
 - [ ] Performance optimization (lazy loading, bundle analysis)
 - [ ] Image optimization (next/image for user media)
 - [ ] Video uploads

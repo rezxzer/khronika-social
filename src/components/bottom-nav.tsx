@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Compass, PlusCircle, Bell, User } from "lucide-react";
+import { Home, Compass, Bell, MessageSquare, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { useUnreadCount } from "@/hooks/use-notifications";
+import { useUnreadMessages } from "@/hooks/use-conversations";
 
 const NAV_ITEMS = [
   {
@@ -22,11 +23,11 @@ const NAV_ITEMS = [
     match: (p: string) => p.startsWith("/circles") || p.startsWith("/c/"),
   },
   {
-    href: "/circles/new",
-    label: "შექმნა",
-    icon: PlusCircle,
-    match: (p: string) => p === "/circles/new",
-    accent: true,
+    href: "/messages",
+    label: "მესიჯები",
+    icon: MessageSquare,
+    match: (p: string) => p.startsWith("/messages"),
+    badgeKey: "messages" as const,
   },
   {
     href: "/notifications",
@@ -48,6 +49,7 @@ export function BottomNav() {
   const { user, loading } = useAuth();
   const { profile } = useProfile();
   const { count: unreadCount } = useUnreadCount();
+  const { count: unreadMessages } = useUnreadMessages(user?.id);
 
   if (loading || !user) return null;
 
@@ -67,30 +69,28 @@ export function BottomNav() {
               href={profileHref}
               className={cn(
                 "relative flex flex-col items-center gap-0.5 rounded-lg px-3 py-1 transition-colors",
-                item.accent
-                  ? "text-seal"
-                  : active
-                    ? "text-foreground"
-                    : "text-muted-foreground",
+                active
+                  ? "text-foreground"
+                  : "text-muted-foreground",
               )}
             >
               <div className="relative">
-                <item.icon
-                  className={cn(
-                    "h-5 w-5",
-                    item.accent && "h-6 w-6",
-                  )}
-                />
+                <item.icon className="h-5 w-5" />
                 {item.badgeKey === "notifications" && unreadCount > 0 && (
                   <span className="absolute -right-1.5 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-seal px-0.5 text-[8px] font-bold text-seal-foreground">
                     {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+                {item.badgeKey === "messages" && unreadMessages > 0 && (
+                  <span className="absolute -right-1.5 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-seal px-0.5 text-[8px] font-bold text-seal-foreground">
+                    {unreadMessages > 9 ? "9+" : unreadMessages}
                   </span>
                 )}
               </div>
               <span className="text-[10px] font-medium leading-none">
                 {item.label}
               </span>
-              {active && !item.accent && (
+              {active && (
                 <span className="absolute -top-0 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-seal" />
               )}
             </Link>

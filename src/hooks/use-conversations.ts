@@ -23,7 +23,7 @@ export function useConversations(userId?: string) {
   const [conversations, setConversations] = useState<ConversationRow[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetch = useCallback(async () => {
+  const fetchConversations = useCallback(async () => {
     if (!userId) return;
     setLoading(true);
 
@@ -88,16 +88,62 @@ export function useConversations(userId?: string) {
   }, [userId]);
 
   useEffect(() => {
-    fetch();
-  }, [fetch]);
+    fetchConversations();
+  }, [fetchConversations]);
 
-  return { conversations, loading, refetch: fetch };
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = supabase
+      .channel(`conversations:${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "conversations",
+        },
+        (payload) => {
+          const row = (payload.new ?? payload.old) as Record<string, string> | undefined;
+          if (
+            row &&
+            (row.participant_1 === userId || row.participant_2 === userId)
+          ) {
+            fetchConversations();
+          }
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+        },
+        (payload) => {
+          const msg = payload.new as { conversation_id: string };
+          const isRelevant = conversations.some(
+            (c) => c.id === msg.conversation_id,
+          );
+          if (isRelevant) {
+            fetchConversations();
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId, fetchConversations, conversations]);
+
+  return { conversations, loading, refetch: fetchConversations };
 }
 
 export function useUnreadMessages(userId?: string) {
   const [count, setCount] = useState(0);
 
-  const fetch = useCallback(async () => {
+  const fetchCount = useCallback(async () => {
     if (!userId) return;
 
     const { data: convs } = await supabase
@@ -123,10 +169,42 @@ export function useUnreadMessages(userId?: string) {
   }, [userId]);
 
   useEffect(() => {
-    fetch();
-    const interval = setInterval(fetch, 30000);
-    return () => clearInterval(interval);
-  }, [fetch]);
+    fetchCount();
+  }, [fetchCount]);
 
-  return { count, refetch: fetch };
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = supabase
+      .channel(`unread-messages:${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+        },
+        () => {
+          fetchCount();
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "messages",
+        },
+        () => {
+          fetchCount();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId, fetchCount]);
+
+  return { count, refetch: fetchCount };
 }

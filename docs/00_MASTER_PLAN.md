@@ -368,10 +368,18 @@
 - Navbar + sidebar: Messages unread count
 - Account deletion cascade
 
-### Phase 15 — Remaining Polish (შემდეგი)
+### Phase 15.1 — Realtime Messages ✅
+**სრულია (2026-02-22).** მოიცავს:
+- Supabase Realtime `postgres_changes` → instant message delivery
+- Removed polling from `useMessages`, `useConversations`, `useUnreadMessages`
+- Mobile bottom nav: "მესიჯები" tab with unread badge
+- Requires Supabase Dashboard: enable Realtime on `messages` + `conversations` tables
+
+### Phase 16 — Remaining Polish (შემდეგი)
 **Done როცა:**
 - Performance optimization
-- Realtime (Supabase Realtime for messages)
+- Image optimization
+- Realtime notifications
 
 ---
 
