@@ -1,7 +1,7 @@
 # ქრონიკა — პროგრესის ტრეკერი (Changelog)
 
 > ყოველი ახალი ფუნქციის დამატებისას აქ ვწერთ.
-> ბოლო განახლება: 2026-02-24 (Phase 18.1 — Push Notifications)
+> ბოლო განახლება: 2026-02-24 (Phase 19.1 — Video Uploads)
 
 ---
 
@@ -273,6 +273,8 @@
 | `database/0009_comment_replies.sql` | Comments parent_id column (reply threading) | ✅ |
 | `database/0010_message_delete_policy.sql` | Messages DELETE RLS policy (sender only) | ✅ |
 | `database/0011_messages_replica_identity.sql` | REPLICA IDENTITY FULL on messages | ✅ |
+| `database/0012_push_subscriptions.sql` | Push subscriptions table + RLS | ✅ |
+| `database/0013_video_posts.sql` | Video post schema + post-videos bucket policies | ✅ |
 
 ---
 
@@ -556,7 +558,39 @@ Button, Card, Input, Label, Avatar, Badge, Dialog, DropdownMenu, Command, Skelet
 
 ---
 
-## რა არ არის ჯერ გაკეთებული (Phase 19+)
+## Phase 19.1 — Video Uploads (v1) ✅ (2026-02-24)
+
+| ფაილი | აღწერა | სტატუსი |
+|---|---|---|
+| `database/0013_video_posts.sql` | `posts.media_kind` + `posts.video_url`, `post-videos` bucket + RLS | ✅ |
+| `src/components/posts/post-composer.tsx` | Circle post composer: video upload, validation, progress bar | ✅ |
+| `src/components/posts/feed-composer.tsx` | Feed composer: video upload, validation, progress bar | ✅ |
+| `src/components/posts/post-card.tsx` | Video preview player in card (`preload=\"metadata\"`) | ✅ |
+| `src/app/p/[id]/page.tsx` | Full video player controls on detail page | ✅ |
+| `src/components/posts/post-edit-dialog.tsx` | Video preview support in edit dialog | ✅ |
+| `src/app/feed/page.tsx` | `PostData` mapping: `media_kind`/`video_url` fallback | ✅ |
+| `src/app/c/[slug]/page.tsx` | `PostData` mapping: `media_kind`/`video_url` fallback | ✅ |
+| `src/app/u/[username]/page.tsx` | `PostData` mapping: `media_kind`/`video_url` fallback | ✅ |
+| `src/app/search/page.tsx` | `PostData` mapping: `media_kind`/`video_url` fallback | ✅ |
+
+**არქიტექტურა:**
+- **Media model**: `posts.media_kind` (`none`/`image`/`video`) + `posts.video_url` (single video)
+- **v1 წესები**: ერთი პოსტი არის ან images-only ან video-only (mix disabled in composer)
+- **Validation**: მხოლოდ `video/mp4` და `video/webm`, მაქსიმუმ 50MB
+- **Storage**: `post-videos` public bucket + authenticated upload/delete policies
+- **Playback performance**: `<video preload=\"metadata\" playsInline controls>` (no auto-download heavy payload)
+- **UX**: upload progress bar + ქართულად toast/inline შეცდომები
+- DB ცვლილებები: საჭიროა (`0013_video_posts.sql`)
+- Manual Supabase steps: bucket/policies/columns მიგრაციით
+
+**Manual steps:**
+1. Supabase SQL Editor-ში: `database/0013_video_posts.sql` გაშვება
+2. გადაამოწმე რომ bucket `post-videos` შეიქმნა და public read მუშაობს
+3. როლით `authenticated` მომხმარებელი უნდა ახერხებდეს upload/delete ოპერაციებს საკუთარ path-ზე
+
+---
+
+## რა არ არის ჯერ გაკეთებული (Phase 20+)
 
 **დასრულებული:**
 - [x] Dark mode toggle UI (Phase 11.1)
@@ -573,10 +607,11 @@ Button, Card, Input, Label, Avatar, Badge, Dialog, DropdownMenu, Command, Skelet
 - [x] Performance Optimization — bundle, lazy loading, memo, skeletons (Phase 17.3)
 - [x] Typing Indicator — Realtime Presence "წერს..." (Phase 17.4)
 - [x] Push Notifications — Web Push + VAPID, messages-only (Phase 18.1)
+- [x] Video Uploads — one video per post (mp4/webm, progress UI) (Phase 19.1)
 
 **შემდეგი:**
-- [ ] Video uploads
 - [ ] Push notifications v2 (reactions, comments, follows)
+- [ ] Video v2 (compression/transcoding/streaming)
 
 ---
 

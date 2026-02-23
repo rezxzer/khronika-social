@@ -1,6 +1,6 @@
 # Khronika — Project Context (for AI assistants)
 
-> Last updated: 2026-02-24 (Phase 18.1 — Push Notifications)
+> Last updated: 2026-02-24 (Phase 19.1 — Video Uploads v1)
 > This document is the single source of truth for any AI assistant helping develop Khronika.
 > It will be updated incrementally as the project evolves.
 
@@ -423,12 +423,28 @@ Body has a fixed multi-layer gradient:
 - **DB**: `push_subscriptions` table (user_id, endpoint, p256dh, auth, is_active) + RLS
 - **Manual steps**: VAPID keys in `.env.local`, migration `0012_push_subscriptions.sql`
 
+### Phase 19.1 — Video Uploads (v1) ✅
+- **Media model**: `posts.media_kind` (`none`/`image`/`video`) + `posts.video_url` (single video)
+- v1 rule enforced: image list and video cannot be mixed in one post
+- Composer updates:
+  - `post-composer.tsx` and `feed-composer.tsx` support `mp4/webm` upload
+  - validation: mime check + max 50MB
+  - video upload progress UI (percentage bar)
+- Storage:
+  - new public bucket `post-videos`
+  - RLS policies for insert/select/delete
+- Rendering:
+  - `PostCard`: lightweight video preview player (`preload="metadata"`)
+  - `p/[id]`: full video player controls
+- Backward compatibility: image-only posts remain unchanged
+- DB migration: `0013_video_posts.sql`
+
 ---
 
 ## What Is NOT Built Yet
 
-### Phase 19 — Remaining Polish
-- Video uploads
+### Phase 20 — Remaining Polish
+- Push notifications v2 (reactions/comments/follows)
 
 ---
 
@@ -559,7 +575,8 @@ src/
     ├── 0009_comment_replies.sql     ← parent_id column on comments (reply threading)
     ├── 0010_message_delete_policy.sql ← Messages DELETE RLS policy (sender only)
     ├── 0011_messages_replica_identity.sql ← REPLICA IDENTITY FULL for Realtime
-    └── 0012_push_subscriptions.sql       ← Web Push subscriptions table + RLS
+    ├── 0012_push_subscriptions.sql       ← Web Push subscriptions table + RLS
+    └── 0013_video_posts.sql              ← Video post columns + post-videos bucket
 ```
 
 ---
@@ -577,7 +594,7 @@ These steps cannot be automated via migrations and must be done manually in the 
    - Then run `database/0005_storage_posts.sql` in SQL Editor
 
 3. **Run all SQL migrations in order:**
-   - `0001_init.sql` → `0002_rls.sql` → `0003_profile_metadata_patch.sql` → `0004_storage_avatars.sql` → `0005_storage_posts.sql` → `0006_reports_select_policy.sql` → `0007_follows.sql` → `0008_messages.sql` → `0009_comment_replies.sql` → `0010_message_delete_policy.sql` → `0011_messages_replica_identity.sql` → `0012_push_subscriptions.sql`
+   - `0001_init.sql` → `0002_rls.sql` → `0003_profile_metadata_patch.sql` → `0004_storage_avatars.sql` → `0005_storage_posts.sql` → `0006_reports_select_policy.sql` → `0007_follows.sql` → `0008_messages.sql` → `0009_comment_replies.sql` → `0010_message_delete_policy.sql` → `0011_messages_replica_identity.sql` → `0012_push_subscriptions.sql` → `0013_video_posts.sql`
 
 4. **Enable Google OAuth in Supabase:**
    - Go to [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials

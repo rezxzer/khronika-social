@@ -48,6 +48,8 @@ export interface PostData {
   type: "story" | "lesson" | "invite";
   content: string;
   media_urls: string[];
+  media_kind: "none" | "image" | "video";
+  video_url: string | null;
   created_at: string;
   profiles: {
     id: string;
@@ -293,7 +295,17 @@ export const PostCard = memo(function PostCard({
           )}
         </Link>
 
-        {post.media_urls.length > 0 && (
+        {post.media_kind === "video" && post.video_url ? (
+          <div className="mt-3 overflow-hidden rounded-lg border">
+            <video
+              src={post.video_url}
+              className="aspect-video w-full bg-black"
+              controls
+              preload="metadata"
+              playsInline
+            />
+          </div>
+        ) : post.media_urls.length > 0 && (
           <div className="mt-3 grid grid-cols-1 gap-2 overflow-hidden rounded-lg sm:grid-cols-3">
             {post.media_urls.slice(0, 3).map((url, i) => (
               <Link
@@ -364,6 +376,8 @@ export const PostCard = memo(function PostCard({
         initialContent={post.content}
         initialType={post.type}
         mediaUrls={post.media_urls}
+        mediaKind={post.media_kind}
+        videoUrl={post.video_url}
         onSaved={(newContent, newType) => {
           onEdited?.(post.id, newContent, newType);
         }}

@@ -1,26 +1,34 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ImagePlus, X, Loader2 } from "lucide-react";
+import { ImagePlus, X, Loader2, Video } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 type PostType = "story" | "lesson" | "invite";
+type ComposerMediaMode = "images" | "video";
 
 const TYPE_OPTIONS: { value: PostType; label: string; icon: string }[] = [
-  { value: "story", label: "Story", icon: "ðŸ“–" },
-  { value: "lesson", label: "Lesson", icon: "ðŸŽ“" },
-  { value: "invite", label: "Invite", icon: "ðŸ“¨" },
+  { value: "story", label: "ამბავი", icon: "📖" },
+  { value: "lesson", label: "სწავლება", icon: "🎓" },
+  { value: "invite", label: "მოწვევა", icon: "📨" },
 ];
+
+const ALLOWED_VIDEO_MIMES = new Set(["video/mp4", "video/webm"]);
+const MAX_VIDEO_MB = 50;
 
 interface CircleOption {
   id: string;
   name: string;
   slug: string;
+}
+
+function safeFileName(name: string) {
+  return name.replace(/[^a-zA-Z0-9._-]/g, "_");
 }
 
 export function FeedComposer({
@@ -33,16 +41,22 @@ export function FeedComposer({
   onPosted: () => void;
 }) {
   const { user } = useAuth();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+
   const [circles, setCircles] = useState<CircleOption[]>([]);
   const [selectedCircle, setSelectedCircle] = useState<string>("");
-
   const [type, setType] = useState<PostType>("story");
   const [content, setContent] = useState("");
+  const [mediaMode, setMediaMode] = useState<ComposerMediaMode>("images");
   const [images, setImages] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [posting, setPosting] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [inlineError, setInlineError] = useState<string | null>(null);
 
   useEffect(() => {
     if (circleIds.length === 0) return;
@@ -52,20 +66,73 @@ export function FeedComposer({
       .in("id", circleIds)
       .order("name")
       .then(({ data }) => {
-        if (data) {
-          setCircles(data);
-          setSelectedCircle(data[0]?.id ?? "");
-        }
+        if (!data) return;
+        setCircles(data);
+        setSelectedCircle(data[0]?.id ?? "");
       });
   }, [circleIds]);
 
+  function clearImages() {
+    previews.forEach((p) => URL.revokeObjectURL(p));
+    setImages([]);
+    setPreviews([]);
+    if (imageInputRef.current) imageInputRef.current.value = "";
+  }
+
+  function clearVideo() {
+    if (videoPreview) URL.revokeObjectURL(videoPreview);
+    setVideoFile(null);
+    setVideoPreview(null);
+    if (videoInputRef.current) videoInputRef.current.value = "";
+  }
+
   function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    setInlineError(null);
     const files = Array.from(e.target.files ?? []);
-    const allowed = files.filter((f) => f.type.startsWith("image/")).slice(0, 4 - images.length);
-    if (allowed.length === 0) return;
+    const allowed = files
+      .filter((f) => f.type.startsWith("image/"))
+      .slice(0, 4 - images.length);
+    if (allowed.length === 0) {
+      setInlineError("აირჩიე სურათის ფაილი");
+      return;
+    }
+
+    if (mediaMode === "video") {
+      clearVideo();
+      setMediaMode("images");
+    }
+
     setImages((prev) => [...prev, ...allowed]);
     setPreviews((prev) => [...prev, ...allowed.map((f) => URL.createObjectURL(f))]);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (imageInputRef.current) imageInputRef.current.value = "";
+  }
+
+  function handleVideoSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    setInlineError(null);
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!ALLOWED_VIDEO_MIMES.has(file.type)) {
+      const message = "ვიდეო უნდა იყოს MP4 ან WebM ფორმატში";
+      setInlineError(message);
+      toast.error(message);
+      return;
+    }
+
+    const maxBytes = MAX_VIDEO_MB * 1024 * 1024;
+    if (file.size > maxBytes) {
+      const message = `ვიდეოს მაქსიმალური ზომა ${MAX_VIDEO_MB}MB-ია`;
+      setInlineError(message);
+      toast.error(message);
+      return;
+    }
+
+    if (images.length > 0) clearImages();
+    clearVideo();
+    setMediaMode("video");
+    setVideoFile(file);
+    setVideoPreview(URL.createObjectURL(file));
+    if (videoInputRef.current) videoInputRef.current.value = "";
   }
 
   function removeImage(index: number) {
@@ -74,57 +141,125 @@ export function FeedComposer({
     setPreviews((prev) => prev.filter((_, i) => i !== index));
   }
 
+  async function uploadVideoWithProgress(path: string, file: File) {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!token || !supabaseUrl || !anon) {
+      throw new Error("ვიდეოს ატვირთვისთვის სერვერის კონფიგი ვერ მოიძებნა");
+    }
+
+    return new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open(
+        "POST",
+        `${supabaseUrl}/storage/v1/object/post-videos/${path}`,
+      );
+      xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+      xhr.setRequestHeader("apikey", anon);
+      xhr.setRequestHeader("x-upsert", "true");
+      xhr.setRequestHeader("Content-Type", file.type);
+      xhr.upload.onprogress = (event) => {
+        if (!event.lengthComputable) return;
+        const percent = Math.round((event.loaded / event.total) * 90);
+        setUploadProgress(percent);
+      };
+      xhr.onerror = () => reject(new Error("ვიდეოს ატვირთვა ვერ მოხერხდა"));
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve();
+        else reject(new Error("ვიდეოს ატვირთვა ვერ მოხერხდა"));
+      };
+      xhr.send(file);
+    });
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!user || content.trim().length < 3 || !selectedCircle) return;
-
+    setInlineError(null);
     setPosting(true);
+    setUploadProgress(5);
 
-    const mediaUrls: string[] = [];
-    for (const file of images) {
-      const path = `${selectedCircle}/${user.id}/${Date.now()}_${file.name}`;
-      const { error: uploadErr } = await supabase.storage
-        .from("posts")
-        .upload(path, file, { upsert: true });
-      if (uploadErr) {
-        toast.error("áƒ¡áƒ£áƒ áƒáƒ—áƒ˜áƒ¡ áƒáƒ¢áƒ•áƒ˜áƒ áƒ—áƒ•áƒ áƒ•áƒ”áƒ  áƒ›áƒáƒ®áƒ”áƒ áƒ®áƒ“áƒ");
+    let mediaKind: "none" | "image" | "video" = "none";
+    let mediaUrls: string[] = [];
+    let videoUrl: string | null = null;
+
+    if (mediaMode === "video" && videoFile) {
+      mediaKind = "video";
+      const path = `${selectedCircle}/${user.id}/${Date.now()}_${safeFileName(videoFile.name)}`;
+      try {
+        await uploadVideoWithProgress(path, videoFile);
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("post-videos").getPublicUrl(path);
+        videoUrl = publicUrl;
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "ვიდეოს ატვირთვა ვერ მოხერხდა";
+        setInlineError(message);
+        toast.error(message);
         setPosting(false);
+        setUploadProgress(0);
         return;
       }
-      const { data: { publicUrl } } = supabase.storage.from("posts").getPublicUrl(path);
-      mediaUrls.push(publicUrl);
+    } else if (images.length > 0) {
+      mediaKind = "image";
+      mediaUrls = [];
+      for (const file of images) {
+        const path = `${selectedCircle}/${user.id}/${Date.now()}_${safeFileName(file.name)}`;
+        const { error: uploadErr } = await supabase.storage
+          .from("posts")
+          .upload(path, file, { upsert: true });
+        if (uploadErr) {
+          toast.error("სურათის ატვირთვა ვერ მოხერხდა");
+          setPosting(false);
+          setUploadProgress(0);
+          return;
+        }
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("posts").getPublicUrl(path);
+        mediaUrls.push(publicUrl);
+      }
     }
 
+    setUploadProgress(95);
     const { error } = await supabase.from("posts").insert({
       circle_id: selectedCircle,
       author_id: user.id,
       type,
       content: content.trim(),
       media_urls: mediaUrls,
+      media_kind: mediaKind,
+      video_url: videoUrl,
     });
 
     if (error) {
-      toast.error("áƒžáƒáƒ¡áƒ¢áƒ˜ áƒ•áƒ”áƒ  áƒ’áƒáƒ˜áƒ’áƒ–áƒáƒ•áƒœáƒ");
+      toast.error("პოსტი ვერ გაიგზავნა");
       setPosting(false);
+      setUploadProgress(0);
       return;
     }
 
-    toast.success("áƒžáƒáƒ¡áƒ¢áƒ˜ áƒ’áƒáƒ›áƒáƒ¥áƒ•áƒ”áƒ§áƒœáƒ“áƒ!");
+    setUploadProgress(100);
+    toast.success("პოსტი გამოქვეყნდა!");
     setContent("");
     setType("story");
-    setImages([]);
-    previews.forEach((p) => URL.revokeObjectURL(p));
-    setPreviews([]);
+    clearImages();
+    clearVideo();
+    setMediaMode("images");
     setPosting(false);
     setExpanded(false);
+    setUploadProgress(0);
     onPosted();
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="rounded-xl border bg-card p-4"
-    >
+    <form onSubmit={handleSubmit} className="rounded-xl border bg-card p-4">
       <div className="flex gap-3">
         <Avatar className="h-9 w-9 shrink-0 ring-2 ring-seal/10">
           <AvatarImage src={avatarUrl ?? undefined} />
@@ -140,7 +275,7 @@ export function FeedComposer({
               onClick={() => setExpanded(true)}
               className="w-full rounded-full border bg-muted/40 px-4 py-2.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted"
             >
-              What&apos;s on your mind?
+              რას აზიარებ დღეს?
             </button>
           ) : (
             <div className="space-y-3">
@@ -154,7 +289,7 @@ export function FeedComposer({
                       "flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors duration-150",
                       type === opt.value
                         ? "border-seal bg-seal text-seal-foreground"
-                        : "border-border text-muted-foreground hover:border-seal/30 hover:text-foreground"
+                        : "border-border text-muted-foreground hover:border-seal/30 hover:text-foreground",
                     )}
                   >
                     <span>{opt.icon}</span>
@@ -178,7 +313,7 @@ export function FeedComposer({
               </div>
 
               <textarea
-                placeholder="áƒ áƒáƒ¡ áƒ£áƒ–áƒ˜áƒáƒ áƒ”áƒ‘ áƒ¬áƒ áƒ”áƒ¡?"
+                placeholder="რას უზიარებ წრეს?"
                 rows={3}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
@@ -187,13 +322,36 @@ export function FeedComposer({
                 autoFocus
               />
 
+              {inlineError && (
+                <p className="text-xs text-destructive">{inlineError}</p>
+              )}
+
+              {videoPreview && (
+                <div className="relative overflow-hidden rounded-lg border">
+                  <video
+                    src={videoPreview}
+                    className="aspect-video w-full bg-black"
+                    controls
+                    preload="metadata"
+                    playsInline
+                  />
+                  <button
+                    type="button"
+                    onClick={clearVideo}
+                    className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
+
               {previews.length > 0 && (
                 <div className="grid grid-cols-2 gap-2">
                   {previews.map((src, i) => (
                     <div key={i} className="relative">
                       <img
                         src={src}
-                        alt=""
+                        alt={`სურათი ${i + 1}`}
                         className="aspect-video w-full rounded-lg border object-cover"
                       />
                       <button
@@ -208,24 +366,57 @@ export function FeedComposer({
                 </div>
               )}
 
+              {posting && mediaMode === "video" && videoFile && (
+                <div className="space-y-1.5">
+                  <div className="h-2 overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-seal transition-all"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    ვიდეო იტვირთება... {uploadProgress}%
+                  </p>
+                </div>
+              )}
+
               <div className="flex items-center justify-between border-t pt-3">
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={images.length >= 4 || posting}
-                  className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40"
-                >
-                  <ImagePlus className="h-4 w-4" />
-                  áƒ¤áƒáƒ¢áƒ
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={handleImageSelect}
-                />
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => imageInputRef.current?.click()}
+                    disabled={posting || mediaMode === "video" || images.length >= 4}
+                    className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40"
+                  >
+                    <ImagePlus className="h-4 w-4" />
+                    ფოტო
+                  </button>
+                  <input
+                    ref={imageInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={handleImageSelect}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => videoInputRef.current?.click()}
+                    disabled={posting || images.length > 0 || !!videoFile}
+                    className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40"
+                  >
+                    <Video className="h-4 w-4" />
+                    ვიდეო
+                  </button>
+                  <input
+                    ref={videoInputRef}
+                    type="file"
+                    accept="video/mp4,video/webm"
+                    className="hidden"
+                    onChange={handleVideoSelect}
+                  />
+                </div>
 
                 <Button
                   type="submit"
@@ -235,7 +426,7 @@ export function FeedComposer({
                   disabled={posting || content.trim().length < 3 || !selectedCircle}
                 >
                   {posting && <Loader2 className="animate-spin" />}
-                  Post
+                  გამოქვეყნება
                 </Button>
               </div>
             </div>

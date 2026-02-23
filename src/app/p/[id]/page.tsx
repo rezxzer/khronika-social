@@ -48,6 +48,8 @@ interface PostDetail {
   type: "story" | "lesson" | "invite";
   content: string;
   media_urls: string[];
+  media_kind: "none" | "image" | "video";
+  video_url: string | null;
   created_at: string;
   profiles: {
     id: string;
@@ -401,7 +403,17 @@ function PostDetailContent() {
           {post.content}
         </div>
 
-        {post.media_urls.length > 0 && (
+        {post.media_kind === "video" && post.video_url ? (
+          <div className="mt-4 overflow-hidden rounded-lg border">
+            <video
+              src={post.video_url}
+              className="aspect-video w-full bg-black"
+              controls
+              preload="metadata"
+              playsInline
+            />
+          </div>
+        ) : post.media_urls.length > 0 && (
           <div
             className="mt-4 grid gap-2"
             style={{
@@ -676,6 +688,8 @@ function PostDetailContent() {
           initialContent={post.content}
           initialType={post.type}
           mediaUrls={post.media_urls}
+          mediaKind={post.media_kind}
+          videoUrl={post.video_url}
           onSaved={(newContent, newType) => {
             setPost((prev) =>
               prev ? { ...prev, content: newContent, type: newType as typeof prev.type } : prev,

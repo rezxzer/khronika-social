@@ -28,6 +28,8 @@ interface PostEditDialogProps {
   initialContent: string;
   initialType: PostType;
   mediaUrls?: string[];
+  mediaKind?: "none" | "image" | "video";
+  videoUrl?: string | null;
   onSaved: (newContent: string, newType: PostType) => void;
 }
 
@@ -38,6 +40,8 @@ export function PostEditDialog({
   initialContent,
   initialType,
   mediaUrls,
+  mediaKind,
+  videoUrl,
   onSaved,
 }: PostEditDialogProps) {
   const [content, setContent] = useState(initialContent);
@@ -101,7 +105,22 @@ export function PostEditDialog({
             placeholder="პოსტის ტექსტი..."
           />
 
-          {mediaUrls && mediaUrls.length > 0 && (
+          {mediaKind === "video" && videoUrl && (
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">
+                ვიდეო (რედაქტირება შემდეგ ვერსიაში)
+              </p>
+              <video
+                src={videoUrl}
+                className="aspect-video w-full rounded-lg border bg-black"
+                controls
+                preload="metadata"
+                playsInline
+              />
+            </div>
+          )}
+
+          {mediaKind !== "video" && mediaUrls && mediaUrls.length > 0 && (
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground">
                 მედია (წაშლა/დამატება შემდეგ ვერსიაში)

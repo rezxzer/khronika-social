@@ -436,9 +436,18 @@
 - DB: `push_subscriptions` table + RLS
 - Manual steps: VAPID keys, migration 0012
 
-### Phase 19 — Remaining Polish (შემდეგი)
+### Phase 19.1 — Video Uploads (v1) ✅
+**სრულია (2026-02-24).** მოიცავს:
+- `posts.media_kind` + `posts.video_url` (single video model)
+- `post-videos` storage bucket + RLS policies
+- Composer video upload (mp4/webm), max size validation, progress UI
+- PostCard video preview + post detail full video controls
+- Rule: image-only ან video-only (no mix in one post)
+- Backward compatibility: old image posts unchanged
+
+### Phase 20 — Remaining Polish (შემდეგი)
 **Done როცა:**
-- Video uploads
+- Push notifications v2 (reactions/comments/follows)
 
 ---
 

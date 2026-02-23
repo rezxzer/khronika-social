@@ -112,6 +112,12 @@ function SearchContent() {
       const mapped: PostData[] = data.map((p) => ({
         ...p,
         media_urls: (p.media_urls ?? []) as string[],
+        media_kind:
+          (p.media_kind as "none" | "image" | "video" | undefined) ??
+          (((p.media_urls ?? []).length > 0 ? "image" : "none") as
+            | "none"
+            | "image"),
+        video_url: (p.video_url as string | null) ?? null,
         profiles: p.profiles as unknown as PostData["profiles"],
         comment_count:
           (p.comments as unknown as { count: number }[])?.[0]?.count ?? 0,
