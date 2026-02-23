@@ -26,6 +26,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { AppShell } from "@/components/layout/app-shell";
 import {
   Loader2,
@@ -36,8 +37,11 @@ import {
   TriangleAlert,
   Trash2,
   Mail,
+  Bell,
+  BellOff,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useWebPush } from "@/hooks/use-web-push";
 
 function sanitizeFilename(name: string): string {
   const ext = name.lastIndexOf(".") >= 0 ? name.slice(name.lastIndexOf(".")) : "";
@@ -67,6 +71,7 @@ export default function ProfileSettingsPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const { state: pushState, loading: pushLoading, subscribe: pushSubscribe, unsubscribe: pushUnsubscribe } = useWebPush(user?.id);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -380,6 +385,55 @@ export default function ProfileSettingsPage() {
           </p>
         </CardContent>
       </Card>
+
+      {/* Push Notifications */}
+      {pushState !== "unsupported" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bell className="h-4 w-4" />
+              Push შეტყობინებები
+            </CardTitle>
+            <CardDescription>
+              მიიღე შეტყობინება ახალი პირადი მესიჯის შესახებ ბრაუზერის გარეთაც
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {pushState === "denied" ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <BellOff className="h-4 w-4 shrink-0" />
+                <span>
+                  შეტყობინებები დაბლოკილია ბრაუზერში. გთხოვთ ნებართვა ბრაუზერის
+                  პარამეტრებში ჩართოთ.
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  {pushState === "subscribed"
+                    ? "შეტყობინებები ჩართულია"
+                    : "შეტყობინებები გამორთულია"}
+                </div>
+                <Switch
+                  checked={pushState === "subscribed"}
+                  disabled={pushLoading}
+                  onCheckedChange={async (checked) => {
+                    if (checked) {
+                      const ok = await pushSubscribe();
+                      if (ok) toast.success("Push შეტყობინებები ჩართულია");
+                      else toast.error("ვერ ჩაირთო push შეტყობინებები");
+                    } else {
+                      const ok = await pushUnsubscribe();
+                      if (ok) toast.success("Push შეტყობინებები გამოირთო");
+                      else toast.error("ვერ გამოირთო push შეტყობინებები");
+                    }
+                  }}
+                />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Danger Zone */}
       <Card className="border-destructive/30">

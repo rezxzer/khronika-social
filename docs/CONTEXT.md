@@ -1,6 +1,6 @@
 # Khronika — Project Context (for AI assistants)
 
-> Last updated: 2026-02-23 (Phase 17.4 — Typing Indicator)
+> Last updated: 2026-02-24 (Phase 18.1 — Push Notifications)
 > This document is the single source of truth for any AI assistant helping develop Khronika.
 > It will be updated incrementally as the project evolves.
 
@@ -263,6 +263,7 @@ Body has a fixed multi-layer gradient:
 - `/settings/profile`: email display (read-only), account deletion (მკაცრი confirm + API route)
 - Blocked user profile → content hidden ("კონტენტი მიუწვდომელია")
 - `POST /api/account/delete`: service role key-ით auth user deletion + cascade data cleanup
+- `POST /api/push/send`: Web Push notification sending (Bearer auth, service role for recipient lookup)
 - Report user → Phase 11 (DB enum არ უჭერს 'user' target_type-ს)
 
 ---
@@ -409,11 +410,24 @@ Body has a fixed multi-layer gradient:
 - Self-filter: only other user's typing state is shown
 - No DB changes, no manual Supabase steps
 
+### Phase 18.1 — Push Notifications (v1, messages-only) ✅
+- **Architecture**: Native Web Push API + VAPID (no FCM/Firebase)
+- **Service Worker** (`public/sw.js`): handles `push` events → show notification, `notificationclick` → open chat
+- **`useWebPush` hook**: subscribe/unsubscribe, permission check, SW registration
+- **API route** (`/api/push/send`): server-side sending via `web-push` npm package
+  - Bearer token auth → verify sender → find recipient → send push
+  - Expired subscriptions (410 Gone) automatically deactivated
+- **Settings UI**: Push toggle Card in settings/profile with Switch
+- **Trigger**: fire-and-forget POST to `/api/push/send` after message send in `useMessages`
+- **Notification payload**: `{ title: senderName, body: "ახალი პირადი მესიჯი", data: { conversationId } }`
+- **DB**: `push_subscriptions` table (user_id, endpoint, p256dh, auth, is_active) + RLS
+- **Manual steps**: VAPID keys in `.env.local`, migration `0012_push_subscriptions.sql`
+
 ---
 
 ## What Is NOT Built Yet
 
-### Phase 18 — Remaining Polish
+### Phase 19 — Remaining Polish
 - Video uploads
 
 ---
@@ -513,6 +527,7 @@ src/
 │   ├── use-conversations.ts    ← Conversations list + unread count
 │   ├── use-messages.ts         ← Chat messages + send
 │   ├── use-typing-indicator.ts ← Realtime Presence typing indicator
+│   ├── use-web-push.ts         ← Web Push subscription management
 │   ├── use-follow.ts           ← Follow/unfollow toggle + counts
 │   ├── use-onboarding.ts       ← 3-step onboarding progress
 │   └── use-trending-circles.ts ← Top active circles this week
@@ -543,7 +558,8 @@ src/
     ├── 0008_messages.sql            ← Conversations + messages tables + RLS
     ├── 0009_comment_replies.sql     ← parent_id column on comments (reply threading)
     ├── 0010_message_delete_policy.sql ← Messages DELETE RLS policy (sender only)
-    └── 0011_messages_replica_identity.sql ← REPLICA IDENTITY FULL for Realtime
+    ├── 0011_messages_replica_identity.sql ← REPLICA IDENTITY FULL for Realtime
+    └── 0012_push_subscriptions.sql       ← Web Push subscriptions table + RLS
 ```
 
 ---
@@ -561,7 +577,7 @@ These steps cannot be automated via migrations and must be done manually in the 
    - Then run `database/0005_storage_posts.sql` in SQL Editor
 
 3. **Run all SQL migrations in order:**
-   - `0001_init.sql` → `0002_rls.sql` → `0003_profile_metadata_patch.sql` → `0004_storage_avatars.sql` → `0005_storage_posts.sql` → `0006_reports_select_policy.sql` → `0007_follows.sql` → `0008_messages.sql` → `0009_comment_replies.sql` → `0010_message_delete_policy.sql` → `0011_messages_replica_identity.sql`
+   - `0001_init.sql` → `0002_rls.sql` → `0003_profile_metadata_patch.sql` → `0004_storage_avatars.sql` → `0005_storage_posts.sql` → `0006_reports_select_policy.sql` → `0007_follows.sql` → `0008_messages.sql` → `0009_comment_replies.sql` → `0010_message_delete_policy.sql` → `0011_messages_replica_identity.sql` → `0012_push_subscriptions.sql`
 
 4. **Enable Google OAuth in Supabase:**
    - Go to [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials

@@ -426,7 +426,17 @@
 - Animated "წერს..." UI between messages and input
 - No DB or manual Supabase changes
 
-### Phase 18 — Remaining Polish (შემდეგი)
+### Phase 18.1 — Push Notifications (v1, messages-only) ✅
+**სრულია (2026-02-24).** მოიცავს:
+- Native Web Push + VAPID (no FCM)
+- Service Worker: push event + notification click → open chat
+- `useWebPush` hook: subscribe/unsubscribe/permission management
+- API route `/api/push/send`: server-side notification sending via `web-push`
+- Settings UI: push toggle Card with Switch
+- DB: `push_subscriptions` table + RLS
+- Manual steps: VAPID keys, migration 0012
+
+### Phase 19 — Remaining Polish (შემდეგი)
 **Done როცა:**
 - Video uploads
 

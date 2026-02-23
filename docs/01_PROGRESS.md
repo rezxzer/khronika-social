@@ -1,7 +1,7 @@
 # ქრონიკა — პროგრესის ტრეკერი (Changelog)
 
 > ყოველი ახალი ფუნქციის დამატებისას აქ ვწერთ.
-> ბოლო განახლება: 2026-02-23 (Phase 17.4 — Typing Indicator)
+> ბოლო განახლება: 2026-02-24 (Phase 18.1 — Push Notifications)
 
 ---
 
@@ -526,7 +526,37 @@ Button, Card, Input, Label, Avatar, Badge, Dialog, DropdownMenu, Command, Skelet
 
 ---
 
-## რა არ არის ჯერ გაკეთებული (Phase 18+)
+## Phase 18.1 — Push Notifications (v1, messages-only) ✅ (2026-02-24)
+
+| ფაილი | აღწერა | სტატუსი |
+|---|---|---|
+| `database/0012_push_subscriptions.sql` | `push_subscriptions` table + RLS (own subs only) | ✅ |
+| `public/sw.js` | Service Worker: push event → showNotification, click → open chat | ✅ |
+| `src/hooks/use-web-push.ts` | Subscribe/unsubscribe hook, permission check, SW registration | ✅ |
+| `src/app/api/push/send/route.ts` | Server-side sending: Bearer auth, `web-push` library, expired cleanup | ✅ |
+| `src/app/settings/profile/page.tsx` | Push toggle Card with Switch component | ✅ |
+| `src/hooks/use-messages.ts` | Fire-and-forget POST to `/api/push/send` after message send | ✅ |
+| `package.json` | Added `web-push` + `@types/web-push` | ✅ |
+
+**არქიტექტურა:**
+- **Native Web Push API + VAPID** (არა FCM) — zero vendor lock-in, no heavy SDK
+- **Service Worker** (`public/sw.js`): `push` event → `showNotification()`, `notificationclick` → open/focus `/messages/{conversationId}`
+- **`useWebPush` hook**: state machine (`unsupported` → `default` → `denied` | `granted` → `subscribed`)
+- **API route** `/api/push/send`: Bearer token auth → verify sender → find recipient → query `push_subscriptions` → `webpush.sendNotification()` → cleanup expired (410 Gone)
+- **Trigger**: `useMessages.sendMessage()` → fire-and-forget fetch after successful DB insert + broadcast
+- **Settings UI**: Card with Switch toggle — opt-in only, no auto-request
+- **Notification**: `{ title: senderDisplayName, body: "ახალი პირადი მესიჯი", data: { conversationId } }`
+- **RLS**: users manage only own subscriptions (SELECT/INSERT/UPDATE/DELETE)
+
+**Manual steps:**
+1. `npx web-push generate-vapid-keys` → generate VAPID key pair
+2. `.env.local`-ში დამატება: `NEXT_PUBLIC_VAPID_PUBLIC_KEY=...`, `VAPID_PRIVATE_KEY=...`
+3. (optional) `VAPID_SUBJECT=mailto:admin@khronika.ge`
+4. Supabase SQL Editor-ში: `database/0012_push_subscriptions.sql` გაშვება
+
+---
+
+## რა არ არის ჯერ გაკეთებული (Phase 19+)
 
 **დასრულებული:**
 - [x] Dark mode toggle UI (Phase 11.1)
@@ -542,10 +572,11 @@ Button, Card, Input, Label, Avatar, Badge, Dialog, DropdownMenu, Command, Skelet
 - [x] Image Optimization — next/image for post media (Phase 17.2)
 - [x] Performance Optimization — bundle, lazy loading, memo, skeletons (Phase 17.3)
 - [x] Typing Indicator — Realtime Presence "წერს..." (Phase 17.4)
+- [x] Push Notifications — Web Push + VAPID, messages-only (Phase 18.1)
 
 **შემდეგი:**
-- [ ] Push notifications (Service Worker)
 - [ ] Video uploads
+- [ ] Push notifications v2 (reactions, comments, follows)
 
 ---
 

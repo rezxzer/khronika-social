@@ -142,6 +142,18 @@ export function useMessages(conversationId?: string, currentUserId?: string) {
           .from("conversations")
           .update({ last_message_at: new Date().toISOString() })
           .eq("id", conversationId);
+
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (!session?.access_token) return;
+          fetch("/api/push/send", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ conversationId }),
+          }).catch(() => {});
+        });
       }
 
       setSending(false);
