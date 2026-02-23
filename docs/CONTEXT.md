@@ -362,7 +362,7 @@ src/
 │   │   ├── layout.tsx           ← Server-side admin gate (notFound if not admin)
 │   │   └── reports/page.tsx     ← Admin reports (server component, service-role fetch)
 │   ├── auth/
-│   │   └── callback/route.ts    ← OAuth callback (code → session)
+│   │   └── callback/page.tsx    ← OAuth callback (client PKCE code → session)
 │   ├── login/
 │   │   ├── layout.tsx           ← SEO metadata
 │   │   └── page.tsx             ← Email + Google OAuth login
@@ -494,7 +494,12 @@ These steps cannot be automated via migrations and must be done manually in the 
    - Supabase Dashboard → Authentication → Providers → Google → Enable → Paste Client ID + Secret
    - Save
 
-5. **Set environment variables on Vercel:**
+5. **Enable Realtime on messaging tables:**
+   - Supabase Dashboard → Database → Replication
+   - Enable Realtime on `messages` table
+   - Enable Realtime on `conversations` table
+
+6. **Set environment variables on Vercel:**
    - `ADMIN_USER_IDS` = comma-separated admin UUIDs (server-only, **required** for admin security gate)
    - `SUPABASE_SERVICE_ROLE_KEY` = Supabase service role key (server-only, for admin data access)
    - `NEXT_PUBLIC_ADMIN_USER_IDS` = same UUIDs (optional — only shows/hides admin link in navbar UI)

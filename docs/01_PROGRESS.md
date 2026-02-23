@@ -1,7 +1,7 @@
 # ქრონიკა — პროგრესის ტრეკერი (Changelog)
 
 > ყოველი ახალი ფუნქციის დამატებისას აქ ვწერთ.
-> ბოლო განახლება: 2026-02-22 (Phase 11.1)
+> ბოლო განახლება: 2026-02-22 (Phase 15.1 + Google OAuth fix)
 
 ---
 
@@ -268,6 +268,8 @@
 | `database/0004_storage_avatars.sql` | Avatars bucket policies (bucket must be created manually, Public ON) | ✅ |
 | `database/0005_storage_posts.sql` | Posts media bucket policies (bucket must be created manually, Public ON) | ✅ |
 | `database/0006_reports_select_policy.sql` | Reports SELECT policy + `get_admin_reports` RPC function | ✅ |
+| `database/0007_follows.sql` | Follows table + RLS + notification trigger (follow type) | ✅ |
+| `database/0008_messages.sql` | Conversations + messages tables + RLS policies | ✅ |
 
 ---
 
@@ -319,12 +321,15 @@ Button, Card, Input, Label, Avatar, Badge, Dialog, DropdownMenu, Command, Skelet
 |---|---|---|
 | `src/app/login/page.tsx` | Google OAuth ღილაკი + divider "ან" | ✅ |
 | `src/app/register/page.tsx` | Google OAuth ღილაკი + divider "ან" | ✅ |
-| `src/app/auth/callback/route.ts` | OAuth callback — code to session exchange | ✅ |
+| `src/app/auth/callback/page.tsx` | OAuth callback — client PKCE code → session exchange | ✅ |
+
+**Fix (2026-02-22):** callback გადაკეთდა `route.ts` → `page.tsx` client component. Server-side route handler PKCE verifier-ს ვერ ხედავდა. ახლა browser Supabase client-ით ხდება `exchangeCodeForSession` + debug logging + sonner toasts.
 
 **Manual setup საჭიროა:**
 - Google Cloud Console: OAuth 2.0 Client ID (Web)
 - Supabase Dashboard → Auth → Providers → Google → Enable + paste credentials
 - Redirect URI: `https://<project>.supabase.co/auth/v1/callback`
+- Supabase Dashboard → Auth → URL Configuration → add `https://your-domain/auth/callback`
 
 ---
 
@@ -371,16 +376,22 @@ Button, Card, Input, Label, Avatar, Badge, Dialog, DropdownMenu, Command, Skelet
 
 ## რა არ არის ჯერ გაკეთებული (Phase 16+)
 
-- [x] Dark mode toggle UI
-- [x] Search results page
-- [x] Follow/Friend system
-- [x] Google OAuth login
-- [x] Messages / chat system
-- [x] Realtime messages
-- [ ] Performance optimization (lazy loading, bundle analysis)
+**დასრულებული:**
+- [x] Dark mode toggle UI (Phase 11.1)
+- [x] Search results page (Phase 11.2)
+- [x] Follow/Friend system (Phase 12)
+- [x] Google OAuth login (Phase 13.1 + fix)
+- [x] Direct Messages (Phase 14)
+- [x] Realtime Messages (Phase 15.1)
+
+**შემდეგი:**
+- [ ] Realtime notifications (Supabase Realtime for notifications)
 - [ ] Image optimization (next/image for user media)
+- [ ] Feed algorithm (Follow-ების პოსტები + Trending)
+- [ ] Performance optimization (lazy loading, bundle analysis)
+- [ ] Typing indicator (Realtime Presence)
+- [ ] Push notifications (Service Worker)
 - [ ] Video uploads
-- [ ] Realtime subscriptions
 
 ---
 

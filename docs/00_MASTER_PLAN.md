@@ -426,7 +426,7 @@ Rules:
 - Empty states
 - **Mobile-first (კრიტიკული!):**
   - ყველა ახალ ფუნქციაში buttons/actions ხელმისაწვდომი მობაილზე (375px+)
-  - BottomNav: Feed, Explore, Create, Notifications, Profile
+  - BottomNav: Feed, Explore, Messages, Notifications, Profile
   - MobileDrawer (hamburger): nav + My Circles
   - No horizontal overflow (responsive grid)
   - Padding: p-3 sm:p-5
