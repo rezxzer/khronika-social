@@ -404,9 +404,15 @@
 - Blocklist + dedup + pagination + empty states ყველა tab-ზე
 - Mobile-friendly pill toggle
 
+### Phase 17.2 — Image Optimization ✅
+**სრულია (2026-02-23).** მოიცავს:
+- `next.config.ts` remotePatterns: Supabase Storage domain
+- PostCard media grid: `<img>` → `next/image` (fill, sizes, lazy)
+- Post detail media: `<img>` → `next/image` (responsive sizes)
+- Georgian alt texts, aspect ratio preserved, no DB changes
+
 ### Phase 18 — Remaining Polish (შემდეგი)
 **Done როცა:**
-- Image optimization (next/image)
 - Performance optimization
 - Video uploads
 

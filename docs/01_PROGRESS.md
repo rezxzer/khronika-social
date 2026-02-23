@@ -1,7 +1,7 @@
 # ქრონიკა — პროგრესის ტრეკერი (Changelog)
 
 > ყოველი ახალი ფუნქციის დამატებისას აქ ვწერთ.
-> ბოლო განახლება: 2026-02-23 (Phase 17.1 — Feed Algorithm)
+> ბოლო განახლება: 2026-02-23 (Phase 17.2 — Image Optimization)
 
 ---
 
@@ -460,6 +460,25 @@ Button, Card, Input, Label, Avatar, Badge, Dialog, DropdownMenu, Command, Skelet
 
 ---
 
+## Phase 17.2 — Image Optimization ✅ (2026-02-23)
+
+| ფაილი | აღწერა | სტატუსი |
+|---|---|---|
+| `next.config.ts` | `images.remotePatterns` — Supabase Storage domain | ✅ |
+| `src/components/posts/post-card.tsx` | media grid `<img>` → `next/image` (fill, sizes, lazy) | ✅ |
+| `src/app/p/[id]/page.tsx` | post detail media `<img>` → `next/image` (responsive sizes) | ✅ |
+
+**დეტალები:**
+- `remotePatterns`: `https://qojrzjonlsynzgqpqsbj.supabase.co/storage/v1/object/public/**`
+- PostCard: `fill` layout, `sizes="(max-width: 640px) 100vw, 33vw"`, `aspect-[4/3]`
+- Post detail: dynamic `sizes` (1-column: `100vw/672px`, 2-column: `50vw/336px`), `aspect-[4/3]`
+- Georgian alt: `პოსტის ფოტო 1`, `პოსტის ფოტო 2`, etc.
+- ავტომატური lazy loading, WebP/AVIF conversion, responsive srcset — Vercel Image Optimization
+- DB ცვლილებები: არ სჭირდება
+- Avatar-ები (`shadcn/ui Avatar`) უკვე `<img>` ტეგით მუშაობს `AvatarImage`-ის მეშვეობით — ბრაუზერის lazy loading-ით, ცვლილება არ სჭირდება (პატარა ზომა, cache-friendly)
+
+---
+
 ## რა არ არის ჯერ გაკეთებული (Phase 18+)
 
 **დასრულებული:**
@@ -473,9 +492,9 @@ Button, Card, Input, Label, Avatar, Badge, Dialog, DropdownMenu, Command, Skelet
 - [x] Comment Replies (Phase 16.1)
 - [x] Messaging Polish — delete, optimistic send, Broadcast sync (Phase 16.2)
 - [x] Feed Algorithm — 3-tab feed: circles / following / trending (Phase 17.1)
+- [x] Image Optimization — next/image for post media (Phase 17.2)
 
 **შემდეგი:**
-- [ ] Image optimization (next/image for user media)
 - [ ] Performance optimization (lazy loading, bundle analysis)
 - [ ] Typing indicator (Realtime Presence)
 - [ ] Push notifications (Service Worker)

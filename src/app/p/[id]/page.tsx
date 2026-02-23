@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase/client";
@@ -409,13 +410,22 @@ function PostDetailContent() {
             }}
           >
             {post.media_urls.map((url, i) => (
-              <img
+              <div
                 key={i}
-                src={url}
-                alt=""
-                className="w-full rounded-lg border object-cover"
-                loading="lazy"
-              />
+                className="relative aspect-[4/3] overflow-hidden rounded-lg border"
+              >
+                <Image
+                  src={url}
+                  alt={`პოსტის ფოტო ${i + 1}`}
+                  fill
+                  sizes={
+                    post.media_urls.length === 1
+                      ? "(max-width: 640px) 100vw, 672px"
+                      : "(max-width: 640px) 50vw, 336px"
+                  }
+                  className="object-cover"
+                />
+              </div>
             ))}
           </div>
         )}

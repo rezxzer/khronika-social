@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -293,13 +294,14 @@ export function PostCard({
               <Link
                 key={i}
                 href={`/p/${post.id}`}
-                className="relative"
+                className="relative aspect-[4/3] overflow-hidden rounded-lg"
               >
-                <img
+                <Image
                   src={url}
-                  alt=""
-                  className="aspect-[4/3] w-full rounded-lg object-cover transition-opacity hover:opacity-90"
-                  loading="lazy"
+                  alt={`პოსტის ფოტო ${i + 1}`}
+                  fill
+                  sizes="(max-width: 640px) 100vw, 33vw"
+                  className="object-cover transition-opacity hover:opacity-90"
                 />
               </Link>
             ))}

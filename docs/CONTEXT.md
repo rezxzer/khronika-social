@@ -1,6 +1,6 @@
 # Khronika — Project Context (for AI assistants)
 
-> Last updated: 2026-02-23 (Phase 17.1 — Feed Algorithm)
+> Last updated: 2026-02-23 (Phase 17.2 — Image Optimization)
 > This document is the single source of truth for any AI assistant helping develop Khronika.
 > It will be updated incrementally as the project evolves.
 
@@ -380,13 +380,21 @@ Body has a fixed multi-layer gradient:
 - "მეტის ჩატვირთვა" pagination on all tabs
 - Mobile-first: horizontal scrollable pill tabs
 
+### Phase 17.2 — Image Optimization ✅
+- `next.config.ts`: added `images.remotePatterns` for Supabase Storage domain
+- `post-card.tsx`: media grid `<img>` → `next/image` with `fill`, `sizes="(max-width: 640px) 100vw, 33vw"`, `object-cover`
+- `p/[id]/page.tsx`: post detail media `<img>` → `next/image` with responsive `sizes` based on column count
+- `aspect-[4/3]` maintained for consistent card layout
+- Georgian alt text (`პოსტის ფოტო 1`, `2`, `3`)
+- Automatic lazy loading, responsive sizing, WebP/AVIF via Vercel Image Optimization
+- No DB changes required
+
 ---
 
 ## What Is NOT Built Yet
 
 ### Phase 18 — Remaining Polish
 - Performance optimization (lazy loading, bundle analysis)
-- Image optimization (next/image for user media)
 - Video uploads
 - Typing indicator (Realtime Presence)
 
