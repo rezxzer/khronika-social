@@ -20,6 +20,7 @@ import {
   Settings,
   Share2,
   Ban,
+  Flag,
   ShieldAlert,
   Loader2,
   FileText,
@@ -66,6 +67,7 @@ export default function PublicProfilePage() {
 
   const [isBlocked, setIsBlocked] = useState(false);
   const [blocking, setBlocking] = useState(false);
+  const [reporting, setReporting] = useState(false);
 
   const profileIdRef = useRef<string | null>(null);
 
@@ -101,19 +103,23 @@ export default function PublicProfilePage() {
     setProfile(data);
     profileIdRef.current = data.id;
 
-    const [postsRes, circlesRes] = await Promise.all([
+    const [postsRes, publicCirclesRes] = await Promise.all([
       supabase
         .from("posts")
         .select("*", { count: "exact", head: true })
         .eq("author_id", data.id),
       supabase
         .from("circle_members")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", data.id),
+        .select("circle_id, circles!inner(is_private)", {
+          count: "exact",
+          head: true,
+        })
+        .eq("user_id", data.id)
+        .eq("circles.is_private", false),
     ]);
 
     setPostCount(postsRes.count ?? 0);
-    setCircleCount(circlesRes.count ?? 0);
+    setCircleCount(publicCirclesRes.count ?? 0);
 
     Promise.resolve(
       supabase
@@ -270,6 +276,23 @@ export default function PublicProfilePage() {
       }
     }
     setBlocking(false);
+  }
+
+  async function handleReport() {
+    if (!user || !profile || isSelf) return;
+    setReporting(true);
+    const { error } = await supabase.from("reports").insert({
+      reporter_id: user.id,
+      target_type: "user",
+      target_id: profile.id,
+      reason: "მომხმარებლის პროფილზე საეჭვო/არასასურველი ქცევა",
+    });
+    if (error) {
+      toast.error("რეპორტი ვერ გაიგზავნა");
+    } else {
+      toast.success("რეპორტი გაიგზავნა, მადლობა!");
+    }
+    setReporting(false);
   }
 
   const [startingChat, setStartingChat] = useState(false);
@@ -460,6 +483,20 @@ export default function PublicProfilePage() {
                       <span className="hidden sm:inline">
                         {isBlocked ? "განბლოკვა" : "დაბლოკვა"}
                       </span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-full"
+                      onClick={handleReport}
+                      disabled={reporting}
+                    >
+                      {reporting ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Flag className="h-4 w-4" />
+                      )}
+                      <span className="hidden sm:inline">დაარეპორტე</span>
                     </Button>
                   </>
                 ) : null}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createAdminClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -10,17 +10,15 @@ export async function POST(request: NextRequest) {
   }
 
   const token = authHeader.split(" ")[1];
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!url || !serviceKey) {
+  let adminClient;
+  try {
+    adminClient = createAdminClient();
+  } catch {
     return NextResponse.json(
-      { error: "Server misconfigured" },
+      { error: "სერვერის კონფიგურაცია არასწორია" },
       { status: 500 },
     );
   }
-
-  const adminClient = createClient(url, serviceKey);
 
   const {
     data: { user },
@@ -34,17 +32,125 @@ export async function POST(request: NextRequest) {
   const uid = user.id;
 
   try {
-    await adminClient.from("messages").delete().eq("sender_id", uid);
-    await adminClient.from("conversations").delete().or(`participant_1.eq.${uid},participant_2.eq.${uid}`);
-    await adminClient.from("reactions").delete().eq("user_id", uid);
-    await adminClient.from("comments").delete().eq("author_id", uid);
-    await adminClient.from("posts").delete().eq("author_id", uid);
-    await adminClient.from("circle_members").delete().eq("user_id", uid);
-    await adminClient.from("follows").delete().or(`follower_id.eq.${uid},following_id.eq.${uid}`);
-    await adminClient.from("blocklist").delete().or(`blocker_id.eq.${uid},blocked_id.eq.${uid}`);
-    await adminClient.from("reports").delete().eq("reporter_id", uid);
-    await adminClient.from("notifications").delete().or(`user_id.eq.${uid},actor_id.eq.${uid}`);
-    await adminClient.from("profiles").delete().eq("id", uid);
+    const steps: Array<{ name: string; run: () => Promise<{ error: { message: string } | null }> }> = [
+      {
+        name: "push_subscriptions",
+        run: async () => {
+          const { error } = await adminClient
+            .from("push_subscriptions")
+            .delete()
+            .eq("user_id", uid);
+          return { error };
+        },
+      },
+      {
+        name: "messages",
+        run: async () => {
+          const { error } = await adminClient.from("messages").delete().eq("sender_id", uid);
+          return { error };
+        },
+      },
+      {
+        name: "conversations",
+        run: async () => {
+          const { error } = await adminClient
+            .from("conversations")
+            .delete()
+            .or(`participant_1.eq.${uid},participant_2.eq.${uid}`);
+          return { error };
+        },
+      },
+      {
+        name: "notifications",
+        run: async () => {
+          const { error } = await adminClient
+            .from("notifications")
+            .delete()
+            .or(`user_id.eq.${uid},actor_id.eq.${uid}`);
+          return { error };
+        },
+      },
+      {
+        name: "reports",
+        run: async () => {
+          const { error } = await adminClient
+            .from("reports")
+            .delete()
+            .eq("reporter_id", uid);
+          return { error };
+        },
+      },
+      {
+        name: "reactions",
+        run: async () => {
+          const { error } = await adminClient.from("reactions").delete().eq("user_id", uid);
+          return { error };
+        },
+      },
+      {
+        name: "comments",
+        run: async () => {
+          const { error } = await adminClient.from("comments").delete().eq("author_id", uid);
+          return { error };
+        },
+      },
+      {
+        name: "posts",
+        run: async () => {
+          const { error } = await adminClient.from("posts").delete().eq("author_id", uid);
+          return { error };
+        },
+      },
+      {
+        name: "circle_members",
+        run: async () => {
+          const { error } = await adminClient
+            .from("circle_members")
+            .delete()
+            .eq("user_id", uid);
+          return { error };
+        },
+      },
+      {
+        name: "follows",
+        run: async () => {
+          const { error } = await adminClient
+            .from("follows")
+            .delete()
+            .or(`follower_id.eq.${uid},following_id.eq.${uid}`);
+          return { error };
+        },
+      },
+      {
+        name: "blocklist",
+        run: async () => {
+          const { error } = await adminClient
+            .from("blocklist")
+            .delete()
+            .or(`blocker_id.eq.${uid},blocked_id.eq.${uid}`);
+          return { error };
+        },
+      },
+      {
+        name: "profiles",
+        run: async () => {
+          const { error } = await adminClient.from("profiles").delete().eq("id", uid);
+          return { error };
+        },
+      },
+    ];
+
+    for (const step of steps) {
+      const { error } = await step.run();
+      if (error) {
+        return NextResponse.json(
+          {
+            error: `წაშლა ვერ დასრულდა (${step.name}): ${error.message}`,
+          },
+          { status: 500 },
+        );
+      }
+    }
 
     const { error: deleteError } = await adminClient.auth.admin.deleteUser(uid);
     if (deleteError) {

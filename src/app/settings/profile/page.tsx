@@ -202,7 +202,7 @@ export default function ProfileSettingsPage() {
   }
 
   async function handleDeleteAccount() {
-    if (!user || deleteConfirm !== "წაშლა") return;
+    if (!user || deleting || deleteConfirm !== "DELETE") return;
     setDeleting(true);
 
     try {
@@ -216,21 +216,24 @@ export default function ProfileSettingsPage() {
 
       const res = await fetch("/api/account/delete", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        toast.error(body.error || "ანგარიშის წაშლა ვერ მოხერხდა");
-        setDeleting(false);
+        toast.error(body.error || "ანგარიშის წაშლა ვერ მოხერხდა. სცადე მოგვიანებით.");
         return;
       }
 
       await supabase.auth.signOut();
-      toast.success("ანგარიში წაიშალა");
+      toast.success("ანგარიში წარმატებით წაიშალა");
       router.replace("/");
     } catch {
-      toast.error("ანგარიშის წაშლა ვერ მოხერხდა");
+      toast.error("ანგარიშის წაშლა ვერ მოხერხდა. სცადე მოგვიანებით.");
+    } finally {
       setDeleting(false);
     }
   }
@@ -384,11 +387,19 @@ export default function ProfileSettingsPage() {
             <Mail className="h-4 w-4" />
             ელფოსტა
           </CardTitle>
+          <CardDescription>
+            ელფოსტა გამოიყენება ავტორიზაციისთვის და აქედან ვერ რედაქტირდება.
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            {user.email || "ელფოსტა მიუწვდომელია"}
-          </p>
+        <CardContent className="space-y-2">
+          <Label htmlFor="account_email">მიმდინარე ელფოსტა</Label>
+          <Input
+            id="account_email"
+            value={user.email || "ელფოსტა მიუწვდომელია"}
+            readOnly
+            disabled
+            className="text-sm"
+          />
         </CardContent>
       </Card>
 
@@ -454,8 +465,9 @@ export default function ProfileSettingsPage() {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            ანგარიშის წაშლით სამუდამოდ წაიშლება შენი პროფილი, პოსტები,
-            კომენტარები, რეაქციები და წრეების წევრობა.
+            ანგარიშის წაშლით სამუდამოდ წაიშლება პროფილი, პოსტები, კომენტარები,
+            რეაქციები, წრეების წევრობები, პირადი მიმოწერის მონაცემები და სხვა
+            დაკავშირებული ჩანაწერები.
           </p>
         </CardContent>
         <CardFooter>
@@ -482,18 +494,18 @@ export default function ProfileSettingsPage() {
             </DialogTitle>
             <DialogDescription>
               ეს მოქმედება შეუქცევადია. წაიშლება შენი პროფილი, ყველა
-              პოსტი, კომენტარი და წრეების წევრობა.
+              პოსტი, კომენტარი, რეაქცია, წევრობა და მიმოწერის მონაცემები.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <p className="text-sm">
               დასადასტურებლად ჩაწერე:{" "}
-              <span className="font-bold text-destructive">წაშლა</span>
+              <span className="font-bold text-destructive">DELETE</span>
             </p>
             <Input
               value={deleteConfirm}
               onChange={(e) => setDeleteConfirm(e.target.value)}
-              placeholder="წაშლა"
+              placeholder="DELETE"
               autoComplete="off"
             />
             <div className="flex justify-end gap-2">
@@ -509,7 +521,7 @@ export default function ProfileSettingsPage() {
                 variant="destructive"
                 size="sm"
                 onClick={handleDeleteAccount}
-                disabled={deleteConfirm !== "წაშლა" || deleting}
+                disabled={deleteConfirm !== "DELETE" || deleting}
               >
                 {deleting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

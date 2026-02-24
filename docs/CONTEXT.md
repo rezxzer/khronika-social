@@ -1,6 +1,6 @@
 # Khronika — Project Context (for AI assistants)
 
-> Last updated: 2026-02-24 (Phase 19.1 — Video Uploads v1)
+> Last updated: 2026-02-24 (Phase 10.2 — Settings Final Polish + Account Deletion)
 > This document is the single source of truth for any AI assistant helping develop Khronika.
 > It will be updated incrementally as the project evolves.
 
@@ -259,12 +259,12 @@ Body has a fixed multi-layer gradient:
 > სრული გეგმა: `docs/04_PROFILE_PHASE10.md`
 
 გაკეთდა:
-- `/u/[username]`: header + accent strip, stats row (posts/circles/reactions), real posts (PostCard + Load more), user circles, Share/Block visitor actions, self edit button
-- `/settings/profile`: email display (read-only), account deletion (მკაცრი confirm + API route)
+- `/u/[username]`: header + accent strip, stats row (posts/circles/reactions), real posts (PostCard + Load more), user circles, Share/Block/Report visitor actions, self edit button
+- `/settings/profile`: email display (read-only), account deletion (მკაცრი `DELETE` typed confirm + API route)
 - Blocked user profile → content hidden ("კონტენტი მიუწვდომელია")
-- `POST /api/account/delete`: service role key-ით auth user deletion + cascade data cleanup
+- `POST /api/account/delete`: service role key-ით auth user deletion + cascade data cleanup (double-submit guard + error surfaced step-by-step)
 - `POST /api/push/send`: Web Push notification sending (Bearer auth, service role for recipient lookup)
-- Report user → Phase 11 (DB enum არ უჭერს 'user' target_type-ს)
+- User report enabled: `reports.target_type = 'user'` (migration: `database/0014_reports_user_target.sql`)
 
 ---
 
@@ -585,7 +585,8 @@ src/
     ├── 0010_message_delete_policy.sql ← Messages DELETE RLS policy (sender only)
     ├── 0011_messages_replica_identity.sql ← REPLICA IDENTITY FULL for Realtime
     ├── 0012_push_subscriptions.sql       ← Web Push subscriptions table + RLS
-    └── 0013_video_posts.sql              ← Video post columns + post-videos bucket
+    ├── 0013_video_posts.sql              ← Video post columns + post-videos bucket
+    └── 0014_reports_user_target.sql      ← Adds `user` to reports target_type enum
 ```
 
 ---
@@ -603,7 +604,7 @@ These steps cannot be automated via migrations and must be done manually in the 
    - Then run `database/0005_storage_posts.sql` in SQL Editor
 
 3. **Run all SQL migrations in order:**
-   - `0001_init.sql` → `0002_rls.sql` → `0003_profile_metadata_patch.sql` → `0004_storage_avatars.sql` → `0005_storage_posts.sql` → `0006_reports_select_policy.sql` → `0007_follows.sql` → `0008_messages.sql` → `0009_comment_replies.sql` → `0010_message_delete_policy.sql` → `0011_messages_replica_identity.sql` → `0012_push_subscriptions.sql` → `0013_video_posts.sql`
+   - `0001_init.sql` → `0002_rls.sql` → `0003_profile_metadata_patch.sql` → `0004_storage_avatars.sql` → `0005_storage_posts.sql` → `0006_reports_select_policy.sql` → `0007_follows.sql` → `0008_messages.sql` → `0009_comment_replies.sql` → `0010_message_delete_policy.sql` → `0011_messages_replica_identity.sql` → `0012_push_subscriptions.sql` → `0013_video_posts.sql` → `0014_reports_user_target.sql`
 
 4. **Enable Google OAuth in Supabase:**
    - Go to [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials
@@ -621,7 +622,7 @@ These steps cannot be automated via migrations and must be done manually in the 
 
 6. **Set environment variables on Vercel:**
    - `ADMIN_USER_IDS` = comma-separated admin UUIDs (server-only, **required** for admin security gate)
-   - `SUPABASE_SERVICE_ROLE_KEY` = Supabase service role key (server-only, for admin data access)
+   - `SUPABASE_SERVICE_ROLE_KEY` = Supabase service role key (server-only, required for admin data access და account deletion route)
    - `NEXT_PUBLIC_ADMIN_USER_IDS` = same UUIDs (optional — only shows/hides admin link in navbar UI)
 
 ---

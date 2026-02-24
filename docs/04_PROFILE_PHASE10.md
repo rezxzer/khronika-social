@@ -1,7 +1,7 @@
 # Khronika — Phase 10: Profile Feature Plan
 
 > შექმნილია: 2026-02-22
-> სტატუსი: **სრულია ✅** (2026-02-22)
+> სტატუსი: **სრულია ✅** (2026-02-24)
 > ეს დოკუმენტი არის სრული გეგმა Profile ფუნქციისთვის.
 
 ---
@@ -10,10 +10,10 @@
 
 | კომპონენტი | სტატუსი | რა არის |
 |---|---|---|
-| `/settings/profile` | არსებობს | ფორმა: avatar, username, display_name, bio. ანგარიშის წაშლა **არ არის**. |
-| `/u/[username]` | მინიმალური | ავატარი + სახელი + ბიო + join date. პოსტების სექცია placeholder-ია. |
+| `/settings/profile` | გაუმჯობესებულია ✅ | ფორმა + email (read-only) + ანგარიშის წაშლა (მკაცრი confirm flow). |
+| `/u/[username]` | გაუმჯობესებულია ✅ | header + accent strip + stats + public circles + რეალური პოსტები (Load more) + visitor actions (Share/Block/Report). |
 | DB `profiles` table | არსებობს | id, username, display_name, avatar_url, bio, created_at |
-| Friends / Follow | **არ არსებობს** | DB ცხრილი არ არის, კოდი არ არის |
+| Friends / Follow | არსებობს (Phase 12) | follows table + follow/unfollow UI პროფილზე |
 
 ---
 
@@ -65,6 +65,8 @@
 
 ## B) Profile Settings გაუმჯობესება (`/settings/profile`)
 
+> ქვეფაზა სტატუსი: **დასრულებულია ✅** (Phase 10.2)
+
 ### რა უნდა დაემატოს
 
 1. **Email display** (read-only)
@@ -76,7 +78,7 @@
    - "ანგარიშის წაშლა" button (destructive variant)
    - **მკაცრი confirm flow**:
      1. Dialog იხსნება warning-ით
-     2. User-მა უნდა ჩაწეროს "წაშლა" (ან "DELETE") text input-ში
+     2. User-მა უნდა ჩაწეროს "DELETE" text input-ში
      3. მხოლოდ მაშინ ხდება confirm button ხელმისაწვდომი
    - რას შლის:
      - Profile data (anonymize or delete)
@@ -127,13 +129,14 @@ Right sidebar-ში უკვე არსებობს onboarding widget (`u
 
 ## Database
 
-### Phase 10-ში schema ცვლილება არ სჭირდება (A + B)
+### Phase 10 core-ში schema ცვლილება არ სჭირდება (A + B)
 
 ყველა data არსებული ცხრილებიდან:
 - `profiles` — user info
 - `posts` — user's posts (`WHERE author_id = profile.id`)
 - `circle_members` + `circles` — user's circles
 - `reactions` + `posts` — reactions received
+- `reports` — visitor report action (`target_type = 'user'`) მხარდაჭერილია `database/0014_reports_user_target.sql` migration-ით
 
 ### Account deletion-ისთვის
 - `SUPABASE_SERVICE_ROLE_KEY` env var (server-only, უკვე გვაქვს admin-ისთვის)
@@ -168,18 +171,18 @@ Right sidebar-ში უკვე არსებობს onboarding widget (`u
 
 ## Definition of Done
 
-- [ ] `/u/[username]` აჩვენებს real posts (paginated, load more)
-- [ ] `/u/[username]` აჩვენებს user-ის public circles
-- [ ] `/u/[username]` stats row: posts, circles, reactions
-- [ ] Share profile + Block/Report visitor-ისთვის
-- [ ] "პროფილის რედაქტირება" button self-ისთვის
-- [ ] Blocked user-ის პროფილზე → კონტენტი დამალული
-- [ ] `/settings/profile` — email display (read-only)
-- [ ] `/settings/profile` — "ანგარიშის წაშლა" მკაცრი confirm-ით
-- [ ] Account deletion API route (service role, server-only)
-- [ ] Mobile 375px: ყველაფერი usable, no overflow
-- [ ] `npm run build` passes
-- [ ] Docs updated: CONTEXT.md, PROGRESS.md
+- [x] `/u/[username]` აჩვენებს real posts (paginated, load more)
+- [x] `/u/[username]` აჩვენებს user-ის public circles
+- [x] `/u/[username]` stats row: posts, circles, reactions
+- [x] Share profile + Block/Report visitor-ისთვის
+- [x] "პროფილის რედაქტირება" button self-ისთვის
+- [x] Blocked user-ის პროფილზე → კონტენტი დამალული
+- [x] `/settings/profile` — email display (read-only)
+- [x] `/settings/profile` — "ანგარიშის წაშლა" მკაცრი confirm-ით
+- [x] Account deletion API route (service role, server-only)
+- [x] Mobile 375px: ყველაფერი usable, no overflow
+- [x] `npm run build` passes
+- [x] Docs updated: CONTEXT.md, PROGRESS.md
 
 ---
 

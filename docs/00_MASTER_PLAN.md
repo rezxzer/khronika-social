@@ -65,7 +65,7 @@
 ### UI Components (shadcn/ui)
 - Button, Card, Tabs, Dialog, DropdownMenu, Badge, Skeleton, Toast, Command, Sonner
 - Icons: lucide-react
-- Animations: framer-motion, nextjs-toploader
+- Animations: CSS keyframes page transition, nextjs-toploader
 
 ### Theme
 - Light mode — მზადაა (Visual Identity v4: ოქროს ფონი + ლურჯი აქცენტი)
@@ -142,7 +142,7 @@
 **reports**
 - id uuid PK
 - reporter_id uuid references profiles(id)
-- target_type text check (target_type in ('post','comment'))
+- target_type text check (target_type in ('post','comment','user'))
 - target_id uuid
 - reason text
 - created_at timestamptz default now()
@@ -325,12 +325,12 @@
 - `onDeleted`/`onEdited` callbacks feed/circle pages-ში
 
 ### Phase 10 — Profile ✅
-**სრულია (2026-02-22).** მოიცავს:
-- `/u/[username]`: header, stats, real posts (paginated), circles, Share/Block
-- `/settings/profile`: email display, account deletion (მკაცრი confirm)
-- `POST /api/account/delete`: service role key cascade deletion
+**სრულია (2026-02-24).** მოიცავს:
+- `/u/[username]`: header, stats, real posts (paginated), circles, Share/Block/Report
+- `/settings/profile`: email display, account deletion (მკაცრი `DELETE` typed confirm)
+- `POST /api/account/delete`: service role key cascade deletion (`SUPABASE_SERVICE_ROLE_KEY`)
 - Blocked user → კონტენტი დამალული
-- Report user → Phase 11 (DB enum limit)
+- Report user completed via `database/0014_reports_user_target.sql`
 
 ### Phase 11.1 — Dark Mode Toggle ✅
 **სრულია (2026-02-22).** მოიცავს:

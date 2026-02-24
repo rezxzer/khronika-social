@@ -1,7 +1,16 @@
 # ქრონიკა — პროგრესის ტრეკერი (Changelog)
 
 > ყოველი ახალი ფუნქციის დამატებისას აქ ვწერთ.
-> ბოლო განახლება: 2026-02-24 (Phase 19.1 — Video Uploads)
+> ბოლო განახლება: 2026-02-24 (Phase 10.2 — settings polish + delete flow hardening)
+
+## Phase 10.2 — Settings Final Polish + Account Deletion ✅
+
+- სტატუსი: დასრულებულია
+- `/settings/profile`: email სექცია მკაფიო read-only disabled input-ით (mobile-friendly)
+- Account deletion dialog: typed confirm სტანდარტი `DELETE`, confirm button strict disabled-state-ით
+- Delete flow: loading + double-submit protection + ქართული toast feedback
+- `POST /api/account/delete`: `createAdminClient()` reuse + table-by-table error surfaced response
+- დამატებითი cleanup: `push_subscriptions` წაშლა account deletion chain-ში
 
 ---
 
@@ -232,14 +241,14 @@
 | User circles section (public only) | `src/app/u/[username]/page.tsx` |
 | Stats row: posts, circles, reactions | `src/app/u/[username]/page.tsx` |
 | Self action: "პროფილის რედაქტირება" | `src/app/u/[username]/page.tsx` |
-| Visitor actions: Share + Block/Unblock | `src/app/u/[username]/page.tsx` |
+| Visitor actions: Share + Block/Unblock + Report user | `src/app/u/[username]/page.tsx` |
 | Blocked user → "კონტენტი მიუწვდომელია" | `src/app/u/[username]/page.tsx` |
-| Email display (read-only) | `src/app/settings/profile/page.tsx` |
-| Account deletion (მკაცრი confirm) | `src/app/settings/profile/page.tsx` |
-| Account delete API route | `src/app/api/account/delete/route.ts` |
-| Report user | ⬜ Phase 11 (DB enum მხოლოდ 'post','comment') |
+| Email display (read-only, disabled input) | `src/app/settings/profile/page.tsx` |
+| Account deletion (`DELETE` typed confirm + loading guard) | `src/app/settings/profile/page.tsx` |
+| Account delete API route (service-role, step error surfacing) | `src/app/api/account/delete/route.ts` |
+| User report enum support | `database/0014_reports_user_target.sql` |
 
-**UX**: ავტორი ხედავს „რედაქტირება", სხვა ხედავს „გაზიარება"+„დაბლოკვა". Blocked user-ის პროფილზე პოსტები/წრეები დამალულია. ანგარიშის წაშლა მოითხოვს „წაშლა" ტექსტის ჩაწერას.
+**UX**: ავტორი ხედავს „რედაქტირება", სხვა ხედავს „გაზიარება"+„დაბლოკვა"+„დაარეპორტე". Blocked user-ის პროფილზე პოსტები/წრეები დამალულია. ანგარიშის წაშლა მოითხოვს ზუსტად `DELETE` ტექსტის ჩაწერას.
 
 ---
 
@@ -275,6 +284,7 @@
 | `database/0011_messages_replica_identity.sql` | REPLICA IDENTITY FULL on messages | ✅ |
 | `database/0012_push_subscriptions.sql` | Push subscriptions table + RLS | ✅ |
 | `database/0013_video_posts.sql` | Video post schema + post-videos bucket policies | ✅ |
+| `database/0014_reports_user_target.sql` | `report_target_type` enum-ში `user` value-ის დამატება | ✅ |
 
 ---
 
