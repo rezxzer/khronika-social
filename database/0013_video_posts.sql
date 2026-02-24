@@ -8,7 +8,12 @@ alter table public.posts
 
 update public.posts
 set media_kind = case
-  when coalesce(array_length(media_urls, 1), 0) > 0 then 'image'
+  when (
+    case
+      when jsonb_typeof(media_urls) = 'array' then jsonb_array_length(media_urls)
+      else 0
+    end
+  ) > 0 then 'image'
   else 'none'
 end
 where media_kind is null or media_kind = 'none';
@@ -20,11 +25,21 @@ alter table public.posts
 alter table public.posts
   add constraint posts_media_kind_consistency
   check (
-    (media_kind = 'video' and video_url is not null and coalesce(array_length(media_urls, 1), 0) = 0)
+    (media_kind = 'video' and video_url is not null and (
+      case
+        when jsonb_typeof(media_urls) = 'array' then jsonb_array_length(media_urls)
+        else 0
+      end
+    ) = 0)
     or
     (media_kind = 'image' and video_url is null)
     or
-    (media_kind = 'none' and video_url is null and coalesce(array_length(media_urls, 1), 0) = 0)
+    (media_kind = 'none' and video_url is null and (
+      case
+        when jsonb_typeof(media_urls) = 'array' then jsonb_array_length(media_urls)
+        else 0
+      end
+    ) = 0)
   );
 
 -- Storage bucket for post videos

@@ -438,6 +438,7 @@ Body has a fixed multi-layer gradient:
   - `p/[id]`: full video player controls
 - Backward compatibility: image-only posts remain unchanged
 - DB migration: `0013_video_posts.sql`
+- Migration note: `media_urls` is `jsonb`, so constraints/backfill use `jsonb_array_length(...)` (not `array_length(...)`)
 
 ---
 

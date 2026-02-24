@@ -580,11 +580,13 @@ Button, Card, Input, Label, Avatar, Badge, Dialog, DropdownMenu, Command, Skelet
 - **Storage**: `post-videos` public bucket + authenticated upload/delete policies
 - **Playback performance**: `<video preload=\"metadata\" playsInline controls>` (no auto-download heavy payload)
 - **UX**: upload progress bar + ქართულად toast/inline შეცდომები
+- **Migration fix**: `0013_video_posts.sql` updated to use `jsonb_array_length(media_urls)` (Supabase `media_urls` არის `jsonb`)
 - DB ცვლილებები: საჭიროა (`0013_video_posts.sql`)
 - Manual Supabase steps: bucket/policies/columns მიგრაციით
 
 **Manual steps:**
 1. Supabase SQL Editor-ში: `database/0013_video_posts.sql` გაშვება
+   - თუ ადრე error იყო `array_length(integer, integer) does not exist`, იგივე SQL თავიდან გაუშვით (fix უკვე შიგნითაა)
 2. გადაამოწმე რომ bucket `post-videos` შეიქმნა და public read მუშაობს
 3. როლით `authenticated` მომხმარებელი უნდა ახერხებდეს upload/delete ოპერაციებს საკუთარ path-ზე
 

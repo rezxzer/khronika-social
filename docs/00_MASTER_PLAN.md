@@ -444,6 +444,7 @@
 - PostCard video preview + post detail full video controls
 - Rule: image-only ან video-only (no mix in one post)
 - Backward compatibility: old image posts unchanged
+- Migration compatibility fix: `jsonb_array_length(media_urls)` for Supabase `jsonb` schema
 
 ### Phase 20 — Remaining Polish (შემდეგი)
 **Done როცა:**
