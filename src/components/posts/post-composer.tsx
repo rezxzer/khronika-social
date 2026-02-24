@@ -9,6 +9,7 @@ import { ImagePlus, X, Loader2, Video } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { VIDEO_ACCEPT_ATTR, validateVideoFile } from "@/lib/video-validation";
+import { registerVideoAssetForPost } from "@/lib/video-pipeline/client";
 
 type PostType = "story" | "lesson" | "invite";
 type ComposerMediaMode = "images" | "video";
@@ -44,6 +45,9 @@ export function PostComposer({
   const [posting, setPosting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [inlineError, setInlineError] = useState<string | null>(null);
+  const [videoPipelineNotice, setVideoPipelineNotice] = useState<string | null>(
+    null,
+  );
 
   function clearImages() {
     previews.forEach((p) => URL.revokeObjectURL(p));
@@ -150,6 +154,7 @@ export function PostComposer({
     e.preventDefault();
     if (!user || content.trim().length < 3) return;
     setInlineError(null);
+    setVideoPipelineNotice(null);
     setPosting(true);
     setUploadProgress(5);
 
@@ -200,15 +205,19 @@ export function PostComposer({
     }
 
     setUploadProgress(95);
-    const { error } = await supabase.from("posts").insert({
-      circle_id: circleId,
-      author_id: user.id,
-      type,
-      content: content.trim(),
-      media_urls: mediaUrls,
-      media_kind: mediaKind,
-      video_url: videoUrl,
-    });
+    const { data: insertedPost, error } = await supabase
+      .from("posts")
+      .insert({
+        circle_id: circleId,
+        author_id: user.id,
+        type,
+        content: content.trim(),
+        media_urls: mediaUrls,
+        media_kind: mediaKind,
+        video_url: videoUrl,
+      })
+      .select("id")
+      .single();
 
     if (error) {
       toast.error("პოსტი ვერ გაიგზავნა");
@@ -226,6 +235,27 @@ export function PostComposer({
     setMediaMode("images");
     setPosting(false);
     setUploadProgress(0);
+
+    if (mediaKind === "video" && videoUrl && insertedPost?.id) {
+      setVideoPipelineNotice("ვიდეო რიგში დაემატა და მუშავდება ფონურად");
+      void registerVideoAssetForPost({
+        postId: insertedPost.id as string,
+        sourceUrl: videoUrl,
+      }).then((result) => {
+        if (!result.ok) {
+          setVideoPipelineNotice("ვიდეო გამოქვეყნდა, მაგრამ დამუშავება ვერ დაიგეგმა");
+          return;
+        }
+        if (result.data.status === "ready") {
+          setVideoPipelineNotice("ვიდეო მზადაა");
+        } else if (result.data.status === "failed") {
+          setVideoPipelineNotice("ვიდეო გამოქვეყნდა, დამუშავება ვერ დასრულდა");
+        } else {
+          setVideoPipelineNotice("ვიდეო მუშავდება ფონურად");
+        }
+      });
+    }
+
     onPosted();
   }
 
@@ -365,6 +395,9 @@ export function PostComposer({
           გამოქვეყნება
         </Button>
       </div>
+      {videoPipelineNotice && (
+        <p className="text-xs text-muted-foreground">{videoPipelineNotice}</p>
+      )}
     </form>
   );
 }

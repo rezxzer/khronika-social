@@ -1,6 +1,6 @@
 # Khronika — Project Context (for AI assistants)
 
-> Last updated: 2026-02-24 (Phase 20 — Push Notifications v2 complete)
+> Last updated: 2026-02-24 (Phase 22 Step 7 — QA/verification/docs closeout complete, partial status)
 > This document is the single source of truth for any AI assistant helping develop Khronika.
 > It will be updated incrementally as the project evolves.
 
@@ -508,6 +508,77 @@ Body has a fixed multi-layer gradient:
 
 ---
 
+### Phase 22 — Video v2 Full Pipeline (Implementation in progress)
+- Status: Step 7 completed ✅, Phase 22 = partial/blocker
+- Blocker reason (single source wording): live external provider callback E2E not yet verified in real traffic
+- Goal: move from single-file v1/v2-lite playback to production-grade video processing:
+  - async transcoding/compression
+  - multi-rendition outputs for adaptive streaming
+  - robust job lifecycle, retries, and failure visibility
+- Recommended architecture path:
+  - Option B lock: queue-based orchestration + external video processing service (managed pipeline)
+  - keep app-side ownership of upload intent, job state, and playback source selection
+- Minimum rollout scope (v1):
+  - async job states (`queued` → `processing` → `ready` / `failed`)
+  - playback source model (manifest + fallback MP4)
+  - poster/thumbnail continuity
+  - `video_processing_events` in v1 for observability/ops
+  - default failure behavior: graceful unavailable state
+  - optional original-progressive fallback only when source exists and policy/security checks pass
+- Step progress:
+  - Step 1 ✅ DB foundation migration added (`database/0015_video_pipeline_foundation.sql`)
+  - Step 1 verification ✅ manual DB sanity checks passed in Supabase (enum, indexes, RLS, policies, trigger)
+  - SQL note: `pg_policies` checks should use `policyname` field in this environment
+  - Step 2 ✅ provider-agnostic domain contracts added (`types/status/contracts`) + API contract routes (`create`, `status/read`, `retry`)
+  - Step 2 scope intentionally excludes queue/worker execution, provider webhook signature handling, and UI changes
+  - Step 3 ✅ queue/job orchestration skeleton added (`queue/worker/retry`) with claim/lock/status progression/retry-backoff/terminal-fail helpers
+  - Step 3 ✅ create/retry entry hooks dispatch orchestration cycle (provider-agnostic, non-blocking)
+  - Step 3 scope intentionally excludes provider integration/webhook signature handling, UI changes, feature flags
+  - Step 4 ✅ provider adapter integration + webhook callback handling:
+    - new adapter boundary `src/lib/video-pipeline/provider-adapter.ts` (provider submit + callback verification/normalization)
+    - new callback endpoint `POST /api/video-assets/webhook` with strict transition guard (`canTransitionStatus`)
+    - callback outputs now persist into `video_assets` (`manifest_url`, `progressive_url`, `poster_url`, `thumbnail_url`, metadata)
+    - security: secret-based signature verification, replay window timestamp checks, nonce-based replay protection
+    - idempotency safety: duplicate callback paths handled as non-destructive skip
+  - Step 4 scope intentionally excludes UI changes, feature-flag rollout wiring, and admin/ops UI
+  - Step 5 ✅ UI lifecycle states integration (composer + card + detail):
+    - new client helper `src/lib/video-pipeline/client.ts` for `create/status` contract consumption
+    - composer UX surfaces non-blocking video lifecycle after publish (`feed-composer`, `post-composer`)
+    - `post-card` and `/p/[id]` consume owner-side `video_assets` status and show lifecycle-aware states
+    - ready state prefers processed playback fields (`progressive/poster/thumbnail`) when present
+    - legacy fallback (`posts.video_url`) remains intact
+  - Step 5 scope intentionally excludes provider/webhook security changes, queue/worker expansion, DB migrations, feature flags
+  - Step 6 ✅ server-focused retry/failure/ops polish:
+    - retry/backoff helper refined with jitter + retry ETA
+    - orchestration logs strengthened with dispatch correlation + consistent failure/retry payloads
+    - processing claim now increments `attempt_count` for accurate retry-limit behavior
+    - retry route hardened against concurrent status drift (status-conditioned update + conflict response)
+    - minimal ops read surface added: `GET /api/video-assets/[postId]/events` (owner-only)
+  - Step 6 scope intentionally excludes UI redesign, provider security model rewrite, DB schema expansion, feature flags/admin buildout
+  - Step 7 ✅ closeout gate (QA + verification + docs):
+    - closeout matrix executed for create/processing/ready-failed/retry/events visibility and Step 5 UI lifecycle regression
+    - minimal fix included: retry attempt double-count bug corrected (`src/app/api/video-assets/retry/route.ts`)
+    - verification gates passed: `tsc` ✅, `build` ✅
+    - truth alignment: Phase 22 remains **partial/blocker** until live external provider callback E2E is verified in real traffic
+  - Blocker lift checklist (before Phase 22 complete mark):
+    - real provider callback success path observed end-to-end
+    - real provider callback failed path observed end-to-end
+    - retry path observed (failed -> retrying -> processing/ready or terminal)
+    - events visibility trace confirmed (`/api/video-assets/[postId]/events` + `video_processing_events`)
+    - security checks observed in runtime logs: signature validation, replay protection, duplicate callback handling
+  - Required evidence artifacts (high-level):
+    - timestamped logs with callback request/response
+    - sample event rows (success/fail/retry/security cases) from `video_processing_events`
+    - request identifiers (`providerJobId`, `providerRequestId`, optional provider event id)
+    - 1-2 screenshots or captures from runtime monitoring/console showing end-to-end transition completion
+- Explicitly out of current planning scope:
+  - DRM
+  - live streaming
+  - aggressive per-title encoding tuning
+  - broad admin tooling beyond minimal status visibility
+
+---
+
 ## Hotfix Notes (2026-02-24)
 
 - **Public profile stale notFound state**
@@ -525,7 +596,7 @@ Body has a fixed multi-layer gradient:
 ## What Is NOT Built Yet
 
 ### Next Candidate Work
-- Video v2 Full Pipeline (transcoding + adaptive renditions) — next stage after Lite
+- Video v2 Full Pipeline implementation (transcoding + adaptive renditions) — next stage after planning approval
 - Push preferences granularity (per-type on/off), batching/digest, quiet hours (out-of-scope in v2)
 
 ---
@@ -659,7 +730,8 @@ src/
     ├── 0011_messages_replica_identity.sql ← REPLICA IDENTITY FULL for Realtime
     ├── 0012_push_subscriptions.sql       ← Web Push subscriptions table + RLS
     ├── 0013_video_posts.sql              ← Video post columns + post-videos bucket
-    └── 0014_reports_user_target.sql      ← Adds `user` to reports target_type enum
+    ├── 0014_reports_user_target.sql      ← Adds `user` to reports target_type enum
+    └── 0015_video_pipeline_foundation.sql ← Phase 22 Step 1: video assets/events foundation + RLS skeleton
 ```
 
 ---
@@ -677,7 +749,7 @@ These steps cannot be automated via migrations and must be done manually in the 
    - Then run `database/0005_storage_posts.sql` in SQL Editor
 
 3. **Run all SQL migrations in order:**
-   - `0001_init.sql` → `0002_rls.sql` → `0003_profile_metadata_patch.sql` → `0004_storage_avatars.sql` → `0005_storage_posts.sql` → `0006_reports_select_policy.sql` → `0007_follows.sql` → `0008_messages.sql` → `0009_comment_replies.sql` → `0010_message_delete_policy.sql` → `0011_messages_replica_identity.sql` → `0012_push_subscriptions.sql` → `0013_video_posts.sql` → `0014_reports_user_target.sql`
+   - `0001_init.sql` → `0002_rls.sql` → `0003_profile_metadata_patch.sql` → `0004_storage_avatars.sql` → `0005_storage_posts.sql` → `0006_reports_select_policy.sql` → `0007_follows.sql` → `0008_messages.sql` → `0009_comment_replies.sql` → `0010_message_delete_policy.sql` → `0011_messages_replica_identity.sql` → `0012_push_subscriptions.sql` → `0013_video_posts.sql` → `0014_reports_user_target.sql` → `0015_video_pipeline_foundation.sql`
 
 4. **Enable Google OAuth in Supabase:**
    - Go to [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials

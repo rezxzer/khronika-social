@@ -1,7 +1,7 @@
 # ქრონიკა — პროგრესის ტრეკერი (Changelog)
 
 > ყოველი ახალი ფუნქციის დამატებისას აქ ვწერთ.
-> ბოლო განახლება: 2026-02-24 (Phase 21 Step 5 — QA finalization + verification + docs sync)
+> ბოლო განახლება: 2026-02-24 (Phase 22 Step 7 — QA/verification/docs closeout completed, partial status)
 
 ## Hotfixes — 2026-02-24 ✅
 
@@ -29,6 +29,103 @@
 - Step 3 completed: poster-first fallback strategy გაძლიერდა `PostCard` + `/p/[id]`-ზე
 - Step 4 completed: playback UX polish + graceful error states (loading/ready/error flow) `PostCard` + `/p/[id]`-ზე, Step 3 poster behavior-ის შენარჩუნებით
 - Step 5 completed: final QA matrix + regression pass + `npx tsc --noEmit` ✅ + `npm run build` ✅ + docs final sync
+
+## Phase 22 — Video v2 Full Pipeline (Implementation in progress)
+
+- სტატუსი: Step 7 დასრულებულია ✅ (QA/verification/docs closeout), **Phase 22 = partial/blocker**
+- blocker reason (single source wording): live external provider callback E2E not yet verified in real traffic
+- Lite ✅ დასრულების შემდეგ დაფიქსირდა next scope:
+  - async processing pipeline
+  - transcoding/compression outputs
+  - adaptive playback source strategy
+  - job lifecycle + retry/failure handling
+- მომზადდა docs-first planning package:
+  - architecture options (A/B) + recommendation
+  - DB/storage/API ცვლილებების გეგმა (ჯერ migration/code გარეშე)
+  - phased rollout + QA matrix + risk/mitigation
+- decision locks დაფიქსირდა:
+  - Option B არქიტექტურა
+  - `video_processing_events` mandatory v1
+  - fail default = graceful unavailable; optional original fallback with policy/security checks
+  - provider-agnostic foundation first
+- მიმდინარე სტატუსი: Step 7 დასრულებულია ✅, Phase 22 ჯამური სტატუსი = **partial/blocker** (live external provider callback E2E not yet verified in real traffic)
+- Step 1 completed (DB foundation):
+  - ახალი enum: `video_processing_status`
+  - ახალი table: `video_assets` (v1 one-asset-per-post, constraints/indexes + updated_at trigger)
+  - ახალი table: `video_processing_events` (mandatory v1 observability)
+  - RLS skeleton: owner read + guarded insert; no owner update/delete policy
+  - migration: `database/0015_video_pipeline_foundation.sql`
+  - manual DB sanity verification: **PASSED ✅** (enum/indexes/RLS/policies/trigger confirmed in Supabase)
+  - verification note: `pg_policies` query snippets should use `policyname` column in this Supabase environment (not `polname`)
+- Step 2 completed (provider-agnostic server contracts):
+  - lifecycle/status rules: `src/lib/video-pipeline/status.ts` (`canTransitionStatus`, `isRetryAllowed`)
+  - domain/error contracts: `src/lib/video-pipeline/types.ts`
+  - API request/response + idempotency/webhook normalization contracts: `src/lib/video-pipeline/contracts.ts`
+  - API contract routes:
+    - `POST /api/video-assets/create`
+    - `GET /api/video-assets/[postId]`
+    - `POST /api/video-assets/retry`
+  - compatibility preserved with existing `posts.video_url` / `posts.media_kind`
+  - intentionally NOT included in Step 2: queue/worker execution, provider signature/webhook integration, UI changes
+- Step 3 completed (provider-agnostic orchestration skeleton):
+  - queue/dispatch layer: `src/lib/video-pipeline/queue.ts`
+  - worker behavior: `src/lib/video-pipeline/worker.ts` (claim/lock, status progression hooks, terminal-fail/retry scheduling helpers, event logging)
+  - retry/backoff policy: `src/lib/video-pipeline/retry.ts`
+  - create/retry entry hooks updated to call non-blocking orchestration dispatch
+  - intentionally NOT included in Step 3: provider adapter/webhook signature, UI changes, feature flags/rollout wiring
+- Step 4 completed (provider adapter integration + webhook/callback handling):
+  - ახალი adapter boundary: `src/lib/video-pipeline/provider-adapter.ts` (provider submit + signed callback normalize/verify)
+  - orchestration hook გაძლიერდა: `src/lib/video-pipeline/worker.ts` ახლა claim-ის შემდეგ provider submit path-ს იძახებს და შესაბამის `video_processing_events`-ს წერს
+  - ახალი route: `POST /api/video-assets/webhook` (`src/app/api/video-assets/webhook/route.ts`) callback → internal status mapping-ით და `canTransitionStatus` guard-ით
+  - output persistence დაემატა `video_assets`-ში (`manifest/progressive/poster/thumbnail` + metadata fields)
+  - idempotency/replay safety: duplicate event-id/nonce გზები non-destructive skip რეჟიმით
+  - security: HMAC signature verification (`x-video-signature`), replay window (`x-video-timestamp`) და nonce-based replay protection (`x-video-nonce`)
+  - intentionally NOT included in Step 4: UI changes, feature flags/rollout wiring, admin/ops UI
+- Step 5 completed (UI lifecycle states integration):
+  - new client consumer helper: `src/lib/video-pipeline/client.ts` (`create/status` APIs)
+  - composer lifecycle surface added after video publish (non-blocking) in:
+    - `src/components/posts/feed-composer.tsx`
+    - `src/components/posts/post-composer.tsx`
+  - `PostCard` + `/p/[id]` now consume owner asset status and surface lifecycle states:
+    - `queued` / `processing` / `retrying` / `failed` / `ready`
+  - ready path prefers processed playback (`progressiveUrl`, `posterUrl`/`thumbnailUrl`) როცა ხელმისაწვდომია
+  - legacy fallback (`posts.video_url`) intentionally preserved for compatibility
+  - intentionally NOT included in Step 5: provider/webhook security changes, queue/worker logic changes, DB schema changes
+- Step 6 completed (server-focused retries/failure/ops polish):
+  - retry policy hardening: jittered backoff + retry ETA helper (`src/lib/video-pipeline/retry.ts`)
+  - orchestration traceability hardening (`src/lib/video-pipeline/worker.ts`):
+    - dispatch correlation (`dispatchId`) propagated into event payloads
+    - claim now increments `attempt_count` on processing claim
+    - terminal failure / auto-retry events standardized with context payloads
+    - auto-retry exhausted path now emits explicit event
+  - retry route edge-case hardening (`src/app/api/video-assets/retry/route.ts`):
+    - optimistic update now status-conditioned
+    - concurrent transition conflict returns `409 INVALID_STATE` with details
+    - conflict event logged (`retry_conflict`)
+  - minimal ops visibility surface added:
+    - `GET /api/video-assets/[postId]/events` (owner-only status + recent event log, server/db oriented)
+  - intentionally NOT included in Step 6: UI redesign, provider signature model rewrite, DB schema expansion, feature flags/admin UI
+- Step 7 completed (QA / verification / docs closeout gate):
+  - QA closeout matrix executed for create/processing/ready-failed/retry/events-visibility + Step 5 UI lifecycle regression
+  - minimal bug fix applied:
+    - retry path attempt counter double-increment issue corrected in `src/app/api/video-assets/retry/route.ts`
+  - verification gates:
+    - `npx tsc --noEmit` ✅
+    - `npm run build` ✅
+  - final status truth-alignment:
+    - Phase 22 **not marked complete**
+    - marked as **partial/blocker** until live external provider callback E2E is verified in real traffic
+- Blocker lift checklist (Phase 22 complete mark-მდე):
+  - real provider callback success path დადასტურდეს
+  - real provider callback failed path დადასტურდეს
+  - retry path დადასტურდეს end-to-end
+  - events visibility trace დადასტურდეს (`/api/video-assets/[postId]/events` + `video_processing_events`)
+  - security checks runtime-ზე დადასტურდეს (signature/replay/duplicate handling)
+- Required evidence artifacts:
+  - timestamped callback request/response logs
+  - `video_processing_events` sample rows (success/fail/retry/security)
+  - request identifiers (`providerJobId`, `providerRequestId`, optional provider event id)
+  - მოკლე runtime screenshots/captures (high-level proof)
 
 ## Phase 20 — Push Notifications v2 ✅
 
@@ -335,6 +432,7 @@
 | `database/0012_push_subscriptions.sql` | Push subscriptions table + RLS | ✅ |
 | `database/0013_video_posts.sql` | Video post schema + post-videos bucket policies | ✅ |
 | `database/0014_reports_user_target.sql` | `report_target_type` enum-ში `user` value-ის დამატება | ✅ |
+| `database/0015_video_pipeline_foundation.sql` | Phase 22 Step 1: `video_processing_status` + `video_assets` + `video_processing_events` + RLS skeleton | ✅ |
 
 ---
 
@@ -682,7 +780,7 @@ Button, Card, Input, Label, Avatar, Badge, Dialog, DropdownMenu, Command, Skelet
 **შემდეგი:**
 - [x] Push notifications v2 (reactions, comments, follows)
 - [x] Video v2 Lite (validation, metadata, poster, playback polish)
-- [ ] Video v2 Full Pipeline (transcoding/compression/streaming)
+- [ ] Video v2 Full Pipeline (implementation prep → step-by-step code phase)
 
 ---
 

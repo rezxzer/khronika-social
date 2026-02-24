@@ -512,6 +512,97 @@
 - adaptive streaming production rollout
 - advanced video security/DRM
 
+### Phase 22 — Video v2 Full Pipeline (Implementation in progress)
+**სტატუსი:** Step 7 დასრულებულია ✅, Phase 22 = partial/blocker
+**Blocker მიზეზი:** live external provider callback E2E not yet verified in real traffic
+
+**მიზანი:**
+- ვიდეო ქვეინფრასტრუქტურის გადასვლა production-grade pipeline-ზე:
+  - async processing (job lifecycle)
+  - transcoding/compression
+  - adaptive playback sources
+
+**Minimum production-worthy scope (v1):**
+- queue/job orchestration (`queued`, `processing`, `completed`, `failed`, `retrying`)
+- original + processed outputs storage convention
+- playback manifest/source selection with safe fallback
+- processing failure visibility (user-facing concise state + ops-facing diagnostics)
+
+**Architecture options (planning):**
+- Option A: app-managed async jobs + storage outputs
+- Option B: queue-based orchestration + external processing service ✅ (decision lock)
+
+**Decision locks (current):**
+- `video_processing_events` table შედის v1-ში (mandatory observability)
+- Processing failure default: graceful unavailable state
+- Original progressive fallback: optional-only, მხოლოდ policy/security checks-ის გავლისას
+- Implementation order: provider-agnostic foundation → provider adapter → gated rollout
+
+**Step progress (implementation):**
+- Step 1 ✅ DB foundation migration: `database/0015_video_pipeline_foundation.sql`
+- Step 1 verification ✅ manual DB sanity checks passed in Supabase
+- SQL snippet note: `pg_policies` checks use `policyname` (environment-specific)
+- Step 2 ✅ provider-agnostic contracts layer:
+  - `src/lib/video-pipeline/types.ts`
+  - `src/lib/video-pipeline/status.ts`
+  - `src/lib/video-pipeline/contracts.ts`
+  - API contract routes: `create`, `status/read`, `retry` (contract-side only)
+- Step 2 intentionally out-of-scope: queue/worker execution, provider signature/webhook integration, UI states
+- Step 3 ✅ orchestration skeleton layer:
+  - `src/lib/video-pipeline/queue.ts`
+  - `src/lib/video-pipeline/worker.ts`
+  - `src/lib/video-pipeline/retry.ts`
+  - create/retry routes now trigger provider-agnostic dispatch hooks
+- Step 3 intentionally out-of-scope: provider adapter integration, webhook signature handling, UI/feature-flag rollout
+- Step 4 ✅ provider adapter integration layer:
+  - `src/lib/video-pipeline/provider-adapter.ts` (submit + callback normalization/verification boundary)
+  - `src/app/api/video-assets/webhook/route.ts` (signed callback handling + status mapping/persistence)
+  - `src/lib/video-pipeline/worker.ts` updated to submit claimed jobs through adapter boundary
+- Step 4 security/idempotency:
+  - HMAC signature verification with secret-based callback validation
+  - replay protection via timestamp window + nonce replay checks
+  - duplicate callbacks safely skipped (idempotent path)
+- Step 4 intentionally out-of-scope: UI changes, feature flags/rollout wiring, admin/ops UI
+- Step 5 ✅ UI lifecycle integration layer:
+  - `src/lib/video-pipeline/client.ts` added for authenticated `create/status` consumption
+  - composer lifecycle surface (non-blocking) added in `feed-composer` and `post-composer`
+  - `post-card` + `/p/[id]` now render lifecycle-aware states from owner-side `video_assets` status
+  - ready state prefers processed playback outputs, legacy `posts.video_url` fallback preserved
+- Step 5 intentionally out-of-scope: provider/webhook security changes, queue/worker logic changes, DB/schema changes, feature flags
+- Step 6 ✅ server reliability and ops visibility polish:
+  - `src/lib/video-pipeline/retry.ts`: jittered backoff + retry ETA
+  - `src/lib/video-pipeline/worker.ts`: attempt increment on claim + correlated event payload standardization + auto-retry exhausted event
+  - `src/app/api/video-assets/retry/route.ts`: status-conditioned retry update + concurrent conflict handling
+  - `src/app/api/video-assets/[postId]/events/route.ts`: owner-only ops/event visibility endpoint
+- Step 6 intentionally out-of-scope: UI redesign, provider security model rewrite, DB major expansion, feature flags/admin dashboard
+- Step 7 ✅ closeout gate:
+  - QA matrix + regression audit completed for Step 1–6 flow
+  - minimal fix applied: retry attempt double-increment removed in retry route
+  - verification gates passed: `npx tsc --noEmit` ✅, `npm run build` ✅
+  - Phase 22 truth-aligned as **partial/blocker** pending live external provider callback E2E verification in real traffic
+- Blocker lift checklist (complete mark-მდე):
+  - real provider callback success path დადასტურებული
+  - real provider callback failed path დადასტურებული
+  - retry path დადასტურებული end-to-end
+  - events visibility trace დადასტურებული (`/api/video-assets/[postId]/events` + `video_processing_events`)
+  - security checks runtime-ზე დადასტურებული (signature/replay/duplicate handling)
+- Required evidence artifacts:
+  - timestamped request/response logs
+  - `video_processing_events` examples (success/fail/retry/security)
+  - request ids (`providerJobId`, `providerRequestId`, optional provider event id)
+  - მოკლე screenshot/capture evidence runtime checks-იდან
+
+**Phase 22 v1-ში არ შედის:**
+- DRM / live streaming
+- advanced per-title encoding optimization
+- multi-region media replication strategy
+
+**Done როცა (planning gate):**
+- არქიტექტურული არჩევანი ერთ ვარიანტზე დაფიქსირებულია
+- DB/storage/API ცვლილებების გეგმა დოკუმენტურად შეთანხმებულია
+- rollout/QA/risk plan დამტკიცებულია
+- მხოლოდ ამის შემდეგ გადავდივართ code implementation-ზე
+
 ### Hotfixes — 2026-02-24 ✅
 - Profile false not-found after settings update:
   - cause: stale `notFound` state in `src/app/u/[username]/page.tsx`

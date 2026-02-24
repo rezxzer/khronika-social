@@ -36,6 +36,8 @@ import {
 import { supabase } from "@/lib/supabase/client";
 import { normalizePostMedia, pickPrimaryPosterUrl } from "@/lib/post-media";
 import { shareOrCopy } from "@/lib/share";
+import { fetchVideoAssetStatusByPost } from "@/lib/video-pipeline/client";
+import type { VideoAssetContractData } from "@/lib/video-pipeline/contracts";
 import { toast } from "sonner";
 
 const PostEditDialog = dynamic(
@@ -145,6 +147,9 @@ export const PostCard = memo(function PostCard({
   );
   const [videoErrorText, setVideoErrorText] = useState<string | null>(null);
   const [videoDuration, setVideoDuration] = useState<string | null>(null);
+  const [pipelineAsset, setPipelineAsset] = useState<VideoAssetContractData | null>(
+    null,
+  );
 
   const isSelf = currentUserId === post.author_id;
 
@@ -215,7 +220,70 @@ export const PostCard = memo(function PostCard({
     setVideoState("loading");
     setVideoErrorText(null);
     setVideoDuration(null);
+    setPipelineAsset(null);
   }, [post.id, normalizedPost.video_url]);
+
+  useEffect(() => {
+    if (
+      normalizedPost.media_kind !== "video" ||
+      !normalizedPost.video_url ||
+      !currentUserId ||
+      currentUserId !== post.author_id
+    ) {
+      return;
+    }
+
+    let alive = true;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    const pull = async () => {
+      const next = await fetchVideoAssetStatusByPost(post.id);
+      if (!alive || !next) return;
+      setPipelineAsset(next);
+
+      if (["queued", "processing", "retrying"].includes(next.status)) {
+        timer = setTimeout(() => {
+          void pull();
+        }, 5000);
+      }
+    };
+
+    void pull();
+    return () => {
+      alive = false;
+      if (timer) clearTimeout(timer);
+    };
+  }, [
+    currentUserId,
+    normalizedPost.media_kind,
+    normalizedPost.video_url,
+    post.author_id,
+    post.id,
+  ]);
+
+  const pipelineStatus = pipelineAsset?.status ?? null;
+  const pipelineBannerText =
+    pipelineStatus === "queued"
+      ? "ვიდეო რიგშია"
+      : pipelineStatus === "processing"
+        ? "ვიდეო მუშავდება"
+        : pipelineStatus === "retrying"
+          ? "ვიდეო ხელახლა მუშავდება"
+          : pipelineStatus === "failed"
+            ? "ვიდეოს დამუშავება ვერ დასრულდა"
+            : null;
+
+  const effectiveVideoUrl =
+    pipelineStatus === "ready"
+      ? (pipelineAsset?.playback.progressiveUrl ?? normalizedPost.video_url)
+      : normalizedPost.video_url;
+
+  const effectivePosterUrl =
+    pipelineStatus === "ready"
+      ? (pipelineAsset?.playback.posterUrl ??
+        pipelineAsset?.playback.thumbnailUrl ??
+        primaryPosterUrl)
+      : primaryPosterUrl;
 
   return (
     <>
@@ -322,13 +390,18 @@ export const PostCard = memo(function PostCard({
           )}
         </Link>
 
-        {normalizedPost.media_kind === "video" && normalizedPost.video_url ? (
+        {normalizedPost.media_kind === "video" && effectiveVideoUrl ? (
           <div className="relative mt-3 overflow-hidden rounded-lg border bg-muted/30 p-1 sm:p-0">
+            {pipelineBannerText && (
+              <span className="absolute left-2 top-2 z-20 rounded-full bg-background/90 px-2 py-1 text-[11px] font-medium text-muted-foreground shadow-sm">
+                {pipelineBannerText}
+              </span>
+            )}
             {videoState !== "ready" && (
               <div className="absolute inset-0 z-10">
-                {primaryPosterUrl ? (
+                {effectivePosterUrl ? (
                   <Image
-                    src={primaryPosterUrl}
+                    src={effectivePosterUrl}
                     alt="ვიდეოს პრევიუ"
                     fill
                     sizes="(max-width: 640px) 100vw, 672px"
@@ -339,7 +412,9 @@ export const PostCard = memo(function PostCard({
                   {videoState === "error" ? (
                     <div className="flex items-center gap-2 rounded-full bg-background/90 px-3 py-1.5 text-xs text-destructive shadow-sm">
                       <AlertCircle className="h-3.5 w-3.5" />
-                      {videoErrorText ?? "ვიდეო ვერ ჩაიტვირთა"}
+                      {pipelineStatus === "failed"
+                        ? pipelineAsset?.error.message ?? "ვიდეოს დამუშავება ვერ დასრულდა"
+                        : videoErrorText ?? "ვიდეო ვერ ჩაიტვირთა"}
                     </div>
                   ) : (
                     <div className="flex items-center gap-2 rounded-full bg-background/80 px-3 py-1.5 text-xs text-muted-foreground shadow-sm">
@@ -351,8 +426,8 @@ export const PostCard = memo(function PostCard({
               </div>
             )}
             <video
-              src={normalizedPost.video_url}
-              poster={primaryPosterUrl ?? undefined}
+              src={effectiveVideoUrl}
+              poster={effectivePosterUrl ?? undefined}
               className={`relative z-0 block h-auto max-h-[65vh] w-full bg-black transition-opacity ${
                 videoState === "ready" ? "opacity-100" : "opacity-0"
               }`}

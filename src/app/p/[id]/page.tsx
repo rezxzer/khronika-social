@@ -42,6 +42,8 @@ import { PostEditDialog } from "@/components/posts/post-edit-dialog";
 import { shareOrCopy } from "@/lib/share";
 import { fireAndForgetPush } from "@/lib/push/client";
 import { normalizePostMedia, pickPrimaryPosterUrl } from "@/lib/post-media";
+import { fetchVideoAssetStatusByPost } from "@/lib/video-pipeline/client";
+import type { VideoAssetContractData } from "@/lib/video-pipeline/contracts";
 import { toast } from "sonner";
 
 interface PostDetail {
@@ -149,6 +151,9 @@ function PostDetailContent() {
   );
   const [videoErrorText, setVideoErrorText] = useState<string | null>(null);
   const [videoDuration, setVideoDuration] = useState<string | null>(null);
+  const [pipelineAsset, setPipelineAsset] = useState<VideoAssetContractData | null>(
+    null,
+  );
   const [isMember, setIsMember] = useState(false);
   const [replyingTo, setReplyingTo] = useState<{
     id: string;
@@ -174,6 +179,7 @@ function PostDetailContent() {
     }
 
     setPost(normalizePostMedia(data as unknown as PostDetail));
+    setPipelineAsset(null);
     setVideoState("loading");
     setVideoErrorText(null);
     setVideoDuration(null);
@@ -238,6 +244,46 @@ function PostDetailContent() {
       setTimeout(() => commentInputRef.current?.focus(), 100);
     }
   }, [loading, searchParams]);
+
+  useEffect(() => {
+    if (
+      !post ||
+      !user ||
+      post.author_id !== user.id ||
+      post.media_kind !== "video" ||
+      !post.video_url
+    ) {
+      return;
+    }
+
+    let alive = true;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    const pull = async () => {
+      const next = await fetchVideoAssetStatusByPost(post.id);
+      if (!alive || !next) return;
+      setPipelineAsset(next);
+
+      if (["queued", "processing", "retrying"].includes(next.status)) {
+        timer = setTimeout(() => {
+          void pull();
+        }, 5000);
+      }
+    };
+
+    void pull();
+    return () => {
+      alive = false;
+      if (timer) clearTimeout(timer);
+    };
+  }, [post, user]);
+
+  useEffect(() => {
+    if (!post || post.media_kind !== "video" || !post.video_url) return;
+    setVideoState("loading");
+    setVideoErrorText(null);
+    setVideoDuration(null);
+  }, [post?.id, post?.video_url, pipelineAsset?.playback.progressiveUrl]);
 
   async function handleComment(e: React.FormEvent) {
     e.preventDefault();
@@ -377,6 +423,27 @@ function PostDetailContent() {
   const author = post.profiles;
   const normalizedPost = normalizePostMedia(post);
   const primaryPosterUrl = pickPrimaryPosterUrl(normalizedPost);
+  const pipelineStatus = pipelineAsset?.status ?? null;
+  const pipelineBannerText =
+    pipelineStatus === "queued"
+      ? "ვიდეო რიგშია"
+      : pipelineStatus === "processing"
+        ? "ვიდეო მუშავდება"
+        : pipelineStatus === "retrying"
+          ? "ვიდეო ხელახლა მუშავდება"
+          : pipelineStatus === "failed"
+            ? "ვიდეოს დამუშავება ვერ დასრულდა"
+            : null;
+  const effectiveVideoUrl =
+    pipelineStatus === "ready"
+      ? (pipelineAsset?.playback.progressiveUrl ?? normalizedPost.video_url)
+      : normalizedPost.video_url;
+  const effectivePosterUrl =
+    pipelineStatus === "ready"
+      ? (pipelineAsset?.playback.posterUrl ??
+        pipelineAsset?.playback.thumbnailUrl ??
+        primaryPosterUrl)
+      : primaryPosterUrl;
   const initials = (author.display_name || author.username || "?")
     .slice(0, 2)
     .toUpperCase();
@@ -448,13 +515,18 @@ function PostDetailContent() {
           {post.content}
         </div>
 
-        {normalizedPost.media_kind === "video" && normalizedPost.video_url ? (
+        {normalizedPost.media_kind === "video" && effectiveVideoUrl ? (
           <div className="relative mt-5 overflow-hidden rounded-xl border bg-muted/30">
+            {pipelineBannerText && (
+              <span className="absolute left-2 top-2 z-20 rounded-full bg-background/90 px-2 py-1 text-[11px] font-medium text-muted-foreground shadow-sm">
+                {pipelineBannerText}
+              </span>
+            )}
             {videoState !== "ready" && (
               <div className="absolute inset-0 z-10">
-                {primaryPosterUrl ? (
+                {effectivePosterUrl ? (
                   <Image
-                    src={primaryPosterUrl}
+                    src={effectivePosterUrl}
                     alt="ვიდეოს პრევიუ"
                     fill
                     sizes="(max-width: 640px) 100vw, 672px"
@@ -465,7 +537,9 @@ function PostDetailContent() {
                   {videoState === "error" ? (
                     <div className="flex items-center gap-2 rounded-full bg-background/90 px-3 py-1.5 text-xs text-destructive shadow-sm">
                       <AlertCircle className="h-3.5 w-3.5" />
-                      {videoErrorText ?? "ვიდეო ვერ ჩაიტვირთა"}
+                      {pipelineStatus === "failed"
+                        ? pipelineAsset?.error.message ?? "ვიდეოს დამუშავება ვერ დასრულდა"
+                        : videoErrorText ?? "ვიდეო ვერ ჩაიტვირთა"}
                     </div>
                   ) : (
                     <div className="flex items-center gap-2 rounded-full bg-background/80 px-3 py-1.5 text-xs text-muted-foreground shadow-sm">
@@ -477,8 +551,8 @@ function PostDetailContent() {
               </div>
             )}
             <video
-              src={normalizedPost.video_url}
-              poster={primaryPosterUrl ?? undefined}
+              src={effectiveVideoUrl}
+              poster={effectivePosterUrl ?? undefined}
               className={`relative z-0 block h-auto max-h-[72vh] w-full bg-black transition-opacity ${
                 videoState === "ready" ? "opacity-100" : "opacity-0"
               }`}
