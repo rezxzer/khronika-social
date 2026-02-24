@@ -1,7 +1,29 @@
 # ქრონიკა — პროგრესის ტრეკერი (Changelog)
 
 > ყოველი ახალი ფუნქციის დამატებისას აქ ვწერთ.
-> ბოლო განახლება: 2026-02-24 (Phase 20 — Push Notifications v2 დასრულებულია)
+> ბოლო განახლება: 2026-02-24 (Hotfixes — profile stale notFound + mobile video visibility)
+
+## Hotfixes — 2026-02-24 ✅
+
+- **Profile page false "not found" after settings update**
+  - სიმპტომი: `/settings/profile`-ში განახლების შემდეგ ზოგჯერ `/u/[username]` გვერდზე ჩნდებოდა "მომხმარებელი ვერ მოიძებნა"
+  - root cause: `src/app/u/[username]/page.tsx`-ში `notFound` state ერთხელ `true` თუ ხდებოდა, შემდეგ წარმატებულ fetch-ზე ყოველთვის არ ნულდებოდა
+  - fix: `fetchProfile()` დასაწყისში და წარმატებულ fetch branch-ში დაემატა `setNotFound(false)`
+  - commit: `07c2fee`
+
+- **Mobile-ზე ვიდეოები PostCard-ში არ ჩანდნენ**
+  - სიმპტომი: ტელეფონზე feed/card-ში ვიდეო პოსტები ზოგჯერ არ ჩნდებოდა (ფოტოები კი ჩანდა)
+  - root cause: `src/components/posts/post-card.tsx`-ში ვიდეო render იყო `opacity-0` სანამ მხოლოდ `onLoadedData` არ მოვიდოდა; mobile browser-ებზე ეს event შეიძლება დაგვიანდეს/არასტაბილური იყოს
+  - fix: readiness gate გაფართოვდა — `setVideoReady(true)` დაემატა `onLoadedMetadata` და `onCanPlay`-ზეაც
+  - commit: (current push)
+
+## Phase 21 — Video v2 (Planning, docs-first)
+
+- სტატუსი: დაგეგმვა მიმდინარეობს (NO CODE)
+- შექმნილია docs-first plan: `docs/05_VIDEO_PHASE21.md`
+- რეკომენდებული implementation track: Video v2 Lite (validation + metadata consistency + poster strategy + playback polish)
+- Video v2 Full Pipeline დაფიქსირდა როგორც შემდეგი არქიტექტურული ვარიანტი (არა ამ ეტაპზე)
+- Phase 20 closeout confirmed: push v2 დასრულებულია და deploy-ზე დადასტურებულია
 
 ## Phase 20 — Push Notifications v2 ✅
 
@@ -654,7 +676,8 @@ Button, Card, Input, Label, Avatar, Badge, Dialog, DropdownMenu, Command, Skelet
 
 **შემდეგი:**
 - [x] Push notifications v2 (reactions, comments, follows)
-- [ ] Video v2 (compression/transcoding/streaming)
+- [ ] Video v2 Lite (validation, metadata, poster, playback polish)
+- [ ] Video v2 Full Pipeline (transcoding/compression/streaming)
 
 ---
 

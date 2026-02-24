@@ -471,6 +471,48 @@
 - quiet hours
 - ახალი notification კატეგორიები
 
+### Phase 21 — Video v2 (Planning, docs-first)
+**სტატუსი:** დაგეგმვაშია (კოდი ჯერ არ იწყება)
+
+**მიზანი:**
+- Video v1-ის არსებული UX/ინფრა გადავიყვანოთ უფრო production-ready მიმართულებით:
+  - უკეთესი ატვირთვის წესები/ვალიდაცია
+  - metadata consistency
+  - poster thumbnail strategy
+  - performance/playback polish
+
+**რეკომენდებული გზაა (Phase 21):** Video v2 Lite
+- არსებული upload flow-ის შენარჩუნება (low risk)
+- stricter validation policy
+- metadata fields consistency plan
+- poster strategy (simple + fallback)
+- playback polish
+
+**ალტერნატივა (შემდეგ ეტაპზე):** Video v2 Full Pipeline
+- transcoding/compression background jobs
+- multi-rendition/adaptive streaming
+- storage path/versioning + job architecture
+
+**Phase 21 Lite — Done როცა:**
+- Validation rules მკაფიოდ მუშაობს composer-ებში
+- Video metadata თანმიმდევრულია card/detail rendering-ში
+- Poster strategy არის (primary + fallback)
+- Playback UX სტაბილურია მობაილ/დესკტოპზე
+- Docs synced (`CONTEXT`, `MASTER_PLAN`, `PROGRESS`, phase doc)
+
+**Out of scope (Phase 21 Lite):**
+- სრული transcoding pipeline
+- adaptive streaming production rollout
+- advanced video security/DRM
+
+### Hotfixes — 2026-02-24 ✅
+- Profile false not-found after settings update:
+  - cause: stale `notFound` state in `src/app/u/[username]/page.tsx`
+  - fix: reset flag before fetch and on successful fetch
+- Mobile PostCard video invisible issue:
+  - cause: readiness depended mostly on `onLoadedData` event
+  - fix: readiness widened to `onLoadedMetadata` + `onCanPlay` (+existing `onLoadedData`)
+
 ---
 
 ## 10) Cursor-ის წესები (კრიტიკული)

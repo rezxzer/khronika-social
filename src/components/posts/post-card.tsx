@@ -330,7 +330,9 @@ export const PostCard = memo(function PostCard({
               controlsList="nodownload"
               onLoadedMetadata={(e) => {
                 setVideoDuration(formatDuration(e.currentTarget.duration));
+                setVideoReady(true);
               }}
+              onCanPlay={() => setVideoReady(true)}
               onLoadedData={() => setVideoReady(true)}
               onError={() => {
                 setVideoReady(true);

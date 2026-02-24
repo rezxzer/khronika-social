@@ -471,10 +471,56 @@ Body has a fixed multi-layer gradient:
 
 ---
 
+### Phase 21 — Video v2 (Planning, docs-first)
+- Status: planning only (NO CODE STARTED)
+- Goal: move video UX/infra from v1 to practical production-ready direction
+- Recommended track: **Video v2 Lite** first (low risk, fast delivery), keep Full Pipeline as next-stage architecture
+- Reuse baseline (must stay):
+  - Video v1 upload flow is working (`post-composer`, `feed-composer`, `post-videos` bucket)
+  - Video v1 polish is complete (#1-#5)
+  - `media_urls` schema is `jsonb`
+  - `PostCard` and `/p/[id]` are already video-aware
+  - No scope mixing with push/notifications/messages phases
+
+**Lite scope (recommended):**
+- Stricter upload validation policy (codec/container/duration/size guardrails)
+- Metadata consistency layer (`duration`, `width`, `height`, optional `poster_url`) and safer UI fallbacks
+- Poster thumbnail strategy:
+  - primary: lightweight client-side extracted frame upload (or first-frame capture)
+  - fallback: deterministic static placeholder
+- Progressive playback polish (preload/sizes/controls tuning, better loading/error states)
+
+**Full Pipeline (not now, architectural option):**
+- Transcoding/compression jobs (background workers)
+- Multi-rendition outputs and adaptive streaming (HLS-like)
+- Asset versioning/path strategy and job status model
+
+**Out of scope in Phase 21 Lite:**
+- Full transcoding infrastructure
+- Multi-bitrate adaptive streaming rollout
+- DRM/advanced media security pipeline
+
+---
+
+## Hotfix Notes (2026-02-24)
+
+- **Public profile stale notFound state**
+  - File: `src/app/u/[username]/page.tsx`
+  - Cause: `notFound` flag could remain `true` after a previous failed fetch.
+  - Fix: reset `notFound` before each fetch and again on success.
+
+- **Mobile video visibility in post cards**
+  - File: `src/components/posts/post-card.tsx`
+  - Cause: video stayed hidden until `onLoadedData`; on some mobile browsers this event is delayed/less reliable for first paint.
+  - Fix: mark video as ready on `onLoadedMetadata` and `onCanPlay` as well, keeping `onLoadedData` fallback.
+
+---
+
 ## What Is NOT Built Yet
 
 ### Next Candidate Work
-- Video v2 (compression/transcoding/streaming)
+- Video v2 Lite (validation + metadata consistency + poster strategy + playback polish)
+- Video v2 Full Pipeline (transcoding + adaptive renditions) — next stage after Lite
 - Push preferences granularity (per-type on/off), batching/digest, quiet hours (out-of-scope in v2)
 
 ---
