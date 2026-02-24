@@ -471,8 +471,8 @@
 - quiet hours
 - ახალი notification კატეგორიები
 
-### Phase 21 — Video v2 (Planning, docs-first)
-**სტატუსი:** დაგეგმვაშია (კოდი ჯერ არ იწყება)
+### Phase 21 — Video v2 Lite ✅
+**სტატუსი:** Video v2 Lite დასრულებულია ✅ (Step 1–5)
 
 **მიზანი:**
 - Video v1-ის არსებული UX/ინფრა გადავიყვანოთ უფრო production-ready მიმართულებით:
@@ -499,6 +499,13 @@
 - Poster strategy არის (primary + fallback)
 - Playback UX სტაბილურია მობაილ/დესკტოპზე
 - Docs synced (`CONTEXT`, `MASTER_PLAN`, `PROGRESS`, phase doc)
+
+**Step-level progress note (Lite scope closeout):**
+- Step 1 ✅ Validation rules unification
+- Step 2 ✅ Metadata consistency contract
+- Step 3 ✅ Poster/Fallback strategy (UI-level)
+- Step 4 ✅ Playback UX polish + graceful video error states
+- Step 5 ✅ QA finalization + verification gates + final docs sync
 
 **Out of scope (Phase 21 Lite):**
 - სრული transcoding pipeline

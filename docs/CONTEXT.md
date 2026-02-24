@@ -471,8 +471,8 @@ Body has a fixed multi-layer gradient:
 
 ---
 
-### Phase 21 — Video v2 (Planning, docs-first)
-- Status: planning only (NO CODE STARTED)
+### Phase 21 — Video v2 Lite ✅ (Current completed scope)
+- Status: Lite scope completed (Step 1–5)
 - Goal: move video UX/infra from v1 to practical production-ready direction
 - Recommended track: **Video v2 Lite** first (low risk, fast delivery), keep Full Pipeline as next-stage architecture
 - Reuse baseline (must stay):
@@ -481,6 +481,12 @@ Body has a fixed multi-layer gradient:
   - `media_urls` schema is `jsonb`
   - `PostCard` and `/p/[id]` are already video-aware
   - No scope mixing with push/notifications/messages phases
+- Step progress (Lite track):
+  - Step 1 ✅ validation rules unified in composers
+  - Step 2 ✅ media mapping contract unified across feed/circle/profile/search/detail/card
+  - Step 3 ✅ poster-first fallback strategy stabilized (UI-level)
+  - Step 4 ✅ playback UX/error states polished (`loading/ready/error`) in card + detail
+  - Step 5 ✅ QA finalization + regression pass + verification (`tsc/build`) + docs sync
 
 **Lite scope (recommended):**
 - Stricter upload validation policy (codec/container/duration/size guardrails)
@@ -519,7 +525,6 @@ Body has a fixed multi-layer gradient:
 ## What Is NOT Built Yet
 
 ### Next Candidate Work
-- Video v2 Lite (validation + metadata consistency + poster strategy + playback polish)
 - Video v2 Full Pipeline (transcoding + adaptive renditions) — next stage after Lite
 - Push preferences granularity (per-type on/off), batching/digest, quiet hours (out-of-scope in v2)
 

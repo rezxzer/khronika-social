@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ImagePlus, X, Loader2, Video } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { VIDEO_ACCEPT_ATTR, validateVideoFile } from "@/lib/video-validation";
 
 type PostType = "story" | "lesson" | "invite";
 type ComposerMediaMode = "images" | "video";
@@ -17,9 +18,6 @@ const TYPE_OPTIONS: { value: PostType; label: string; icon: string }[] = [
   { value: "lesson", label: "სწავლება", icon: "🎓" },
   { value: "invite", label: "მოწვევა", icon: "📨" },
 ];
-
-const ALLOWED_VIDEO_MIMES = new Set(["video/mp4", "video/webm"]);
-const MAX_VIDEO_MB = 50;
 
 interface CircleOption {
   id: string;
@@ -112,16 +110,9 @@ export function FeedComposer({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!ALLOWED_VIDEO_MIMES.has(file.type)) {
-      const message = "ვიდეო უნდა იყოს MP4 ან WebM ფორმატში";
-      setInlineError(message);
-      toast.error(message);
-      return;
-    }
-
-    const maxBytes = MAX_VIDEO_MB * 1024 * 1024;
-    if (file.size > maxBytes) {
-      const message = `ვიდეოს მაქსიმალური ზომა ${MAX_VIDEO_MB}MB-ია`;
+    const validationError = validateVideoFile(file);
+    if (validationError) {
+      const message = validationError;
       setInlineError(message);
       toast.error(message);
       return;
@@ -412,7 +403,7 @@ export function FeedComposer({
                   <input
                     ref={videoInputRef}
                     type="file"
-                    accept="video/mp4,video/webm"
+                    accept={VIDEO_ACCEPT_ATTR}
                     className="hidden"
                     onChange={handleVideoSelect}
                   />

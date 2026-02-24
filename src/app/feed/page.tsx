@@ -8,6 +8,7 @@ import { useProfile } from "@/hooks/use-profile";
 import { useReactions } from "@/hooks/use-reactions";
 import { useBlocklist } from "@/hooks/use-blocklist";
 import { supabase } from "@/lib/supabase/client";
+import { normalizePostMedia } from "@/lib/post-media";
 import { AppShell } from "@/components/layout/app-shell";
 import { PostCard, type PostData } from "@/components/posts/post-card";
 import { FeedComposer } from "@/components/posts/feed-composer";
@@ -69,21 +70,17 @@ export default function FeedPage() {
   const tabRef = useRef<FeedTab>("circles");
 
   const mapPosts = (data: Record<string, unknown>[]): PostData[] =>
-    data.map((p) => ({
-      ...(p as unknown as PostData),
-      media_urls: ((p.media_urls as string[]) ?? []) as string[],
-      media_kind:
-        ((p.media_kind as "none" | "image" | "video" | undefined) ??
-          ((((p.media_urls as string[]) ?? []).length > 0 ? "image" : "none") as
-            | "none"
-            | "image")),
-      video_url: (p.video_url as string | null) ?? null,
-      profiles: p.profiles as unknown as PostData["profiles"],
-      comment_count:
-        (p.comments as unknown as { count: number }[])?.[0]?.count ?? 0,
-      reaction_count:
-        (p.reactions as unknown as { count: number }[])?.[0]?.count ?? 0,
-    }));
+    data.map((p) => {
+      const normalized = normalizePostMedia(p);
+      return {
+        ...(normalized as unknown as PostData),
+        profiles: p.profiles as unknown as PostData["profiles"],
+        comment_count:
+          (p.comments as unknown as { count: number }[])?.[0]?.count ?? 0,
+        reaction_count:
+          (p.reactions as unknown as { count: number }[])?.[0]?.count ?? 0,
+      };
+    });
 
   // --- Circles feed (existing) ---
   const fetchCirclesFeed = useCallback(

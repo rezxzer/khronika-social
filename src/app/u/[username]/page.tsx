@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { useReactions } from "@/hooks/use-reactions";
 import { supabase } from "@/lib/supabase/client";
+import { normalizePostMedia } from "@/lib/post-media";
 import { shareOrCopy } from "@/lib/share";
 import { getCircleAccent } from "@/lib/ui/circle-style";
 import { AppShell } from "@/components/layout/app-shell";
@@ -166,21 +167,17 @@ export default function PublicProfilePage() {
         .range(offset, offset + PAGE_SIZE - 1);
 
       if (!error && data) {
-        const mapped: PostData[] = data.map((p) => ({
-          ...p,
-          media_urls: (p.media_urls ?? []) as string[],
-          media_kind:
-            (p.media_kind as "none" | "image" | "video" | undefined) ??
-            (((p.media_urls ?? []).length > 0 ? "image" : "none") as
-              | "none"
-              | "image"),
-          video_url: (p.video_url as string | null) ?? null,
-          profiles: p.profiles as unknown as PostData["profiles"],
-          comment_count:
-            (p.comments as unknown as { count: number }[])?.[0]?.count ?? 0,
-          reaction_count:
-            (p.reactions as unknown as { count: number }[])?.[0]?.count ?? 0,
-        }));
+        const mapped: PostData[] = data.map((p) => {
+          const normalized = normalizePostMedia(p);
+          return {
+            ...(normalized as unknown as PostData),
+            profiles: p.profiles as unknown as PostData["profiles"],
+            comment_count:
+              (p.comments as unknown as { count: number }[])?.[0]?.count ?? 0,
+            reaction_count:
+              (p.reactions as unknown as { count: number }[])?.[0]?.count ?? 0,
+          };
+        });
 
         if (append) {
           setPosts((prev) => {

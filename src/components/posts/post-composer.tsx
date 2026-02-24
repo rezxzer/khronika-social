@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ImagePlus, X, Loader2, Video } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { VIDEO_ACCEPT_ATTR, validateVideoFile } from "@/lib/video-validation";
 
 type PostType = "story" | "lesson" | "invite";
 type ComposerMediaMode = "images" | "video";
@@ -17,9 +18,6 @@ const TYPE_OPTIONS: { value: PostType; label: string }[] = [
   { value: "lesson", label: "სწავლება" },
   { value: "invite", label: "მოწვევა" },
 ];
-
-const ALLOWED_VIDEO_MIMES = new Set(["video/mp4", "video/webm"]);
-const MAX_VIDEO_MB = 50;
 
 function safeFileName(name: string) {
   return name.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -88,16 +86,10 @@ export function PostComposer({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!ALLOWED_VIDEO_MIMES.has(file.type)) {
-      setInlineError("ვიდეო უნდა იყოს MP4 ან WebM ფორმატში");
-      toast.error("ვიდეო უნდა იყოს MP4 ან WebM ფორმატში");
-      return;
-    }
-
-    const maxBytes = MAX_VIDEO_MB * 1024 * 1024;
-    if (file.size > maxBytes) {
-      setInlineError(`ვიდეოს მაქსიმალური ზომა ${MAX_VIDEO_MB}MB-ია`);
-      toast.error(`ვიდეოს მაქსიმალური ზომა ${MAX_VIDEO_MB}MB-ია`);
+    const validationError = validateVideoFile(file);
+    if (validationError) {
+      setInlineError(validationError);
+      toast.error(validationError);
       return;
     }
 
@@ -356,7 +348,7 @@ export function PostComposer({
           <input
             ref={videoInputRef}
             type="file"
-            accept="video/mp4,video/webm"
+            accept={VIDEO_ACCEPT_ATTR}
             className="hidden"
             onChange={handleVideoSelect}
           />

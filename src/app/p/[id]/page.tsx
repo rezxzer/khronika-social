@@ -36,10 +36,12 @@ import {
   Pencil,
   Reply,
   X,
+  AlertCircle,
 } from "lucide-react";
 import { PostEditDialog } from "@/components/posts/post-edit-dialog";
 import { shareOrCopy } from "@/lib/share";
 import { fireAndForgetPush } from "@/lib/push/client";
+import { normalizePostMedia, pickPrimaryPosterUrl } from "@/lib/post-media";
 import { toast } from "sonner";
 
 interface PostDetail {
@@ -97,6 +99,16 @@ function timeAgo(dateStr: string): string {
   });
 }
 
+function formatDuration(seconds: number): string | null {
+  if (!Number.isFinite(seconds) || seconds < 0) return null;
+  const total = Math.floor(seconds);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
 export default function PostDetailPage() {
   return (
     <Suspense
@@ -132,6 +144,11 @@ function PostDetailContent() {
   const [editOpen, setEditOpen] = useState(false);
   const [confirmDeletePost, setConfirmDeletePost] = useState(false);
   const [deletingPost, setDeletingPost] = useState(false);
+  const [videoState, setVideoState] = useState<"loading" | "ready" | "error">(
+    "loading",
+  );
+  const [videoErrorText, setVideoErrorText] = useState<string | null>(null);
+  const [videoDuration, setVideoDuration] = useState<string | null>(null);
   const [isMember, setIsMember] = useState(false);
   const [replyingTo, setReplyingTo] = useState<{
     id: string;
@@ -156,7 +173,10 @@ function PostDetailContent() {
       return;
     }
 
-    setPost(data as unknown as PostDetail);
+    setPost(normalizePostMedia(data as unknown as PostDetail));
+    setVideoState("loading");
+    setVideoErrorText(null);
+    setVideoDuration(null);
 
     if (user) {
       const { data: membership } = await supabase
@@ -355,6 +375,8 @@ function PostDetailContent() {
   }
 
   const author = post.profiles;
+  const normalizedPost = normalizePostMedia(post);
+  const primaryPosterUrl = pickPrimaryPosterUrl(normalizedPost);
   const initials = (author.display_name || author.username || "?")
     .slice(0, 2)
     .toUpperCase();
@@ -426,25 +448,75 @@ function PostDetailContent() {
           {post.content}
         </div>
 
-        {post.media_kind === "video" && post.video_url ? (
-          <div className="mt-5 overflow-hidden rounded-xl border bg-black">
+        {normalizedPost.media_kind === "video" && normalizedPost.video_url ? (
+          <div className="relative mt-5 overflow-hidden rounded-xl border bg-muted/30">
+            {videoState !== "ready" && (
+              <div className="absolute inset-0 z-10">
+                {primaryPosterUrl ? (
+                  <Image
+                    src={primaryPosterUrl}
+                    alt="ვიდეოს პრევიუ"
+                    fill
+                    sizes="(max-width: 640px) 100vw, 672px"
+                    className="object-cover"
+                  />
+                ) : null}
+                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-seal-light/50 via-muted/45 to-seal-muted/50 backdrop-blur-[1px]">
+                  {videoState === "error" ? (
+                    <div className="flex items-center gap-2 rounded-full bg-background/90 px-3 py-1.5 text-xs text-destructive shadow-sm">
+                      <AlertCircle className="h-3.5 w-3.5" />
+                      {videoErrorText ?? "ვიდეო ვერ ჩაიტვირთა"}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 rounded-full bg-background/80 px-3 py-1.5 text-xs text-muted-foreground shadow-sm">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ვიდეო იტვირთება...
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
             <video
-              src={post.video_url}
-              className="block h-auto max-h-[72vh] w-full bg-black"
+              src={normalizedPost.video_url}
+              poster={primaryPosterUrl ?? undefined}
+              className={`relative z-0 block h-auto max-h-[72vh] w-full bg-black transition-opacity ${
+                videoState === "ready" ? "opacity-100" : "opacity-0"
+              }`}
               controls
               preload="metadata"
               playsInline
+              controlsList="nodownload"
+              onLoadedMetadata={(e) => {
+                setVideoDuration(formatDuration(e.currentTarget.duration));
+                setVideoState((prev) => (prev === "error" ? prev : "ready"));
+              }}
+              onCanPlay={() =>
+                setVideoState((prev) => (prev === "error" ? prev : "ready"))
+              }
+              onLoadedData={() =>
+                setVideoState((prev) => (prev === "error" ? prev : "ready"))
+              }
+              onError={() => {
+                setVideoDuration(null);
+                setVideoState("error");
+                setVideoErrorText("ვიდეო ვერ ჩაიტვირთა");
+              }}
             />
+            {videoState === "ready" && videoDuration && (
+              <span className="pointer-events-none absolute bottom-14 right-3 rounded bg-black/70 px-1.5 py-0.5 text-[11px] font-medium text-white sm:bottom-2 sm:right-2">
+                {videoDuration}
+              </span>
+            )}
           </div>
-        ) : post.media_urls.length > 0 && (
+        ) : normalizedPost.media_urls.length > 0 && (
           <div
             className="mt-5 grid gap-2"
             style={{
               gridTemplateColumns:
-                post.media_urls.length === 1 ? "1fr" : "1fr 1fr",
+                normalizedPost.media_urls.length === 1 ? "1fr" : "1fr 1fr",
             }}
           >
-            {post.media_urls.map((url, i) => (
+            {normalizedPost.media_urls.map((url, i) => (
               <div
                 key={i}
                 className="relative aspect-[4/3] overflow-hidden rounded-lg border"
@@ -454,7 +526,7 @@ function PostDetailContent() {
                   alt={`პოსტის ფოტო ${i + 1}`}
                   fill
                   sizes={
-                    post.media_urls.length === 1
+                    normalizedPost.media_urls.length === 1
                       ? "(max-width: 640px) 100vw, 672px"
                       : "(max-width: 640px) 50vw, 336px"
                   }
@@ -711,9 +783,9 @@ function PostDetailContent() {
           postId={post.id}
           initialContent={post.content}
           initialType={post.type}
-          mediaUrls={post.media_urls}
-          mediaKind={post.media_kind}
-          videoUrl={post.video_url}
+          mediaUrls={normalizedPost.media_urls}
+          mediaKind={normalizedPost.media_kind}
+          videoUrl={normalizedPost.video_url}
           onSaved={(newContent, newType) => {
             setPost((prev) =>
               prev ? { ...prev, content: newContent, type: newType as typeof prev.type } : prev,

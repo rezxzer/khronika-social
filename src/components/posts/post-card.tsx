@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
@@ -31,8 +31,10 @@ import {
   Pencil,
   Trash2,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { normalizePostMedia, pickPrimaryPosterUrl } from "@/lib/post-media";
 import { shareOrCopy } from "@/lib/share";
 import { toast } from "sonner";
 
@@ -123,6 +125,8 @@ export const PostCard = memo(function PostCard({
   onDeleted,
   onEdited,
 }: PostCardProps) {
+  const normalizedPost = normalizePostMedia(post);
+  const primaryPosterUrl = pickPrimaryPosterUrl(normalizedPost);
   const router = useRouter();
   const author = post.profiles;
   const initials = (author.display_name || author.username || "?")
@@ -136,7 +140,10 @@ export const PostCard = memo(function PostCard({
   const [editOpen, setEditOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [videoReady, setVideoReady] = useState(false);
+  const [videoState, setVideoState] = useState<"loading" | "ready" | "error">(
+    "loading",
+  );
+  const [videoErrorText, setVideoErrorText] = useState<string | null>(null);
   const [videoDuration, setVideoDuration] = useState<string | null>(null);
 
   const isSelf = currentUserId === post.author_id;
@@ -203,6 +210,12 @@ export const PostCard = memo(function PostCard({
       onDeleted?.(post.id);
     }
   }
+
+  useEffect(() => {
+    setVideoState("loading");
+    setVideoErrorText(null);
+    setVideoDuration(null);
+  }, [post.id, normalizedPost.video_url]);
 
   return (
     <>
@@ -309,20 +322,39 @@ export const PostCard = memo(function PostCard({
           )}
         </Link>
 
-        {post.media_kind === "video" && post.video_url ? (
-          <div className="relative mt-3 rounded-lg border bg-black p-1 sm:p-0">
-            {!videoReady && (
-              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-seal-light/50 via-muted/40 to-seal-muted/50">
-                <div className="flex items-center gap-2 rounded-full bg-background/80 px-3 py-1.5 text-xs text-muted-foreground shadow-sm">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ვიდეო იტვირთება...
+        {normalizedPost.media_kind === "video" && normalizedPost.video_url ? (
+          <div className="relative mt-3 overflow-hidden rounded-lg border bg-muted/30 p-1 sm:p-0">
+            {videoState !== "ready" && (
+              <div className="absolute inset-0 z-10">
+                {primaryPosterUrl ? (
+                  <Image
+                    src={primaryPosterUrl}
+                    alt="ვიდეოს პრევიუ"
+                    fill
+                    sizes="(max-width: 640px) 100vw, 672px"
+                    className="object-cover"
+                  />
+                ) : null}
+                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-seal-light/50 via-muted/45 to-seal-muted/50 backdrop-blur-[1px]">
+                  {videoState === "error" ? (
+                    <div className="flex items-center gap-2 rounded-full bg-background/90 px-3 py-1.5 text-xs text-destructive shadow-sm">
+                      <AlertCircle className="h-3.5 w-3.5" />
+                      {videoErrorText ?? "ვიდეო ვერ ჩაიტვირთა"}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 rounded-full bg-background/80 px-3 py-1.5 text-xs text-muted-foreground shadow-sm">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ვიდეო იტვირთება...
+                    </div>
+                  )}
                 </div>
               </div>
             )}
             <video
-              src={post.video_url}
-              className={`block h-auto max-h-[65vh] w-full bg-black transition-opacity ${
-                videoReady ? "opacity-100" : "opacity-0"
+              src={normalizedPost.video_url}
+              poster={primaryPosterUrl ?? undefined}
+              className={`relative z-0 block h-auto max-h-[65vh] w-full bg-black transition-opacity ${
+                videoState === "ready" ? "opacity-100" : "opacity-0"
               }`}
               controls
               preload="metadata"
@@ -330,24 +362,29 @@ export const PostCard = memo(function PostCard({
               controlsList="nodownload"
               onLoadedMetadata={(e) => {
                 setVideoDuration(formatDuration(e.currentTarget.duration));
-                setVideoReady(true);
+                setVideoState((prev) => (prev === "error" ? prev : "ready"));
               }}
-              onCanPlay={() => setVideoReady(true)}
-              onLoadedData={() => setVideoReady(true)}
+              onCanPlay={() =>
+                setVideoState((prev) => (prev === "error" ? prev : "ready"))
+              }
+              onLoadedData={() =>
+                setVideoState((prev) => (prev === "error" ? prev : "ready"))
+              }
               onError={() => {
-                setVideoReady(true);
                 setVideoDuration(null);
+                setVideoState("error");
+                setVideoErrorText("ვიდეო ვერ ჩაიტვირთა");
               }}
             />
-            {videoReady && videoDuration && (
+            {videoState === "ready" && videoDuration && (
               <span className="pointer-events-none absolute bottom-14 right-3 rounded bg-black/70 px-1.5 py-0.5 text-[11px] font-medium text-white sm:bottom-2 sm:right-2">
                 {videoDuration}
               </span>
             )}
           </div>
-        ) : post.media_urls.length > 0 && (
+        ) : normalizedPost.media_urls.length > 0 && (
           <div className="mt-3 grid grid-cols-1 gap-2 overflow-hidden rounded-lg sm:grid-cols-3">
-            {post.media_urls.slice(0, 3).map((url, i) => (
+            {normalizedPost.media_urls.slice(0, 3).map((url, i) => (
               <Link
                 key={i}
                 href={`/p/${post.id}`}
@@ -415,9 +452,9 @@ export const PostCard = memo(function PostCard({
         postId={post.id}
         initialContent={post.content}
         initialType={post.type}
-        mediaUrls={post.media_urls}
-        mediaKind={post.media_kind}
-        videoUrl={post.video_url}
+        mediaUrls={normalizedPost.media_urls}
+        mediaKind={normalizedPost.media_kind}
+        videoUrl={normalizedPost.video_url}
         onSaved={(newContent, newType) => {
           onEdited?.(post.id, newContent, newType);
         }}

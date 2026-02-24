@@ -1,7 +1,7 @@
 # ქრონიკა — პროგრესის ტრეკერი (Changelog)
 
 > ყოველი ახალი ფუნქციის დამატებისას აქ ვწერთ.
-> ბოლო განახლება: 2026-02-24 (Hotfixes — profile stale notFound + mobile video visibility)
+> ბოლო განახლება: 2026-02-24 (Phase 21 Step 5 — QA finalization + verification + docs sync)
 
 ## Hotfixes — 2026-02-24 ✅
 
@@ -17,13 +17,18 @@
   - fix: readiness gate გაფართოვდა — `setVideoReady(true)` დაემატა `onLoadedMetadata` და `onCanPlay`-ზეაც
   - commit: (current push)
 
-## Phase 21 — Video v2 (Planning, docs-first)
+## Phase 21 — Video v2 Lite ✅ (Step 1–5 დასრულებულია)
 
-- სტატუსი: დაგეგმვა მიმდინარეობს (NO CODE)
+- სტატუსი: Lite scope დასრულებულია (validation + consistency + poster/fallback + playback/error UX + QA/verification/docs)
 - შექმნილია docs-first plan: `docs/05_VIDEO_PHASE21.md`
 - რეკომენდებული implementation track: Video v2 Lite (validation + metadata consistency + poster strategy + playback polish)
 - Video v2 Full Pipeline დაფიქსირდა როგორც შემდეგი არქიტექტურული ვარიანტი (არა ამ ეტაპზე)
 - Phase 20 closeout confirmed: push v2 დასრულებულია და deploy-ზე დადასტურებულია
+- Step 1 completed: validation rules unification (`post-composer` + `feed-composer`) shared util-ით
+- Step 2 completed: media mapping/normalization contract გათანაბრდა feed/circle/profile/search/detail/card paths-ში
+- Step 3 completed: poster-first fallback strategy გაძლიერდა `PostCard` + `/p/[id]`-ზე
+- Step 4 completed: playback UX polish + graceful error states (loading/ready/error flow) `PostCard` + `/p/[id]`-ზე, Step 3 poster behavior-ის შენარჩუნებით
+- Step 5 completed: final QA matrix + regression pass + `npx tsc --noEmit` ✅ + `npm run build` ✅ + docs final sync
 
 ## Phase 20 — Push Notifications v2 ✅
 
@@ -676,7 +681,7 @@ Button, Card, Input, Label, Avatar, Badge, Dialog, DropdownMenu, Command, Skelet
 
 **შემდეგი:**
 - [x] Push notifications v2 (reactions, comments, follows)
-- [ ] Video v2 Lite (validation, metadata, poster, playback polish)
+- [x] Video v2 Lite (validation, metadata, poster, playback polish)
 - [ ] Video v2 Full Pipeline (transcoding/compression/streaming)
 
 ---

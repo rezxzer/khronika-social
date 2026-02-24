@@ -1,7 +1,7 @@
 # Khronika — Phase 21: Video v2 Plan (Docs-first)
 
 > შექმნილია: 2026-02-24
-> სტატუსი: **Planning only (NO CODE)**
+> სტატუსი: **Video v2 Lite completed (Step 1–5)**
 
 ---
 
@@ -136,12 +136,20 @@ Video v1-დან გადავიდეთ უფრო production-ready მ
 
 ## Definition of Done (Phase 21 Lite)
 
-- [ ] Validation rules მკაფიოდ და სტაბილურად მუშაობს composer-ებში
-- [ ] Video metadata rendering თანმიმდევრულია feed/card/detail-ში
-- [ ] Poster strategy მუშაობს primary + fallback რეჟიმით
-- [ ] Playback UX მობაილ/დესკტოპზე სტაბილურია
-- [ ] No regressions existing v1 behavior-ში
-- [ ] Docs synced: `CONTEXT.md`, `00_MASTER_PLAN.md`, `01_PROGRESS.md`, `05_VIDEO_PHASE21.md`
+- [x] Validation rules მკაფიოდ და სტაბილურად მუშაობს composer-ებში
+- [x] Video metadata rendering თანმიმდევრულია feed/card/detail-ში
+- [x] Poster strategy მუშაობს primary + fallback რეჟიმით
+- [x] Playback UX მობაილ/დესკტოპზე სტაბილურია
+- [x] No regressions existing v1 behavior-ში
+- [x] Docs synced: `CONTEXT.md`, `00_MASTER_PLAN.md`, `01_PROGRESS.md`, `05_VIDEO_PHASE21.md`
+
+## Final Step 5 Note (QA/Verification)
+
+- Manual QA matrix გაიარა Lite scope-ის კრიტიკულ ბილიკებზე (validation, consistency, poster/fallback, playback/error, regression)
+- Verification gates:
+  - `npx tsc --noEmit` ✅
+  - `npm run build` ✅
+- Lite scope deliberately არ გაფართოვდა Full Pipeline მიმართულებით (transcoding/HLS/ffmpeg/db schema changes არა)
 
 ---
 
