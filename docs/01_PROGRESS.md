@@ -584,6 +584,14 @@ Button, Card, Input, Label, Avatar, Badge, Dialog, DropdownMenu, Command, Skelet
 - DB ცვლილებები: საჭიროა (`0013_video_posts.sql`)
 - Manual Supabase steps: bucket/policies/columns მიგრაციით
 
+**Polish (step-by-step #1-#5):**
+- **#1** PostCard video: forced `aspect-video` removed → natural ratio + `max-h` guard
+- **#2** Loading fallback overlay: placeholder + spinner სანამ video მზადაა
+- **#3** Duration badge: metadata-based (`m:ss` / `h:mm:ss`), invalid duration-ზე graceful hide
+- **#4** Mobile controls polish: badge moved away from control bar, mobile spacing improved
+- **#5** Post detail polish: video/content/actions/comments spacing tuned for cleaner rhythm
+- **Polish scope**: no new migration, no schema change, no upload-flow change
+
 **Manual steps:**
 1. Supabase SQL Editor-ში: `database/0013_video_posts.sql` გაშვება
    - თუ ადრე error იყო `array_length(integer, integer) does not exist`, იგივე SQL თავიდან გაუშვით (fix უკვე შიგნითაა)

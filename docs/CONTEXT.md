@@ -439,6 +439,14 @@ Body has a fixed multi-layer gradient:
 - Backward compatibility: image-only posts remain unchanged
 - DB migration: `0013_video_posts.sql`
 - Migration note: `media_urls` is `jsonb`, so constraints/backfill use `jsonb_array_length(...)` (not `array_length(...)`)
+- **Polish pass (#1-#5)**:
+  - PostCard video uses natural ratio + max-height guard (no forced crop/stretch)
+  - Loading fallback overlay shown before video readiness (no blank black block)
+  - Duration badge from metadata (`m:ss` / `h:mm:ss`) with graceful fallback
+  - Mobile controls polish: safer badge placement + better touch spacing
+  - Post detail player spacing/typography tuned for cleaner visual rhythm
+- **Polish scope note**: no DB/schema/upload-flow change in polish ეტაპი
+- **Known v1 limits**: no transcoding/streaming pipeline, no poster generation, one video per post
 
 ---
 

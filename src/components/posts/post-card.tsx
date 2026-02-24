@@ -88,6 +88,18 @@ function extractTitle(content: string): { title: string; body: string } {
   return { title: "", body: content };
 }
 
+function formatDuration(seconds: number): string | null {
+  if (!Number.isFinite(seconds) || seconds < 0) return null;
+  const total = Math.floor(seconds);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  if (h > 0) {
+    return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  }
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
 interface PostCardProps {
   post: PostData;
   liked?: boolean;
@@ -124,6 +136,8 @@ export const PostCard = memo(function PostCard({
   const [editOpen, setEditOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
+  const [videoDuration, setVideoDuration] = useState<string | null>(null);
 
   const isSelf = currentUserId === post.author_id;
 
@@ -296,14 +310,38 @@ export const PostCard = memo(function PostCard({
         </Link>
 
         {post.media_kind === "video" && post.video_url ? (
-          <div className="mt-3 overflow-hidden rounded-lg border">
+          <div className="relative mt-3 rounded-lg border bg-black p-1 sm:p-0">
+            {!videoReady && (
+              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-seal-light/50 via-muted/40 to-seal-muted/50">
+                <div className="flex items-center gap-2 rounded-full bg-background/80 px-3 py-1.5 text-xs text-muted-foreground shadow-sm">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ვიდეო იტვირთება...
+                </div>
+              </div>
+            )}
             <video
               src={post.video_url}
-              className="aspect-video w-full bg-black"
+              className={`block h-auto max-h-[65vh] w-full bg-black transition-opacity ${
+                videoReady ? "opacity-100" : "opacity-0"
+              }`}
               controls
               preload="metadata"
               playsInline
+              controlsList="nodownload"
+              onLoadedMetadata={(e) => {
+                setVideoDuration(formatDuration(e.currentTarget.duration));
+              }}
+              onLoadedData={() => setVideoReady(true)}
+              onError={() => {
+                setVideoReady(true);
+                setVideoDuration(null);
+              }}
             />
+            {videoReady && videoDuration && (
+              <span className="pointer-events-none absolute bottom-14 right-3 rounded bg-black/70 px-1.5 py-0.5 text-[11px] font-medium text-white sm:bottom-2 sm:right-2">
+                {videoDuration}
+              </span>
+            )}
           </div>
         ) : post.media_urls.length > 0 && (
           <div className="mt-3 grid grid-cols-1 gap-2 overflow-hidden rounded-lg sm:grid-cols-3">

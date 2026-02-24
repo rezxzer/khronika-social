@@ -347,7 +347,7 @@ function PostDetailContent() {
         </Button>
       </div>
 
-      <article className="rounded-xl border bg-card p-6">
+      <article className="rounded-xl border bg-card p-4 sm:p-6">
         <div className="flex items-start gap-3">
           <Link href={author.username ? `/u/${author.username}` : "#"}>
             <Avatar className="h-10 w-10 ring-2 ring-seal/10">
@@ -399,15 +399,15 @@ function PostDetailContent() {
           </div>
         </div>
 
-        <div className="mt-4 whitespace-pre-wrap text-[15px] leading-relaxed">
+        <div className="mt-5 whitespace-pre-wrap text-[15px] leading-relaxed">
           {post.content}
         </div>
 
         {post.media_kind === "video" && post.video_url ? (
-          <div className="mt-4 overflow-hidden rounded-lg border">
+          <div className="mt-5 overflow-hidden rounded-xl border bg-black">
             <video
               src={post.video_url}
-              className="aspect-video w-full bg-black"
+              className="block h-auto max-h-[72vh] w-full bg-black"
               controls
               preload="metadata"
               playsInline
@@ -415,7 +415,7 @@ function PostDetailContent() {
           </div>
         ) : post.media_urls.length > 0 && (
           <div
-            className="mt-4 grid gap-2"
+            className="mt-5 grid gap-2"
             style={{
               gridTemplateColumns:
                 post.media_urls.length === 1 ? "1fr" : "1fr 1fr",
@@ -442,7 +442,7 @@ function PostDetailContent() {
           </div>
         )}
 
-        <div className="mt-4 flex items-center gap-4 border-t pt-3">
+        <div className="mt-5 flex items-center gap-4 border-t pt-3.5">
           <button
             onClick={toggleReaction}
             className="flex items-center gap-1.5 text-sm transition-colors hover:text-red-500"
@@ -482,7 +482,7 @@ function PostDetailContent() {
       </article>
 
       {/* Comments section */}
-      <div className="space-y-4">
+      <div className="space-y-5">
         <h2 className="text-lg font-semibold">
           კომენტარები{" "}
           {comments.length > 0 && (

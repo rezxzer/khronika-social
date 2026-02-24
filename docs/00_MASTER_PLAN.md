@@ -445,6 +445,11 @@
 - Rule: image-only ან video-only (no mix in one post)
 - Backward compatibility: old image posts unchanged
 - Migration compatibility fix: `jsonb_array_length(media_urls)` for Supabase `jsonb` schema
+- Polish pass completed:
+  - PostCard natural ratio, loading fallback, duration badge
+  - Mobile controls usability polish
+  - Post detail spacing/typography tune
+- Polish ეტაპზე schema/upload-flow არ შეცვლილა
 
 ### Phase 20 — Remaining Polish (შემდეგი)
 **Done როცა:**
