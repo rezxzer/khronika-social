@@ -1,26 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import webpush from "web-push";
+import {
+  buildPushContent,
+  ensureVapid,
+  resolveRecipientId,
+  sendPushToRecipient,
+  type PushRequestPayload,
+} from "@/lib/push/server";
 
 export const dynamic = "force-dynamic";
-
-let vapidConfigured = false;
-
-function ensureVapid() {
-  if (vapidConfigured) return true;
-  const pub = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-  const priv = process.env.VAPID_PRIVATE_KEY;
-  const subject = process.env.VAPID_SUBJECT ?? "mailto:admin@khronika.ge";
-  if (!pub || !priv) return false;
-  webpush.setVapidDetails(subject, pub, priv);
-  vapidConfigured = true;
-  return true;
-}
 
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   if (!authHeader?.startsWith("Bearer ")) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { ok: false, error: "Unauthorized", code: "UNAUTHORIZED" },
+      { status: 401 },
+    );
   }
 
   const token = authHeader.split(" ")[1];
@@ -28,7 +24,10 @@ export async function POST(request: NextRequest) {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!url || !serviceKey || !ensureVapid()) {
-    return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, error: "Server misconfigured", code: "SERVER_MISCONFIGURED" },
+      { status: 500 },
+    );
   }
 
   const admin = createClient(url, serviceKey);
@@ -39,33 +38,53 @@ export async function POST(request: NextRequest) {
   } = await admin.auth.getUser(token);
 
   if (authError || !user) {
-    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    return NextResponse.json(
+      { ok: false, error: "Invalid token", code: "INVALID_TOKEN" },
+      { status: 401 },
+    );
   }
 
-  let body: { conversationId?: string };
+  let body: PushRequestPayload;
   try {
-    body = await request.json();
+    const parsed = await request.json();
+    if (!parsed || typeof parsed !== "object") {
+      return NextResponse.json(
+        { ok: false, error: "Bad request", code: "BAD_REQUEST" },
+        { status: 400 },
+      );
+    }
+    body = parsed as PushRequestPayload;
   } catch {
-    return NextResponse.json({ error: "Bad request" }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: "Bad request", code: "BAD_REQUEST" },
+      { status: 400 },
+    );
   }
 
-  const { conversationId } = body;
-  if (!conversationId) {
-    return NextResponse.json({ error: "Missing conversationId" }, { status: 400 });
+  const recipientId = await resolveRecipientId(admin, user.id, body);
+  if (!recipientId) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "Missing recipient target",
+        code: "MISSING_RECIPIENT",
+      },
+      { status: 400 },
+    );
   }
 
-  const { data: conv } = await admin
-    .from("conversations")
-    .select("participant_1, participant_2")
-    .eq("id", conversationId)
-    .single();
-
-  if (!conv) {
-    return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
+  if (recipientId === user.id) {
+    return NextResponse.json({
+      ok: true,
+      sent: 0,
+      attempted: 0,
+      deactivated: 0,
+      recipientId,
+      skipped: true,
+      mode: body.type ?? (body.conversationId ? "message" : "custom"),
+      message: "Self-notification skipped",
+    });
   }
-
-  const recipientId =
-    conv.participant_1 === user.id ? conv.participant_2 : conv.participant_1;
 
   const { data: senderProfile } = await admin
     .from("profiles")
@@ -76,49 +95,21 @@ export async function POST(request: NextRequest) {
   const senderName =
     senderProfile?.display_name || senderProfile?.username || "მომხმარებელი";
 
-  const { data: subscriptions } = await admin
-    .from("push_subscriptions")
-    .select("id, endpoint, p256dh, auth")
-    .eq("user_id", recipientId)
-    .eq("is_active", true);
-
-  if (!subscriptions || subscriptions.length === 0) {
-    return NextResponse.json({ sent: 0 });
-  }
-
-  const payload = JSON.stringify({
-    title: senderName,
-    body: "ახალი პირადი მესიჯი",
-    data: { conversationId },
+  const content = buildPushContent({
+    actorName: senderName,
+    payload: body,
   });
 
-  let sent = 0;
-  const expiredIds: string[] = [];
+  const result = await sendPushToRecipient({
+    admin,
+    recipientId,
+    payload: {
+      title: content.title,
+      body: content.body,
+      data: content.data,
+    },
+    mode: content.mode,
+  });
 
-  for (const sub of subscriptions) {
-    try {
-      await webpush.sendNotification(
-        {
-          endpoint: sub.endpoint,
-          keys: { p256dh: sub.p256dh, auth: sub.auth },
-        },
-        payload,
-      );
-      sent++;
-    } catch (err: unknown) {
-      const status = (err as { statusCode?: number }).statusCode;
-      if (status === 404 || status === 410) {
-        expiredIds.push(sub.id);
-      }
-    }
-  }
-
-  if (expiredIds.length > 0) {
-    await admin
-      .from("push_subscriptions")
-      .update({ is_active: false, updated_at: new Date().toISOString() })
-      .in("id", expiredIds);
-  }
-
-  return NextResponse.json({ sent });
+  return NextResponse.json(result);
 }

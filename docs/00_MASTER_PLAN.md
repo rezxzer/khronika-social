@@ -451,9 +451,25 @@
   - Post detail spacing/typography tune
 - Polish ეტაპზე schema/upload-flow არ შეცვლილა
 
-### Phase 20 — Remaining Polish (შემდეგი)
-**Done როცა:**
-- Push notifications v2 (reactions/comments/follows)
+### Phase 20 — Push Notifications v2 ✅
+**სრულია (2026-02-24).** მოიცავს:
+- Web Push გაფართოება `reaction` / `comment` / `follow` ივენთებზე (messages legacy flow შენარჩუნებით)
+- Reuse არქიტექტურა:
+  - `/api/push/send` generic/type-aware route + shared `src/lib/push/server.ts`
+  - client fire-and-forget helper `src/lib/push/client.ts`
+  - არსებული `push_subscriptions` + VAPID + service worker ინფრასტრუქტურა
+- Trigger bindings:
+  - reaction: მხოლოდ like-add
+  - comment: მხოლოდ წარმატებული create
+  - follow: მხოლოდ follow-add
+- Service Worker click routing polish: `data.link` პრიორიტეტი, `conversationId` legacy fallback, safe fallback `/notifications`
+- Reliability: push failure არ აჩერებს მთავარ action UX-ს; self-target skip guard დაცულია
+
+**Out of scope (v2):**
+- per-type push preferences
+- batching/digest
+- quiet hours
+- ახალი notification კატეგორიები
 
 ---
 

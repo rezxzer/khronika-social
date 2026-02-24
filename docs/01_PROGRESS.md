@@ -1,7 +1,30 @@
 # ქრონიკა — პროგრესის ტრეკერი (Changelog)
 
 > ყოველი ახალი ფუნქციის დამატებისას აქ ვწერთ.
-> ბოლო განახლება: 2026-02-24 (Phase 10.2 — settings polish + delete flow hardening)
+> ბოლო განახლება: 2026-02-24 (Phase 20 — Push Notifications v2 დასრულებულია)
+
+## Phase 20 — Push Notifications v2 ✅
+
+- სტატუსი: დასრულებულია
+- Pre-sync: scope დამტკიცებულია მხოლოდ server layer-ზე — generic/type-aware push delivery (reaction/comment/follow), backward compatibility `/api/push/send` messages flow-სთან
+- Post-sync (Step 1): დაემატა shared server helper `src/lib/push/server.ts` (payload builder, recipient resolver, subscription delivery, 404/410 deactivate)
+- Post-sync (Step 1): `/api/push/send` გაფართოვდა backward-compatible რეჟიმში — ძველი `{ conversationId }` message flow უცვლელად მუშაობს და დაემატა generic/type-aware request მხარდაჭერა (`recipientId` + `type` + optional `link/title/body`)
+- Post-sync (Step 1): response სტრუქტურა გახდა მკაფიო (`ok/sent/attempted/deactivated/skipped/mode` ან error `code`)
+- ამ ნაბიჯში client trigger binding არ შედის (Step 2-ში დაიბმება)
+- Pre-sync (Step 2): იწყება client fire-and-forget trigger bindings (`reaction like-add`, `comment create`, `follow add`) + `public/sw.js` click routing polish (`data.link` first, legacy message fallback)
+- Post-sync (Step 2): დაემატა shared client helper `src/lib/push/client.ts` — fire-and-forget push call + dev-only debug logging (`console.debug`)
+- Post-sync (Step 2): trigger bindings დაემატა წარმატებულ action-ებზე:
+  - `useReactions`: მხოლოდ like-add insert success-ზე (`unlike` არ აგზავნის)
+  - `/p/[id]`: comment insert success + reaction like-add success
+  - `useFollow`: მხოლოდ follow-add success-ზე (`unfollow` არ აგზავნის)
+- Post-sync (Step 2): self-target guard დაცულია client layer-შიც (`actor === recipient` skip), push failure არ აჩერებს მთავარ UX flow-ს
+- Post-sync (Step 2): `public/sw.js` click routing გაუმჯობესდა — `data.link` პრიორიტეტი, messages legacy `conversationId` fallback, link-ის არარსებობაზე safe fallback `/notifications`, existing tab focus + navigate მხარდაჭერით
+- Post-sync (Step 3 QA/Finalization):
+  - E2E checked: reaction like-add → push, unlike → no push; comment create → push; follow add → push, unfollow → no push
+  - Legacy messages flow checked: chat send კვლავ იძახებს `/api/push/send` (conversation-based flow intact)
+  - Verification: `npx tsc --noEmit` ✅, `npm run build` ✅
+  - Build notes: Next.js workspace root warning (multiple lockfiles), middleware deprecation warning (proxy migration note)
+- v2 out-of-scope (intentionally არაა დამატებული): per-type preferences, batching/digest, quiet hours, ახალი notification კატეგორიები
 
 ## Phase 10.2 — Settings Final Polish + Account Deletion ✅
 
@@ -630,7 +653,7 @@ Button, Card, Input, Label, Avatar, Badge, Dialog, DropdownMenu, Command, Skelet
 - [x] Video Uploads — one video per post (mp4/webm, progress UI) (Phase 19.1)
 
 **შემდეგი:**
-- [ ] Push notifications v2 (reactions, comments, follows)
+- [x] Push notifications v2 (reactions, comments, follows)
 - [ ] Video v2 (compression/transcoding/streaming)
 
 ---

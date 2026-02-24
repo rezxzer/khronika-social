@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 import { PostEditDialog } from "@/components/posts/post-edit-dialog";
 import { shareOrCopy } from "@/lib/share";
+import { fireAndForgetPush } from "@/lib/push/client";
 import { toast } from "sonner";
 
 interface PostDetail {
@@ -125,6 +126,7 @@ function PostDetailContent() {
   const [loading, setLoading] = useState(true);
   const [commentText, setCommentText] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [reacting, setReacting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
@@ -238,6 +240,16 @@ function PostDetailContent() {
       setCommentText("");
       setReplyingTo(null);
       toast.success("კომენტარი დაემატა");
+      if (post.author_id !== user.id) {
+        void fireAndForgetPush(
+          {
+            recipientId: post.author_id,
+            type: "comment",
+            link: `/p/${post.id}`,
+          },
+          "comment-create",
+        );
+      }
       await fetchPost();
     }
     setSubmitting(false);
@@ -264,7 +276,8 @@ function PostDetailContent() {
   }
 
   async function toggleReaction() {
-    if (!user || !post) return;
+    if (!user || !post || reacting) return;
+    setReacting(true);
 
     const wasReacted = hasReacted;
     setHasReacted(!wasReacted);
@@ -288,7 +301,17 @@ function PostDetailContent() {
         wasReacted ? p + 1 : Math.max(0, p - 1),
       );
       toast.error("რეაქცია ვერ შეიცვალა");
+    } else if (!wasReacted && post.author_id !== user.id) {
+      void fireAndForgetPush(
+        {
+          recipientId: post.author_id,
+          type: "reaction",
+          link: `/p/${post.id}`,
+        },
+        "reaction-like-detail",
+      );
     }
+    setReacting(false);
   }
 
   async function handleDeletePost() {
@@ -445,6 +468,7 @@ function PostDetailContent() {
         <div className="mt-5 flex items-center gap-4 border-t pt-3.5">
           <button
             onClick={toggleReaction}
+            disabled={reacting}
             className="flex items-center gap-1.5 text-sm transition-colors hover:text-red-500"
           >
             <Heart

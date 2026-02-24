@@ -1,6 +1,6 @@
 # Khronika — Project Context (for AI assistants)
 
-> Last updated: 2026-02-24 (Phase 10.2 — Settings Final Polish + Account Deletion)
+> Last updated: 2026-02-24 (Phase 20 — Push Notifications v2 complete)
 > This document is the single source of truth for any AI assistant helping develop Khronika.
 > It will be updated incrementally as the project evolves.
 
@@ -450,10 +450,32 @@ Body has a fixed multi-layer gradient:
 
 ---
 
+### Phase 20 — Push Notifications v2 ✅
+- Extended Web Push from messages-only to `reaction`, `comment`, `follow` events
+- Reused existing infrastructure:
+  - server route `/api/push/send` + `src/lib/push/server.ts` (type-aware payloads, recipient resolution, expired subscription deactivation)
+  - client fire-and-forget helper `src/lib/push/client.ts`
+  - existing `push_subscriptions` table + VAPID/service-worker setup from Phase 18.1
+- Trigger bindings:
+  - `useReactions`: only on like-add (not unlike)
+  - `/p/[id]` comment create: only on successful insert
+  - `useFollow`: only on follow-add (not unfollow)
+- Safety/compatibility:
+  - self-target skip guard
+  - push failures never block primary UX flows
+  - legacy messages push flow preserved (`{ conversationId }`)
+- Service Worker routing polish:
+  - `data.link` is primary target
+  - fallback to legacy `conversationId`
+  - fallback to `/notifications` when no link exists
+
+---
+
 ## What Is NOT Built Yet
 
-### Phase 20 — Remaining Polish
-- Push notifications v2 (reactions/comments/follows)
+### Next Candidate Work
+- Video v2 (compression/transcoding/streaming)
+- Push preferences granularity (per-type on/off), batching/digest, quiet hours (out-of-scope in v2)
 
 ---
 

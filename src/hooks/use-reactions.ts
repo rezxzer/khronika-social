@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase/client";
+import { fireAndForgetPush } from "@/lib/push/client";
 import { toast } from "sonner";
 
 /**
@@ -11,6 +12,7 @@ import { toast } from "sonner";
 export function useReactions(userId: string | undefined) {
   const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
   const [toggling, setToggling] = useState<Record<string, boolean>>({});
+  const postAuthorCacheRef = useRef<Record<string, string>>({});
 
   const fetchLiked = useCallback(
     async (postIds: string[]) => {
@@ -63,6 +65,33 @@ export function useReactions(userId: string | undefined) {
         setLikedMap((prev) => ({ ...prev, [postId]: wasLiked }));
         setCount(currentCount);
         toast.error("რეაქცია ვერ შეიცვალა");
+      } else if (!wasLiked) {
+        void (async () => {
+          let recipientId = postAuthorCacheRef.current[postId];
+
+          if (!recipientId) {
+            const { data: postRow } = await supabase
+              .from("posts")
+              .select("author_id")
+              .eq("id", postId)
+              .maybeSingle();
+            recipientId = postRow?.author_id ?? "";
+            if (recipientId) {
+              postAuthorCacheRef.current[postId] = recipientId;
+            }
+          }
+
+          if (!recipientId || recipientId === userId) return;
+
+          await fireAndForgetPush(
+            {
+              recipientId,
+              type: "reaction",
+              link: `/p/${postId}`,
+            },
+            "reaction-like",
+          );
+        })();
       }
 
       setToggling((prev) => ({ ...prev, [postId]: false }));

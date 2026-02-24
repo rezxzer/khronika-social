@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase/client";
+import { fireAndForgetPush } from "@/lib/push/client";
 
 interface UseFollowOptions {
   currentUserId?: string;
@@ -94,6 +95,15 @@ export function useFollow({ currentUserId, targetUserId }: UseFollowOptions) {
       if (!error) {
         setIsFollowing(true);
         setFollowerCount((c) => c + 1);
+        if (targetUserId !== currentUserId) {
+          void fireAndForgetPush(
+            {
+              recipientId: targetUserId,
+              type: "follow",
+            },
+            "follow-add",
+          );
+        }
       }
     }
 
