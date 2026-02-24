@@ -87,6 +87,7 @@ export default function PublicProfilePage() {
   const fetchProfile = useCallback(async () => {
     if (!username) return;
     setLoading(true);
+    setNotFound(false);
 
     const { data, error } = await supabase
       .from("profiles")
@@ -100,6 +101,7 @@ export default function PublicProfilePage() {
       return;
     }
 
+    setNotFound(false);
     setProfile(data);
     profileIdRef.current = data.id;
 
