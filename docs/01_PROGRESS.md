@@ -126,6 +126,11 @@
   - `video_processing_events` sample rows (success/fail/retry/security)
   - request identifiers (`providerJobId`, `providerRequestId`, optional provider event id)
   - მოკლე runtime screenshots/captures (high-level proof)
+- Separate mini-scope update — Duplicate Video Prevention (exact duplicate, same owner):
+  - Step 1 ✅ DB foundation: `database/0016_video_assets_source_hash.sql` (`source_file_sha256` + owner/hash unique partial index)
+  - Step 2 ✅ server enforcement: create/register path now validates hash and maps duplicates/races to `DUPLICATE_VIDEO`
+  - Step 3 ✅ composer wiring: client SHA-256 precheck in feed/post composers + pre-publish duplicate block warning
+  - note: Phase 22 status wording unchanged (still partial/blocker; separate track)
 
 ## Phase 20 — Push Notifications v2 ✅
 

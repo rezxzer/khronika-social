@@ -7,6 +7,7 @@ import { isVideoProcessingStatus } from "@/lib/video-pipeline/status";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const SHA256_LOWER_HEX_RE = /^[0-9a-f]{64}$/;
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
@@ -25,6 +26,7 @@ function asOptionalString(value: unknown): string | null {
 export interface CreateVideoAssetRequest {
   postId: string;
   sourceUrl: string;
+  sourceFileSha256?: string | null;
   sourceStoragePath?: string | null;
   providerRequestId?: string | null;
 }
@@ -87,9 +89,18 @@ export function parseCreateVideoAssetRequest(
     return null;
   }
 
+  const sourceFileSha256 = asOptionalString(body.sourceFileSha256);
+  if (
+    sourceFileSha256 !== null &&
+    !SHA256_LOWER_HEX_RE.test(sourceFileSha256)
+  ) {
+    return null;
+  }
+
   return {
     postId: body.postId,
     sourceUrl: body.sourceUrl.trim(),
+    sourceFileSha256,
     sourceStoragePath: asOptionalString(body.sourceStoragePath),
     providerRequestId: asOptionalString(body.providerRequestId),
   };

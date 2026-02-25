@@ -16,6 +16,7 @@ export interface VideoAssetRecord {
   owner_id: string;
   status: VideoProcessingStatus;
   source_url: string;
+  source_file_sha256: string | null;
   source_storage_path: string | null;
   provider: string;
   provider_job_id: string | null;
@@ -43,6 +44,7 @@ export type VideoPipelineErrorCode =
   | "BAD_REQUEST"
   | "FORBIDDEN"
   | "NOT_FOUND"
+  | "DUPLICATE_VIDEO"
   | "CONFLICT"
   | "INVALID_STATE"
   | "SERVER_MISCONFIGURED"

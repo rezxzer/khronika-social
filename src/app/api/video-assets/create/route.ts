@@ -114,12 +114,34 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  if (payload.sourceFileSha256) {
+    const { data: duplicateByHash } = await admin
+      .from("video_assets")
+      .select("id, post_id")
+      .eq("owner_id", user.id)
+      .eq("source_file_sha256", payload.sourceFileSha256)
+      .maybeSingle();
+
+    if (duplicateByHash) {
+      return NextResponse.json(
+        {
+          ok: false,
+          code: "DUPLICATE_VIDEO",
+          error: "ეს ვიდეო უკვე ატვირთულია",
+          details: `Existing asset id: ${(duplicateByHash as { id: string }).id}`,
+        },
+        { status: 409 },
+      );
+    }
+  }
+
   const { data: created, error: createError } = await admin
     .from("video_assets")
     .insert({
       post_id: payload.postId,
       owner_id: user.id,
       source_url: payload.sourceUrl,
+      source_file_sha256: payload.sourceFileSha256 ?? null,
       source_storage_path: payload.sourceStoragePath,
       provider_request_id: payload.providerRequestId,
       status: "queued",
@@ -128,6 +150,22 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (createError || !created) {
+    if (
+      createError?.code === "23505" &&
+      payload.sourceFileSha256 &&
+      (createError.message?.includes("idx_video_assets_owner_source_hash_unique") ||
+        createError.message?.includes("source_file_sha256"))
+    ) {
+      return NextResponse.json(
+        {
+          ok: false,
+          code: "DUPLICATE_VIDEO",
+          error: "ეს ვიდეო უკვე ატვირთულია",
+        },
+        { status: 409 },
+      );
+    }
+
     return NextResponse.json(
       {
         ok: false,

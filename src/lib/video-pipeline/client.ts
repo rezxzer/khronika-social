@@ -84,6 +84,7 @@ async function getAccessToken(): Promise<string | null> {
 export async function registerVideoAssetForPost(params: {
   postId: string;
   sourceUrl: string;
+  sourceFileSha256?: string | null;
 }): Promise<{ ok: true; data: VideoAssetContractData } | ApiErrorShape> {
   // A publish flow may have just created an asset; remove stale no-asset marks.
   clearNoAssetMark(params.postId);
@@ -102,6 +103,7 @@ export async function registerVideoAssetForPost(params: {
     body: JSON.stringify({
       postId: params.postId,
       sourceUrl: params.sourceUrl,
+      sourceFileSha256: params.sourceFileSha256 ?? null,
     }),
   });
 

@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { VIDEO_ACCEPT_ATTR, validateVideoFile } from "@/lib/video-validation";
 import { registerVideoAssetForPost } from "@/lib/video-pipeline/client";
+import { sha256File } from "@/lib/file-hash";
 
 type PostType = "story" | "lesson" | "invite";
 type ComposerMediaMode = "images" | "video";
@@ -59,6 +60,11 @@ export function FeedComposer({
   const [videoPipelineNotice, setVideoPipelineNotice] = useState<string | null>(
     null,
   );
+  const [videoHash, setVideoHash] = useState<string | null>(null);
+  const [videoHashState, setVideoHashState] = useState<
+    "idle" | "computing" | "ready" | "error"
+  >("idle");
+  const hashComputeIdRef = useRef(0);
 
   useEffect(() => {
     if (circleIds.length === 0) return;
@@ -85,6 +91,8 @@ export function FeedComposer({
     if (videoPreview) URL.revokeObjectURL(videoPreview);
     setVideoFile(null);
     setVideoPreview(null);
+    setVideoHash(null);
+    setVideoHashState("idle");
     if (videoInputRef.current) videoInputRef.current.value = "";
   }
 
@@ -127,7 +135,39 @@ export function FeedComposer({
     setMediaMode("video");
     setVideoFile(file);
     setVideoPreview(URL.createObjectURL(file));
+    setVideoHash(null);
+    setVideoHashState("computing");
+    const runId = ++hashComputeIdRef.current;
+    void sha256File(file)
+      .then((digest) => {
+        if (hashComputeIdRef.current !== runId) return;
+        setVideoHash(digest);
+        setVideoHashState("ready");
+      })
+      .catch((error) => {
+        if (hashComputeIdRef.current !== runId) return;
+        console.warn("[feed-composer] video hash compute failed:", error);
+        setVideoHash(null);
+        setVideoHashState("error");
+      });
     if (videoInputRef.current) videoInputRef.current.value = "";
+  }
+
+  async function hasDuplicateVideoForOwner(hash: string): Promise<boolean> {
+    if (!user) return false;
+    const { data, error } = await supabase
+      .from("video_assets")
+      .select("id")
+      .eq("owner_id", user.id)
+      .eq("source_file_sha256", hash)
+      .maybeSingle();
+
+    if (error) {
+      console.warn("[feed-composer] duplicate precheck failed:", error);
+      return false;
+    }
+
+    return !!data;
   }
 
   function removeImage(index: number) {
@@ -177,6 +217,26 @@ export function FeedComposer({
     if (!user || content.trim().length < 3 || !selectedCircle) return;
     setInlineError(null);
     setVideoPipelineNotice(null);
+
+    if (mediaMode === "video" && videoFile) {
+      if (videoHashState === "computing") {
+        const msg = "ვიდეო ჯერ მოწმდება. სცადე რამდენიმე წამში.";
+        setInlineError(msg);
+        return;
+      }
+
+      if (videoHash) {
+        const isDuplicate = await hasDuplicateVideoForOwner(videoHash);
+        if (isDuplicate) {
+          const msg = "ეს იგივე ვიდეო უკვე ატვირთულია — დუბლიკატი ვიდეო იბლოკება";
+          setInlineError(msg);
+          setVideoPipelineNotice(msg);
+          toast.warning(msg);
+          return;
+        }
+      }
+    }
+
     setPosting(true);
     setUploadProgress(5);
 
@@ -261,8 +321,18 @@ export function FeedComposer({
       void registerVideoAssetForPost({
         postId: insertedPost.id as string,
         sourceUrl: videoUrl,
+        sourceFileSha256: videoHash,
       }).then((result) => {
         if (!result.ok) {
+          if (result.code === "DUPLICATE_VIDEO") {
+            setVideoPipelineNotice(
+              "ეს იგივე ვიდეო უკვე ატვირთულია — დუბლიკატი დამუშავებაზე არ დაემატა",
+            );
+            toast.warning(
+              "ეს იგივე ვიდეო უკვე ატვირთულია. დუბლიკატი დამუშავებაზე დაიბლოკა.",
+            );
+            return;
+          }
           setVideoPipelineNotice("ვიდეო გამოქვეყნდა, მაგრამ დამუშავება ვერ დაიგეგმა");
           return;
         }
@@ -364,6 +434,16 @@ export function FeedComposer({
                     <X className="h-3.5 w-3.5" />
                   </button>
                 </div>
+              )}
+
+              {videoFile && videoHashState === "computing" && (
+                <p className="text-xs text-muted-foreground">ვიდეო მოწმდება...</p>
+              )}
+
+              {videoFile && videoHashState === "error" && (
+                <p className="text-xs text-muted-foreground">
+                  ვიდეოს იდენტიფიკატორის გამოთვლა ვერ მოხერხდა — ატვირთვა მაინც გაგრძელდება
+                </p>
               )}
 
               {previews.length > 0 && (
