@@ -15,23 +15,63 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 const NO_ASSET_CACHE_TTL_MS = 2 * 60_000;
 const noAssetCache = new Map<string, number>();
+const NO_ASSET_STORAGE_KEY_PREFIX = "video-pipeline:no-asset:";
+
+function getStorageKey(postId: string): string {
+  return `${NO_ASSET_STORAGE_KEY_PREFIX}${postId}`;
+}
+
+function readStorageMark(postId: string): number | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(getStorageKey(postId));
+    if (!raw) return null;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStorageMark(postId: string, timestampMs: number) {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(getStorageKey(postId), String(timestampMs));
+  } catch {
+    // Storage may be unavailable (privacy mode/quota); in-memory cache is enough.
+  }
+}
+
+function clearStorageMark(postId: string) {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.removeItem(getStorageKey(postId));
+  } catch {
+    // Ignore storage cleanup errors.
+  }
+}
 
 function hasFreshNoAssetMark(postId: string): boolean {
-  const markedAt = noAssetCache.get(postId);
+  const markedAt = noAssetCache.get(postId) ?? readStorageMark(postId) ?? undefined;
   if (!markedAt) return false;
   if (Date.now() - markedAt > NO_ASSET_CACHE_TTL_MS) {
     noAssetCache.delete(postId);
+    clearStorageMark(postId);
     return false;
   }
+  noAssetCache.set(postId, markedAt);
   return true;
 }
 
 function markNoAsset(postId: string) {
-  noAssetCache.set(postId, Date.now());
+  const now = Date.now();
+  noAssetCache.set(postId, now);
+  writeStorageMark(postId, now);
 }
 
 function clearNoAssetMark(postId: string) {
   noAssetCache.delete(postId);
+  clearStorageMark(postId);
 }
 
 async function getAccessToken(): Promise<string | null> {
