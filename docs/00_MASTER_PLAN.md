@@ -471,6 +471,25 @@
 - quiet hours
 - ახალი notification კატეგორიები
 
+### Phase 20 Follow-up — Push Preferences Granularity (In progress)
+**Step 1 დასრულებულია ✅ (DB model only):**
+- additive table: `public.push_notification_preferences` (`database/0017_push_notification_preferences.sql`)
+- user-level per-type flags: `reaction_enabled`, `comment_enabled`, `follow_enabled`
+- defaults: all `true` (legacy behavior unchanged)
+- existing `push_subscriptions` flow intentionally unchanged
+
+**Step 2 დასრულებულია ✅ (API read/write only):**
+- new route: `src/app/api/push/preferences/route.ts`
+- `GET`: current user preferences read
+- `PUT`: current user preferences save/update
+- auth-required (Bearer token), current-user-only scope
+- simple response shape: `{ ok, data: { reactionEnabled, commentEnabled, followEnabled } }`
+
+**Out of scope (Step 1):**
+- messages push preferences
+- batching/digest
+- quiet hours
+
 ### Phase 21 — Video v2 Lite ✅
 **სტატუსი:** Video v2 Lite დასრულებულია ✅ (Step 1–5)
 
@@ -591,6 +610,15 @@
   - `video_processing_events` examples (success/fail/retry/security)
   - request ids (`providerJobId`, `providerRequestId`, optional provider event id)
   - მოკლე screenshot/capture evidence runtime checks-იდან
+- Config prerequisite check (documentation/config clarification only; no code changes):
+  - Operational Config Snapshot (values-hidden)
+  - `VIDEO_PIPELINE_PROVIDER_SUBMIT_URL` = missing
+  - `VIDEO_PIPELINE_PROVIDER_TOKEN` = missing
+  - `VIDEO_PIPELINE_PROVIDER_CALLBACK_URL` = missing
+  - `VIDEO_PIPELINE_WEBHOOK_SECRET` = missing
+  - source of check: manual (`.env.local` + Vercel Environment Variables page)
+  - last-checked: 2026-02-25
+  - note: Phase 22 completion claim remains unchanged (`partial/blocker`) until runtime config exists and live callback E2E evidence is collected
 
 **Phase 22 v1-ში არ შედის:**
 - DRM / live streaming

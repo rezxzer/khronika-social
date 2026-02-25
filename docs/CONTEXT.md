@@ -469,6 +469,17 @@ Body has a fixed multi-layer gradient:
   - fallback to legacy `conversationId`
   - fallback to `/notifications` when no link exists
 
+#### Phase 20 Follow-up — Push Preferences Granularity (In progress)
+- Step 1 ✅ completed: DB preference model added via `database/0017_push_notification_preferences.sql`
+- Added user-level per-type flags: `reaction_enabled`, `comment_enabled`, `follow_enabled` (default `true`)
+- Additive/compatibility-safe: existing `push_subscriptions` flow unchanged; legacy behavior preserved by default-true model
+- Out of scope in this step: messages push preferences, batching/digest, quiet hours
+- Step 2 ✅ completed: API read/write path added via `src/app/api/push/preferences/route.ts`
+- `GET /api/push/preferences`: current user per-type preferences read (auth-required)
+- `PUT /api/push/preferences`: current user per-type preferences save/update (auth-required)
+- Response shape (simple/backward-compatible): `{ ok, data: { reactionEnabled, commentEnabled, followEnabled } }`
+- Out of scope in this step: UI changes, server-side send guard, messages preferences, batching/digest/quiet hours
+
 ---
 
 ### Phase 21 — Video v2 Lite ✅ (Current completed scope)
@@ -571,6 +582,15 @@ Body has a fixed multi-layer gradient:
     - sample event rows (success/fail/retry/security cases) from `video_processing_events`
     - request identifiers (`providerJobId`, `providerRequestId`, optional provider event id)
     - 1-2 screenshots or captures from runtime monitoring/console showing end-to-end transition completion
+  - Config prerequisite check (documentation/config clarification only; no code changes):
+    - Operational Config Snapshot (values-hidden)
+    - `VIDEO_PIPELINE_PROVIDER_SUBMIT_URL` = missing
+    - `VIDEO_PIPELINE_PROVIDER_TOKEN` = missing
+    - `VIDEO_PIPELINE_PROVIDER_CALLBACK_URL` = missing
+    - `VIDEO_PIPELINE_WEBHOOK_SECRET` = missing
+    - source of check: manual (`.env.local` + Vercel Environment Variables page)
+    - last-checked: 2026-02-25
+    - note: Phase 22 completion claim remains unchanged (`partial/blocker`) until runtime config exists and live callback E2E evidence is collected
 - Explicitly out of current planning scope:
   - DRM
   - live streaming

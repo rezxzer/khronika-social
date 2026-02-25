@@ -126,6 +126,15 @@
   - `video_processing_events` sample rows (success/fail/retry/security)
   - request identifiers (`providerJobId`, `providerRequestId`, optional provider event id)
   - მოკლე runtime screenshots/captures (high-level proof)
+- Config prerequisite check (documentation/config clarification only; no code changes):
+  - Operational Config Snapshot (values-hidden)
+  - `VIDEO_PIPELINE_PROVIDER_SUBMIT_URL` = missing
+  - `VIDEO_PIPELINE_PROVIDER_TOKEN` = missing
+  - `VIDEO_PIPELINE_PROVIDER_CALLBACK_URL` = missing
+  - `VIDEO_PIPELINE_WEBHOOK_SECRET` = missing
+  - source of check: manual (`.env.local` + Vercel Environment Variables page)
+  - last-checked: 2026-02-25
+  - note: Phase 22 completion claim remains unchanged (`partial/blocker`) until runtime config exists and live callback E2E evidence is collected
 - Separate mini-scope update — Duplicate Video Prevention (exact duplicate, same owner):
   - Step 1 ✅ DB foundation: `database/0016_video_assets_source_hash.sql` (`source_file_sha256` + owner/hash unique partial index)
   - Step 2 ✅ server enforcement: create/register path now validates hash and maps duplicates/races to `DUPLICATE_VIDEO`
@@ -154,6 +163,19 @@
   - Verification: `npx tsc --noEmit` ✅, `npm run build` ✅
   - Build notes: Next.js workspace root warning (multiple lockfiles), middleware deprecation warning (proxy migration note)
 - v2 out-of-scope (intentionally არაა დამატებული): per-type preferences, batching/digest, quiet hours, ახალი notification კატეგორიები
+
+## Phase 20 Follow-up — Push Preferences Granularity (In progress)
+
+- Step 1 completed ✅ (DB preference model only)
+- new additive migration: `database/0017_push_notification_preferences.sql`
+- new user-level flags (default `true`): `reaction_enabled`, `comment_enabled`, `follow_enabled`
+- compatibility note: existing `push_subscriptions` delivery flow unchanged; defaults preserve legacy behavior
+- out of scope in Step 1: messages push preferences, batching/digest, quiet hours
+- Step 2 completed ✅ (API read/write path only)
+- new route: `src/app/api/push/preferences/route.ts` (`GET` read, `PUT` save/update for current user)
+- auth model: Bearer token required; only current user preferences are readable/writable
+- response shape: simple/backward-compatible `{ ok, data: { reactionEnabled, commentEnabled, followEnabled } }`
+- out of scope in Step 2: UI changes, send guard, messages preferences, quiet hours/batching/digest
 
 ## Phase 10.2 — Settings Final Polish + Account Deletion ✅
 
