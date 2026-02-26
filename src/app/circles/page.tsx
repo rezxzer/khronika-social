@@ -30,15 +30,15 @@ export default function CirclesPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
-  // Temporarily disabled auth check for testing
-  // useEffect(() => {
-  //   if (!authLoading && !user) {
-  //     router.replace("/login");
-  //   }
-  // }, [user, authLoading, router]);
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace("/login");
+    }
+  }, [user, authLoading, router]);
 
   useEffect(() => {
-    // Allow loading without user for testing
+    if (!user) return;
+
     async function fetchCircles() {
       setLoading(true);
 
@@ -65,16 +65,15 @@ export default function CirclesPage() {
     }
 
     fetchCircles();
-  }, []);
+  }, [user]);
 
-  // Removed loading spinner that blocks rendering
-  // if (authLoading || !user) {
-  //   return (
-  //     <div className="flex min-h-[calc(100vh-10rem)] items-center justify-center">
-  //       <Skeleton className="h-8 w-8 rounded-full" />
-  //     </div>
-  //   );
-  // }
+  if (authLoading || !user) {
+    return (
+      <div className="flex min-h-[calc(100vh-10rem)] items-center justify-center">
+        <Skeleton className="h-8 w-8 rounded-full" />
+      </div>
+    );
+  }
 
   const filtered = circles.filter(
     (c) =>
